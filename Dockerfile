@@ -12,7 +12,7 @@ COPY frontend/ ./
 RUN yarn build
 
 # ---- Backend build --------------------------------------------------------
-FROM eclipse-temurin:21-jdk-alpine AS backend
+FROM eclipse-temurin:25-jdk-alpine AS backend
 WORKDIR /build
 # Dependency resolution is cached on its own layer: build files change far less often than
 # source, so a source-only edit does not re-download the world.
@@ -24,7 +24,7 @@ COPY backend/ ./
 RUN ./gradlew :app:installDist --no-daemon -x test
 
 # ---- Runtime --------------------------------------------------------------
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 # Never root. A container that runs as root turns a container escape into a host compromise,
 # and nothing in this image needs the privilege.
