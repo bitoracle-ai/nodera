@@ -3,7 +3,7 @@
 [versions]
 kotlin = "2.1.20"
 ktor = "3.1.2"
-exposed = "0.60.0"
+exposed = "1.4.0"
 flyway = "11.7.2"
 postgresql = "42.7.5"
 hikari = "6.3.0"
