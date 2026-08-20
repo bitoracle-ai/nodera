@@ -1,0 +1,99 @@
+# Nodera — one entry point for every routine task.
+#
+# `make check` runs everything CI runs. If it is green here it is green there, with one
+# exception worth knowing: the backend tests need a running Docker daemon (Testcontainers),
+# and skipping them locally is the most common cause of a surprise red build.
+
+.DEFAULT_GOAL := help
+SHELL := /bin/sh
+
+PY ?= python
+COMPOSE ?= docker compose
+
+.PHONY: help dev up down logs migrate seed check check-repo check-db check-backend \
+        check-frontend backend frontend test fmt clean ticket
+
+help: ## Show this help
+	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
+
+# ---------------------------------------------------------------------------
+# Development
+# ---------------------------------------------------------------------------
+
+dev: up migrate seed ## Start everything: postgres, migrations, seed, backend, frontend
+	@echo ""
+	@echo "  API      http://localhost:8080"
+	@echo "  Web      http://localhost:5173"
+	@echo ""
+	@$(MAKE) -j2 backend frontend
+
+up: ## Start Postgres only
+	$(COMPOSE) up -d postgres
+	@$(COMPOSE) exec -T postgres sh -c 'until pg_isready -U nodera >/dev/null 2>&1; do sleep 1; done'
+	@echo "postgres ready"
+
+down: ## Stop everything and remove the containers (keeps the volume)
+	$(COMPOSE) down
+
+logs: ## Follow the Postgres log
+	$(COMPOSE) logs -f postgres
+
+migrate: ## Apply migrations
+	cd backend && ./gradlew flywayMigrate --no-daemon
+
+seed: ## Load the development seed (one project, one human, one agent)
+	@$(COMPOSE) exec -T postgres psql -U nodera -d nodera -v ON_ERROR_STOP=1 -q < db/seed/dev-seed.sql
+# stdin rather than `-f /seed/...`: a POSIX path handed to a container from Git Bash on
+# Windows is rewritten to a host path (C:/Program Files/Git/seed/...) and psql cannot find
+# it. Piping keeps the same command working on every contributor's machine.
+
+backend: ## Run the backend
+	cd backend && ./gradlew :app:run --no-daemon
+
+frontend: ## Run the frontend dev server
+	cd frontend && yarn dev
+
+ticket: ## Scaffold a ticket: make ticket ID=CORE-06 T="Title" [P=P2] [E="~1 d"]
+	@test -n "$(ID)" || (echo "ID is required, e.g. make ticket ID=CORE-06 T=\"Title\""; exit 1)
+	@test -n "$(T)"  || (echo "T (title) is required"; exit 1)
+	$(PY) scripts/ticket_new.py "$(ID)" "$(T)" --priority "$(or $(P),P3)" --effort "$(or $(E),~1 d)"
+
+# ---------------------------------------------------------------------------
+# Gates — the local equivalents of the CI lanes (docs/ci.md)
+# ---------------------------------------------------------------------------
+
+check: check-repo check-db check-backend check-frontend ## Everything CI runs
+	@echo ""
+	@echo "All gates green."
+
+check-repo: ## Docs, tickets, adapters, language, invariants, release triggers
+	$(PY) scripts/docs_list.py
+	$(PY) scripts/generate_docs_map.py --check
+	$(PY) scripts/check_tickets.py --check
+	$(PY) scripts/lint_adapters.py
+	$(PY) scripts/lint_docs_index.py
+	$(PY) scripts/lint_language.py
+	$(PY) scripts/lint_workflow_triggers.py
+	$(PY) scripts/lint_invariants.py
+
+check-db: ## SQL conventions
+	$(PY) scripts/lint_sql.py
+
+check-backend: ## ktlint, detekt, module boundaries, tests (needs Docker)
+	cd backend && ./gradlew ktlintCheck detekt test --no-daemon
+
+check-frontend: ## lint, types, coverage, build
+	cd frontend && yarn lint && yarn typecheck && yarn test:coverage && yarn build
+
+test: ## Tests only, both sides
+	cd backend && ./gradlew test --no-daemon
+	cd frontend && yarn test:run
+
+fmt: ## Format everything in place
+	cd backend && ./gradlew ktlintFormat --no-daemon
+	cd frontend && yarn format
+
+clean: ## Remove build output (not the database volume)
+	cd backend && ./gradlew clean --no-daemon
+	rm -rf frontend/dist frontend/node_modules/.vite

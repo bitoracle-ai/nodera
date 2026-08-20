@@ -1,0 +1,65 @@
+# Keep dependencies and pinned Action SHAs current.
+#
+# One window per week (Monday 06:00 Europe/Vienna) so dependency review is a single task
+# rather than a trickle. Caveat, stated rather than hidden: Dependabot also re-evaluates
+# whenever a manifest changes on the default branch, so a day of merging can still produce
+# PRs outside this window. That is by design, not a misconfiguration.
+#
+# Grouping: minor and patch updates collapse into ONE pull request per ecosystem. MAJOR
+# updates are excluded from the group and arrive individually — a grouped mega-bump of
+# majors is unmergeable, and each major needs its own migration and its own review.
+#
+# Hard limit worth knowing: Dependabot never merges different ecosystems into one pull
+# request. Gradle, npm and github-actions each get their own, and no option changes that.
+
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Vienna
+    open-pull-requests-limit: 5
+    groups:
+      backend-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Vienna
+    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Vienna
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(ci)"
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(deps)"

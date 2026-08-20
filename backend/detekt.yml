@@ -1,0 +1,62 @@
+# Detekt configuration for Nodera.
+#
+# Deliberately strict on complexity: a function that trips these thresholds is usually a use
+# case doing two things, and splitting it is nearly always the right answer rather than raising
+# the number.
+
+build:
+  maxIssues: 0
+
+complexity:
+  LongMethod:
+    threshold: 40
+  LongParameterList:
+    # ActorContext is the first parameter of EVERY use case (docs/ARCHITECTURE.md § 5), so the
+    # threshold is counted with that one already spent.
+    functionThreshold: 7
+    constructorThreshold: 8
+  TooManyFunctions:
+    thresholdInClasses: 15
+    thresholdInFiles: 15
+  CyclomaticComplexMethod:
+    threshold: 12
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+  SwallowedException:
+    active: true
+  ThrowingExceptionsWithoutMessageOrCause:
+    active: true
+
+potential-bugs:
+  UnsafeCallOnNullableType:
+    active: true
+  LateinitUsage:
+    active: true
+    excludes: ['**/test/**']
+
+style:
+  MaxLineLength:
+    maxLineLength: 120
+  ReturnCount:
+    max: 4
+  ForbiddenComment:
+    # TODO/FIXME break the build. A finding is fixed, dropped with a recorded reason, or
+    # ticketed — a comment is none of those (docs/PROJECT_MANAGEMENT.md § 8).
+    active: true
+    comments:
+      - reason: 'Fix it, drop it with a recorded reason, or open a ticket.'
+        value: 'TODO:'
+      - reason: 'Fix it, drop it with a recorded reason, or open a ticket.'
+        value: 'FIXME:'
+  MagicNumber:
+    active: true
+    excludes: ['**/test/**']
+  UnusedPrivateMember:
+    active: true
+
+naming:
+  FunctionNaming:
+    # Kotest test names are English sentences describing behaviour, not identifiers.
+    excludes: ['**/test/**']

@@ -1,0 +1,41 @@
+# Enforce LF line endings for all text files (Windows contributors included).
+* text=auto eol=lf
+
+*.kt      text eol=lf
+*.kts     text eol=lf
+*.java    text eol=lf
+*.ts      text eol=lf
+*.tsx     text eol=lf
+*.js      text eol=lf
+*.jsx     text eol=lf
+*.py      text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.json    text eol=lf
+*.md      text eol=lf
+*.toml    text eol=lf
+*.sql     text eol=lf
+*.sh      text eol=lf
+*.txt     text eol=lf
+*.properties text eol=lf
+gradlew   text eol=lf
+
+# Gradle wrapper on Windows must keep CRLF or cmd.exe cannot parse it.
+gradlew.bat text eol=crlf
+
+# Generated artefacts — excluded from GitHub language stats, collapsed in PR diffs.
+docs/docs_map.md linguist-generated=true
+backend/gradle/wrapper/gradle-wrapper.jar binary linguist-vendored=true
+
+# Binary files — no conversion.
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
+*.webp    binary
+*.woff    binary
+*.woff2   binary
+*.gz      binary
+*.zip     binary
+*.jar     binary

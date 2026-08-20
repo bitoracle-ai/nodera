@@ -1,0 +1,30 @@
+# Local development. NOT a production topology — see docs/DEPLOYMENT.md for that.
+#
+# The password here is a literal development value and is meant to be. A compose file
+# that reads a secret from the environment for local Postgres teaches contributors to
+# put real secrets in shell history; a value that is unmistakably local does not.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nodera-postgres
+    environment:
+      POSTGRES_DB: nodera
+      POSTGRES_USER: nodera
+      POSTGRES_PASSWORD: nodera-local-dev-only
+      # Deterministic collation, so an index built on a contributor's machine sorts the
+      # way it sorts in CI. Locale drift produces "works locally" bugs that take a day.
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/seed:/seed:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nodera -d nodera"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

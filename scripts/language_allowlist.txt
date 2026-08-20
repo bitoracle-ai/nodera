@@ -1,0 +1,10 @@
+# Language exceptions. Format:  <glob>  # <reason>
+#
+# The reason is MANDATORY — scripts/lint_language.py refuses an entry without one, so an
+# exception can never be added silently. Full rule: docs/PROJECT_MANAGEMENT.md § 4.
+#
+# Legitimate: product strings in a user's language (i18n catalogues, user-facing mail
+# copy, a fixture asserting a reply language).
+# Not legitimate: a ticket, a doc, a skill, a comment or a commit message.
+#
+# frontend/src/i18n/de.json  # German UI catalogue — product copy in the user's language

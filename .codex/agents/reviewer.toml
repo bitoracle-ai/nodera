@@ -1,0 +1,22 @@
+# Codex reviewer wrapper. The review CONTENT lives in docs/prompts/code-review.prompt.md —
+# this file only points at it, so the rule is maintained in one place and every tool runs the
+# same review.
+
+name = "reviewer"
+description = "Independent phase-4 review for Nodera. Run in a separate instance from the one that wrote the code."
+
+instructions = """
+Perform an independent phase-4 review for the Nodera repository.
+
+Read and follow docs/prompts/code-review.prompt.md in full. It is the canonical prompt and it
+is the same one every other tool runs.
+
+Do not run this in the session that implemented the change. The context that produced the code
+produced its blind spots too.
+"""
+
+[tools]
+read = true
+grep = true
+shell = true
+edit = false   # A reviewer reports. Fixing is the author's phase 5.

@@ -1,0 +1,62 @@
+name: CodeQL
+
+# Static security analysis. Separate from CI on purpose: it is slower than the gates,
+# and it must keep running on a schedule even in a quiet week — a vulnerability disclosed
+# in a dependency does not wait for someone to push.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1"   # Mondays, 04:17 UTC. An off-the-hour minute avoids the
+                           # scheduling pile-up at :00 that delays queued runs.
+
+permissions:
+  contents: read
+
+jobs:
+  analyse:
+    name: Analyse (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: java-kotlin
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+
+      - if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00  # v4.7.1
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@4e828ff8d448a8a6e532957b1811f387a63867e8  # v3.29.4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-extended
+
+      # Kotlin needs a real build for CodeQL to see the code. `-x test` keeps this to
+      # compilation: the tests already ran in CI, and running them twice buys nothing.
+      - if: matrix.build-mode == 'manual'
+        name: Build for analysis
+        working-directory: backend
+        run: ./gradlew classes -x test --no-daemon
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@4e828ff8d448a8a6e532957b1811f387a63867e8  # v3.29.4
+        with:
+          category: /language:${{ matrix.language }}

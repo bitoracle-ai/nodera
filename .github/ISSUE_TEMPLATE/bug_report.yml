@@ -1,0 +1,51 @@
+name: Bug report
+description: Something behaves differently from what the documentation says.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Nodera is pre-alpha and much of it is not implemented yet. Please check
+        `tickets/INDEX.md` first — if the feature is still an open ticket, it is not a bug.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you observed, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: The smallest sequence that produces it. A reproduction is worth more than a description.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface
+      options: [Web app, REST API, MCP server, Database / migrations, Build or CI, Documentation]
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Logs or errors. Redact tokens before pasting — a token in a public issue is a compromised token.
+      render: shell

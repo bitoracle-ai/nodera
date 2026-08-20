@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose something Nodera should do.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Please read [`docs/VISION.md`](../blob/main/docs/VISION.md) § 3 first.** It lists what
+        Nodera deliberately does not build — chat, CI/CD, git hosting, an agent runtime,
+        custom field builders. A proposal that crosses the scope fence will be declined
+        however good it is, and reading it first saves us both the exchange.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you cannot do today. Describe the problem, not the solution you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope fence
+      options:
+        - label: I have read `docs/VISION.md` § 3 and this does not cross the scope fence
+          required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Including doing nothing. Why is that not enough?

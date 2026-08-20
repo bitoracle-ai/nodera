@@ -1,0 +1,27 @@
+# Code owners. A review from the listed owner is requested automatically.
+#
+# The paths below are the ones where a mistake is expensive and hard to see in a diff:
+# the invariants, the schema, the permission engine and the rules themselves.
+
+*                               @bitoracle-ai/nodera-maintainers
+
+# The premise. A change here changes what the product is.
+/docs/VISION.md                 @bitoracle-ai/nodera-maintainers
+/docs/DOMAIN_MODEL.md           @bitoracle-ai/nodera-maintainers
+/skills/critical-invariants.md  @bitoracle-ai/nodera-maintainers
+
+# Forward-only and unforgiving.
+/db/migrations/                 @bitoracle-ai/nodera-maintainers
+
+# Identity, permissions, audit.
+/backend/domain/src/main/kotlin/ai/nodera/domain/permission/    @bitoracle-ai/nodera-maintainers
+/backend/application/src/main/kotlin/ai/nodera/application/audit/  @bitoracle-ai/nodera-maintainers
+
+# The rules every contributor and every tool loads first.
+/CLAUDE.md                      @bitoracle-ai/nodera-maintainers
+/AGENTS.md                      @bitoracle-ai/nodera-maintainers
+/.github/copilot-instructions.md @bitoracle-ai/nodera-maintainers
+/docs/INDEX.md                  @bitoracle-ai/nodera-maintainers
+
+# Supply chain.
+/.github/workflows/             @bitoracle-ai/nodera-maintainers

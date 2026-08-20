@@ -1,0 +1,14 @@
+# Codex project configuration for Nodera.
+#
+# Entry point: AGENTS.md at the repository root, which Codex reads natively. Everything else
+# is routed from docs/INDEX.md — this file pins no models, no personal paths and no account
+# settings, because those are properties of a contributor's machine rather than of the project.
+
+[project]
+name = "nodera"
+instructions_file = "AGENTS.md"
+
+[project.docs]
+hub = "docs/INDEX.md"
+tickets = "tickets/INDEX.md"
+skills = "skills/README.md"

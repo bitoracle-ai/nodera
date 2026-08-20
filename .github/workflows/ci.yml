@@ -1,0 +1,272 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Least privilege by default; a job that needs more says so itself.
+permissions:
+  contents: read
+
+concurrency:
+  # A new push to a PR cancels the previous run. Pushes to main are never cancelled —
+  # every commit on the default branch keeps its own verdict.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "22"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Secrets first. A leaked credential is the one finding whose cost keeps rising
+  # while the rest of the pipeline runs, so nothing waits on anything else here.
+  # ---------------------------------------------------------------------------
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@44c470ffc35caa8b1eb3e8012ca53c2f9bea4c92  # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # gitleaks-action v2+ needs a (free) licence key for organisation-owned repos.
+          # Store it as GITLEAKS_LICENSE in BOTH Actions secrets and Dependabot secrets —
+          # Dependabot PRs cannot read Actions secrets, and without it they stay red.
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # ---------------------------------------------------------------------------
+  # Repository integrity. Cheap, stdlib-only, and NEVER conditional: doc and ticket
+  # drift must be caught on a docs-only pull request too, which is exactly the kind
+  # that tempts people to skip the heavy lanes.
+  # ---------------------------------------------------------------------------
+  repo-checks:
+    name: Repository checks (docs, tickets, adapters)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.11"
+
+      - name: Documentation frontmatter (summary + read_when on every knowledge doc)
+        run: python scripts/docs_list.py
+
+      - name: Documentation map is fresh (no heading drift)
+        run: python scripts/generate_docs_map.py --check
+
+      - name: Ticket-tree consistency (INDEX <-> tickets/, no cycles, views fresh)
+        run: python scripts/check_tickets.py --check
+
+      - name: Agent-adapter consistency (two-layer architecture, ADR-0002)
+        run: python scripts/lint_adapters.py
+
+      - name: Documentation discoverability (hub reachability, no dead links)
+        run: python scripts/lint_docs_index.py
+
+      - name: Repository language (English only)
+        run: python scripts/lint_language.py
+
+      # Releasing must stay a deliberate act. A comment saying so is not a control:
+      # two accidental YAML lines in release.yml would otherwise leave every gate green.
+      - name: Releasing stays manual (no event may trigger a release)
+        run: python scripts/lint_workflow_triggers.py
+
+      # Invariant #1 of skills/critical-invariants.md, as an executable sweep rather
+      # than a hope: no code path may branch on actor kind to decide a permission.
+      - name: Critical-invariant firewall (actor kind never gates permission)
+        run: python scripts/lint_invariants.py
+
+      # No TODO/FIXME. A finding is fixed, dropped with a recorded reason, or ticketed —
+      # a comment is none of those, it is a finding hidden where no index reaches it.
+      - name: No TODO/FIXME comments
+        run: |
+          if grep -rInE '(^|[^A-Za-z])(TODO|FIXME)([^A-Za-z]|$)' \
+               --include='*.kt' --include='*.kts' --include='*.ts' --include='*.tsx' \
+               --include='*.sql' --include='*.py' \
+               backend/ frontend/ db/ scripts/ 2>/dev/null; then
+            echo "::error::TODO/FIXME found. Fix it, drop it with a recorded reason, or open a ticket (docs/PROJECT_MANAGEMENT.md § 8)."
+            exit 1
+          fi
+          echo "OK - no TODO/FIXME comments."
+
+  # ---------------------------------------------------------------------------
+  # Backend
+  # ---------------------------------------------------------------------------
+  backend:
+    name: Backend (Kotlin)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00  # v4.7.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96  # v4.4.1
+        with:
+          # The wrapper JAR is validated against the published checksums. A tampered
+          # wrapper executes arbitrary code with the job's token; this is the one
+          # supply-chain check a Gradle build cannot skip.
+          validate-wrappers: true
+
+      - name: Lint (ktlint)
+        working-directory: backend
+        run: ./gradlew ktlintCheck --no-daemon
+
+      - name: Static analysis (detekt)
+        working-directory: backend
+        run: ./gradlew detekt --no-daemon
+
+      - name: Module boundaries hold (:domain stays framework-free)
+        working-directory: backend
+        run: ./gradlew :domain:checkModuleBoundaries --no-daemon
+
+      # Testcontainers needs a Docker daemon; ubuntu-latest has one. RLS policies and
+      # append-only triggers cannot be tested against a substitute, so they are tested
+      # against a real Postgres or not at all.
+      - name: Test
+        working-directory: backend
+        run: ./gradlew test --no-daemon
+
+      - name: Build
+        working-directory: backend
+        run: ./gradlew build -x test --no-daemon
+
+  # ---------------------------------------------------------------------------
+  # Frontend
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: Frontend (React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install (locked)
+        run: yarn install --frozen-lockfile
+
+      - name: Generated API client is current
+        # The client is generated from the committed OpenAPI document. Regenerating and
+        # finding a diff means the contract moved and the client did not — which is the
+        # drift the generation step exists to prevent, so it fails here rather than in a
+        # runtime type error nobody traces back.
+        run: |
+          yarn api:generate
+          if ! git diff --quiet -- src/api/generated; then
+            echo "::error::src/api/generated is stale — run 'yarn api:generate' and commit the result."
+            git diff --stat -- src/api/generated
+            exit 1
+          fi
+
+      - name: Lint (max-warnings 0)
+        run: yarn lint
+
+      - name: Type check
+        run: yarn typecheck
+
+      - name: Test + per-file coverage gate (>= 80% each)
+        run: yarn test:coverage
+
+      - name: Production build
+        run: yarn build
+
+  # ---------------------------------------------------------------------------
+  # Database
+  # ---------------------------------------------------------------------------
+  database:
+    name: Database (migrations + schema rules)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: nodera_ci
+          POSTGRES_USER: nodera_owner
+          POSTGRES_PASSWORD: ci-dummy
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.11"
+
+      - name: SQL conventions (lowercase identifiers, every FK indexed)
+        run: python scripts/lint_sql.py
+
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00  # v4.7.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96  # v4.4.1
+        with:
+          validate-wrappers: true
+
+      - name: Apply migrations to an empty database
+        working-directory: backend
+        env:
+          NODERA_DB_URL: jdbc:postgresql://localhost:5432/nodera_ci
+          NODERA_DB_USER: nodera_owner
+          NODERA_DB_PASSWORD: ci-dummy
+          NODERA_APP_PASSWORD: ci-dummy
+        run: ./gradlew flywayMigrate --no-daemon
+
+      # A migration that applies once but not twice is a migration that will fail on the
+      # next deployment. Running it against an already-migrated database proves the
+      # sequence is idempotent at the Flyway level rather than assuming it.
+      - name: Re-run migrations (no-op on an already-migrated database)
+        working-directory: backend
+        env:
+          NODERA_DB_URL: jdbc:postgresql://localhost:5432/nodera_ci
+          NODERA_DB_USER: nodera_owner
+          NODERA_DB_PASSWORD: ci-dummy
+          NODERA_APP_PASSWORD: ci-dummy
+        run: ./gradlew flywayMigrate --no-daemon
+
+      - name: Schema integrity (actor subtypes exhaustive and exclusive)
+        env:
+          PGPASSWORD: ci-dummy
+        run: psql -h localhost -U nodera_owner -d nodera_ci -v ON_ERROR_STOP=1 -f db/checks/schema_integrity.sql
+
+  # ---------------------------------------------------------------------------
+  # The single required check. The branch ruleset names "CI Gate" and nothing else,
+  # so adding a lane is a change to `needs:` plus scripts/ci_gate.py — GitHub never
+  # learns the job list and no ruleset edit is needed.
+  # ---------------------------------------------------------------------------
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [secret-scan, repo-checks, backend, frontend, database]
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+
+      - name: Aggregate job results
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: python3 scripts/ci_gate.py

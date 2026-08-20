@@ -1,0 +1,22 @@
+title = "Nodera — Gitleaks Config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Placeholder credentials in templates, fixtures and documentation — not real secrets."
+regexes = [
+  # Angle-bracket placeholders in *.example templates and docs: <your-token>, <value>.
+  '''<your-[^>]+>''',
+  '''<[a-z][a-z0-9_-]*>''',
+  # CI dummies. Deliberately unmistakable so a real value can never masquerade as one.
+  '''ci-dummy''',
+  '''nodera-local-dev-only''',
+  # Documented example tokens carry this prefix; the token issuer refuses to mint it.
+  '''nod_pat_EXAMPLE[A-Za-z0-9]*''',
+]
+paths = [
+  '''.*\.example$''',
+  '''^docs/.*\.md$''',
+  '''^db/seed/dev-.*\.sql$''',
+]

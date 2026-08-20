@@ -1,0 +1,68 @@
+# ---- Secrets & environment -------------------------------------------------
+# Deny-by-default: every .env variant is ignored, examples are re-admitted
+# explicitly. A new .env.<something> is therefore ignored the moment it is
+# created, rather than after someone remembers to add a rule.
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+*.pem
+*.key
+!**/testdata/**/*.pem
+secrets/
+
+# ---- Kotlin / Gradle (backend) ---------------------------------------------
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+.kotlin/
+*.class
+*.hprof
+
+# ---- Node / React (frontend) -----------------------------------------------
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.tsbuildinfo
+.eslintcache
+
+# ---- Test & coverage artefacts ---------------------------------------------
+coverage/
+htmlcov/
+.nyc_output/
+*.lcov
+build/reports/
+**/test-results/
+playwright-report/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+# ---- Docker & local infrastructure -----------------------------------------
+pgdata/
+.docker-data/
+
+# ---- Editors & OS ----------------------------------------------------------
+.idea/
+!.idea/runConfigurations/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.shared.json
+*.iml
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ---- Agent tooling (machine-specific, never shared) ------------------------
+# The shared adapters (CLAUDE.md, AGENTS.md, .claude/settings.json) ARE tracked.
+# Only per-machine state is not.
+.claude/settings.local.json
+.claude/worktrees/
+.claude/scheduled_tasks.lock
+
+# ---- Generated, never committed --------------------------------------------
+tickets_board.html
