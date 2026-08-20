@@ -27,7 +27,10 @@ mutating tool can drift.
 
 ## Approach
 
-1. Transport: stdio first, streamable HTTP behind the same handler set.
+1. Transport: stdio first, streamable HTTP behind the same handler set. This replaces the
+   `mcp-stdio` stub OPS-01 ships — that entrypoint exits non-zero naming this ticket until it
+   does — and keeps the rule OPS-01 established: MCP framing on stdout, every diagnostic on
+   stderr.
 2. Tools: `whoami`, `project_list`, `project_get`, `actor_search`, `ticket_search`, `ticket_get`,
    `ticket_next`, `comment_list`, `review_list`.
 3. `tools/list` filtered by the caller's effective capabilities — discovery scoped to what the
@@ -46,6 +49,11 @@ mutating tool can drift.
 - [ ] Every call is audited with `surface = mcp` and `tool_name` set, including denials.
 - [ ] The parity test passes for at least three distinct capabilities.
 - [ ] `limit` is clamped server-side regardless of the requested value.
+- [ ] The `mcp-stdio` entrypoint from OPS-01 serves a real session, and nothing but MCP framing
+      reaches stdout — proved by a test that is red when a diagnostic is written there.
+- [ ] The streamable HTTP session is either **not** bound to a process, or the sticky-routing
+      requirement is written into `docs/MCP.md` and ADR-0006 § 6.5 is amended to match. Decided
+      in this package, because after it the answer is whatever the code happened to do.
 - [ ] `make check` green.
 - [ ] Independent review: 0 BLOCKING findings.
 
