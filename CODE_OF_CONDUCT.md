@@ -50,7 +50,7 @@ when representing the project in public.
 ## Enforcement
 
 Report to **conduct@bitoracle.ai**. Reports are handled confidentially, and you will get an
-acknowledgement within 3 working days.
+acknowledgement within 10 working days.
 
 Maintainers may remove, edit or reject contributions that violate this code, and may
 temporarily or permanently ban a contributor for behaviour they consider inappropriate.
