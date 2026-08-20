@@ -154,6 +154,41 @@ The reviewer's NOT VERIFIED list is retained as-is: nothing image-level was chec
 and no release run exists, so multi-arch, provenance, SBOM and `cosign verify` remain unproven by
 anyone. Also noted: `release.yml` signs but nothing in the repository ever verifies.
 
+
+### Round 2 — 2026-08-20 · CHANGES REQUIRED · 1 BLOCKING, 9 NON-BLOCKING
+
+Run in a sub-agent against commit `450dd47`, by a reviewer who did not perform round 1. It confirmed
+all four round-1 BLOCKING findings genuinely fixed, and reproduced two of them by re-breaking and
+re-fixing the guard.
+
+| | Finding | Resolution |
+|---|---|---|
+| **B1** | **`make check` does not run on a clean clone.** No target installs `frontend/node_modules`, so `check-frontend` dies on its first command. The reviewer did not reason about this — they cloned the commit into a fresh directory and hit it. Worse, round 1's N9 fix had just made `docs/ci.md` claim `make check-frontend` is the local equivalent of the CI Frontend lane, whose *first* step is `yarn install --frozen-lockfile`. CI stayed green precisely because it had the step the Makefile lacked, which is the failure `docs/ci.md` exists to prevent. Falsifies acceptance criteria 1 and 12 verbatim. | Fixed: `check-frontend`, `frontend` and `test` install first. Re-proved by cloning fresh and running the lanes. |
+
+Non-blocking N1–N9, all fixed in the same session:
+
+- **N1** `Migrator`'s class KDoc still asserted the Flyway claim round 1 had disproved, sixty lines
+  above the function whose KDoc said the opposite. The round-1 record claimed the correction shipped;
+  it had shipped in the plan only. Corrected in the code.
+- **N2** `checkModuleBoundaries` printed "OK" unconditionally — the same "reads as present, checks
+  nothing" shape as the original B1. The task now asserts the configuration-time check actually ran.
+- **N6** The guard was narrower than the rule it backs: project-level edges such as
+  `:persistence → :api-rest` and anything → `:app` were unchecked. Replaced with the explicit
+  inward-only allow-list from `ARCHITECTURE.md` § 2, including a refusal for any module not listed.
+  Proved live: `:persistence → :api-rest` now fails with a message naming what that module may
+  depend on.
+- **N4** The port-range check added in round 1 had no test; deleting it left all tests green. Added.
+- **N3** the shutdown KDoc had become detached from its constants · **N5** the rationale for hiding
+  the driver's exception class contradicted the same body returning the build version · **N7** the
+  plan claimed "three places" where two are demonstrable · **N8** four more citations to numbered
+  sections ADR-0006 does not have · **N9** the backend row in `docs/ci.md` no longer matched
+  `make check-backend`.
+
+Round 2's NOT VERIFIED list stands and is not claimed as passing: the release path end to end
+(multi-arch, provenance, SBOM, `cosign verify`), `validate-wrappers` as an executed action, CI itself
+on this branch, and Testcontainers — this package adds none. The reviewer also confirmed round 1's
+observation that `release.yml` signs but nothing in the repository ever verifies.
+
 ## Affected files
 
 - `backend/gradlew`, `backend/gradlew.bat`, `backend/gradle/wrapper/` — new, committed.

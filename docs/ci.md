@@ -22,7 +22,7 @@ succeed makes the gate red.
 |---|---|---|
 | **Secret scan** | No credential in the history | `gitleaks detect --config .gitleaks.toml` |
 | **Repository checks** | Docs, tickets, adapters, language, invariants, release triggers | `make check-repo` |
-| **Backend** | ktlint, detekt, module boundaries, tests, build | `cd backend && ./gradlew ktlintCheck detekt test build` |
+| **Backend** | ktlint, detekt, module boundaries, tests, build | `make check-backend` |
 | **Frontend** | Generated client fresh, lint, types, coverage, build | `make check-frontend` |
 | **Database** | SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make up && make migrate` |
 | **CI Gate** | Every lane above succeeded | — (aggregation only) |

@@ -91,9 +91,9 @@ sealed interface SchemaState {
  * table (`V5`) and no data-definition rights at all. A single object holding owner credentials for
  * the lifetime of the server is exactly the privilege that split exists to avoid.
  *
- * Flyway types do not cross this boundary, and the reason is not tidiness: a Flyway exception message
- * quotes the statement that failed, and for `V4` that statement is a `create role` carrying the
- * substituted password.
+ * Flyway types do not cross this boundary. `:app` does not depend on Flyway, and a message leaving
+ * here goes through [redactSecret] first — see that function for what redaction does and does not
+ * buy, since Flyway Core does not quote the failing statement by default.
  */
 class Migrator(private val settings: DatabaseSettings) {
     /**

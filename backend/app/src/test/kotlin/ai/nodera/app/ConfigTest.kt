@@ -83,6 +83,17 @@ class ConfigTest : StringSpec({
         error.message.orEmpty() shouldNotContain "s3cr3t-value"
     }
 
+    // Guard: the range check. Remove `takeIf { it in MIN_PORT..MAX_PORT }` and this goes red —
+    // 0 and 70000 both parse as integers and then fail inside Netty with a stack trace instead of
+    // the named refusal every other value in this file gets.
+    "refuses a port outside the valid range, not merely one that is not a number" {
+        listOf("0", "-1", "70000").forEach { value ->
+            val env = Environment(complete(mapOf("NODERA_HTTP_PORT" to value)))
+            shouldThrow<ConfigurationError> { Configuration.serve(env) }
+                .message.shouldContainNotNull("NODERA_HTTP_PORT")
+        }
+    }
+
     "refuses a port that is not a number instead of falling back to the default" {
         val env = Environment(complete(mapOf("NODERA_HTTP_PORT" to "eighty-eighty")))
         val error = shouldThrow<ConfigurationError> { Configuration.serve(env) }

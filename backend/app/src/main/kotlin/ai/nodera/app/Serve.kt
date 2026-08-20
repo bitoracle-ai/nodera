@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.PrintStream
 
+private val logger = LoggerFactory.getLogger("ai.nodera.app")
+
 /**
  * How long in-flight requests get to finish on `SIGTERM`, and the hard ceiling after that.
  *
@@ -25,8 +27,6 @@ import java.io.PrintStream
  * request it was serving becomes an error the client sees. Draining is the difference between a
  * rolling deployment nobody notices and one that shows up in the error rate.
  */
-private val logger = LoggerFactory.getLogger("ai.nodera.app")
-
 private const val SHUTDOWN_GRACE_MILLIS = 5_000L
 private const val SHUTDOWN_TIMEOUT_MILLIS = 15_000L
 

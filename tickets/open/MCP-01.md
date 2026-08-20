@@ -52,7 +52,7 @@ mutating tool can drift.
 - [ ] The `mcp-stdio` entrypoint from OPS-01 serves a real session, and nothing but MCP framing
       reaches stdout — proved by a test that is red when a diagnostic is written there.
 - [ ] The streamable HTTP session is either **not** bound to a process, or the sticky-routing
-      requirement is written into `docs/MCP.md` and ADR-0006 § 6.5 is amended to match. Decided
+      requirement is written into `docs/MCP.md` and ADR-0006's decision 6, point 5, is amended to match. Decided
       in this package, because after it the answer is whatever the code happened to do.
 - [ ] `make check` green.
 - [ ] Independent review: 0 BLOCKING findings.

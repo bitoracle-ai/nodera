@@ -43,7 +43,7 @@ scoping boundary inside a deployment.
 
 **The control plane lives outside this repository.** Provisioning, billing, fleet upgrade orchestration
 and tenant lifecycle are the operator's product, not Nodera's. What Nodera owes such an operator is
-exactly the six stateless properties in [ADR-0006](0006-one-image-three-entrypoints.md) § 6 plus:
+exactly the six stateless properties in [ADR-0006](0006-one-image-three-entrypoints.md), decision 6, plus:
 
 - configuration entirely external, with no baked-in per-instance value;
 - `migrate` as a job with a machine-readable exit status, so a fleet upgrade can report which instance
@@ -70,7 +70,7 @@ not mean Nodera grows a tenancy layer on speculation.
   that floor may exceed what they would pay. Accepted — and revisited with real numbers, not now.
 - ⚠️ No cross-customer queries. Aggregate usage reporting is a control-plane concern and has to
   collect from instances rather than read one table.
-- ⚠️ A fleet upgrade is N upgrades. This is what makes ADR-0006 § 5 — digest-addressable images, a
+- ⚠️ A fleet upgrade is N upgrades. This is what makes ADR-0006's decision 5 — digest-addressable images, a
   migration job with a real exit status — load-bearing rather than tidy.
 
 ## Alternatives considered

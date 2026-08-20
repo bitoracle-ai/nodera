@@ -60,7 +60,7 @@ backend: ## Run the backend
 	cd backend && $(DEV_DB_ENV) NODERA_STATIC_ROOT=../../frontend/dist ./gradlew :app:run --no-daemon
 
 frontend: ## Run the frontend dev server
-	cd frontend && yarn dev
+	cd frontend && yarn install --frozen-lockfile && yarn dev
 
 ticket: ## Scaffold a ticket: make ticket ID=CORE-06 T="Title" [P=P2] [E="~1 d"]
 	@test -n "$(ID)" || (echo "ID is required, e.g. make ticket ID=CORE-06 T=\"Title\""; exit 1)
@@ -91,13 +91,14 @@ check-db: ## SQL conventions
 check-backend: ## ktlint, detekt, module boundaries, tests (needs Docker)
 	cd backend && ./gradlew ktlintCheck detekt checkModuleBoundaries test --no-daemon
 
-check-frontend: ## generated client fresh, lint, types, coverage, build
+check-frontend: ## install, generated client fresh, lint, types, coverage, build
+	cd frontend && yarn install --frozen-lockfile
 	cd frontend && yarn api:generate && git diff --exit-code -- src/api/generated
 	cd frontend && yarn lint && yarn typecheck && yarn test:coverage && yarn build
 
 test: ## Tests only, both sides
 	cd backend && ./gradlew test --no-daemon
-	cd frontend && yarn test:run
+	cd frontend && yarn install --frozen-lockfile && yarn test:run
 
 fmt: ## Format everything in place
 	cd backend && ./gradlew ktlintFormat --no-daemon

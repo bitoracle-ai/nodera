@@ -202,7 +202,7 @@ no `tenant` above `project`, and a hosted offering multiplies instances rather t
 shared one. What that requires of this codebase — statelessness, secrets from files, distinct
 liveness and readiness, no in-process singletons, an instance identity taken from configuration —
 is specified in [`adr/0007-deployment-is-the-tenant-boundary.md`](adr/0007-deployment-is-the-tenant-boundary.md)
-and in ADR-0006 § 6. Those are acceptance criteria, not aspirations: each one is cheap now and
+and in ADR-0006, decision 6. Those are acceptance criteria, not aspirations: each one is cheap now and
 expensive to retrofit.
 
 `docker-compose.yml` in this repository is a **development** topology — Postgres only. The production
