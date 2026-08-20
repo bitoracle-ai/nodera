@@ -8,7 +8,9 @@ Generated from ticket frontmatter: `python scripts/tickets_index.py --write`.
 
 <!-- BEGIN GENERATED: closed tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_0 closed work packages, newest first._
+_1 closed work packages, newest first._
 
-_none yet._
+| ID | Title | Closed |
+|---|---|---|
+| [OPS-01](tickets/closed/OPS-01.md) | Build chain and release package: wrapper, lockfile, image, signed multi-arch release | 2026-08-20 |
 <!-- END GENERATED: closed tickets -->

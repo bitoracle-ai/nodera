@@ -31,4 +31,4 @@ A plan that lists only files is a checklist. The justification is the part worth
 
 | Plan | Status |
 |---|---|
-| [`OPS-01.md`](OPS-01.md) — build chain and release package | `active` |
+| [`OPS-01.md`](OPS-01.md) — build chain and release package | `implemented` |

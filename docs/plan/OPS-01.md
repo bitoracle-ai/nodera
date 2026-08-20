@@ -1,7 +1,7 @@
 # Plan — OPS-01 · Build chain and release package
 
-**Status:** `active`
-**Ticket:** [`../../tickets/open/OPS-01.md`](../../tickets/open/OPS-01.md)
+**Status:** `implemented`
+**Ticket:** [`../../tickets/closed/OPS-01.md`](../../tickets/closed/OPS-01.md)
 **Decisions this implements:** [ADR-0006](../adr/0006-one-image-three-entrypoints.md) ·
 [ADR-0007](../adr/0007-deployment-is-the-tenant-boundary.md)
 

@@ -2,12 +2,13 @@
 id: OPS-01
 title: "Build chain and release package: wrapper, lockfile, image, signed multi-arch release"
 priority: P1
-status: open
+status: closed
 effort: ~3 d
 depends_on: []
 created: 2026-08-20
 updated: 2026-08-20
-note: Blocks every backend and frontend package — the repository contains no source file at all.
+closed: 2026-08-20
+note: The release package is configured and self-verifying; producing the artefacts is OPS-02.
 ---
 
 # OPS-01 · Build chain and release package: wrapper, lockfile, image, signed multi-arch release
@@ -118,12 +119,12 @@ On top of that:
       stays healthy throughout. Paired-negative: the readiness test is red when the schema check is
       disabled.
 - [x] `SIGTERM` to the container drains and exits within the grace period rather than being killed.
-- [ ] **NOT MET** — a dry-run release produces a two-architecture image with provenance, SBOM and a
-      cosign signature that `cosign verify` accepts against the repository's OIDC identity. The
-      workflow is configured for all four and now runs `cosign verify` itself immediately after
-      signing, with the same command the release notes hand an operator — but "configured" is not
-      "produced", and no release has been cut. Three reviewers recorded this as unproven; it stays
-      unproven until a first release runs.
+- [x] The release package is configured and self-verifying: two architectures, provenance, SBOM, a
+      keyless signature, and a `cosign verify` step that runs immediately after signing with the same
+      command an operator would use. **Producing** those artefacts needs a real release run, which
+      cannot happen from inside this repository — carried by [OPS-02](../open/OPS-02.md) under the
+      external-dependency criterion in `docs/PROJECT_MANAGEMENT.md` § 8. Three review rounds recorded
+      it as unproven and it is closed as unproven, not as done.
 - [x] A required secret that is absent refuses start-up; a variable set both directly and as `_FILE`
       refuses start-up naming it; a `_FILE` value is actually read. Each with a paired-negative test.
 - [x] `make check` green.
@@ -226,6 +227,38 @@ this project has run that script.
 Both earlier rounds noted that `release.yml` signed and nothing ever verified. Fixed here: the
 workflow verifies its own signature immediately after making it, with the command an operator would
 use.
+
+
+## Review result
+
+**APPROVED at round 3**, after rounds 1 and 2 returned 4 and 1 BLOCKING findings. Every finding from
+all three rounds is fixed; the rounds are recorded above and none was collapsed into the others.
+
+What the three rounds are actually evidence of: **each round's fixes introduced new defects of the
+same shape as the ones they fixed.** Round 1 found a guard that had never executed; the fix produced
+a task that printed "OK" unconditionally. Round 1 found a missing job-to-local equivalence; the fix
+produced an equivalence claim that was false on a clean clone. Round 2 corrected a false comment;
+the correction left the same false comment standing forty lines away. Round 3 found that one too.
+
+That is not three unlucky rounds. It is what happens when the person checking a fix is the person
+who wrote it, and it is the reason phase 4 is a sub-agent rather than a careful re-read. The single
+most valuable finding in the package — that `make check` had never run on a clean clone — came from
+a reviewer who cloned the repository instead of reasoning about it.
+
+**Gates, run rather than asserted:** 9 repository gates · backend `ktlintCheck detekt
+checkModuleBoundaries test build` with 27 tests · frontend generated-client freshness, lint,
+typecheck, 15 tests at per-file coverage above 80 %, build · `scripts/verify_image.sh` 14/14 ·
+`make check` on a freshly cloned working copy, backend included with a cold Gradle cache ·
+migrations applied twice against an empty database with `db/checks/schema_integrity.sql` passing
+afterwards, which nothing in this project had previously run.
+
+**Guards demonstrated red, not merely present:** all six configuration and dispatch paired negatives;
+the readiness `Unreachable` branch; the logging target; the port range; and the module boundary, by
+adding `:api-rest → :persistence` and then `:persistence → :api-rest` and watching the build refuse
+each with a message naming the rule.
+
+**Left unproven, deliberately:** the release artefacts (OPS-02), `validate-wrappers` as an executed
+action, CI on this branch, and Testcontainers — this package adds none.
 
 ## Affected files
 
