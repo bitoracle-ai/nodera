@@ -69,7 +69,9 @@ services:
       NODERA_DB_URL: jdbc:postgresql://postgres:5432/nodera
       NODERA_DB_USER: nodera_app
       NODERA_DB_PASSWORD_FILE: /run/secrets/app_role_password
-      NODERA_LOG_FORMAT: json
+      # NODERA_LOG_FORMAT is not honoured yet — structured JSON output needs an encoder
+      # dependency and belongs with the observability work. Setting it here would configure
+      # something that does nothing, which is worse than not offering it.
     secrets: [app_role_password]
     ports:
       - "8080:8080"

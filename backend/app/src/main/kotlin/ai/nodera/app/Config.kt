@@ -15,6 +15,11 @@ class ConfigurationError(message: String, cause: Throwable? = null) : RuntimeExc
 private const val FILE_SUFFIX = "_FILE"
 
 private const val DEFAULT_HTTP_PORT = 8080
+
+// 0, -1 and 70000 all parse as integers and then fail inside Netty with a stack trace instead
+// of the named refusal the rest of this file promises.
+private const val MIN_PORT = 1
+private const val MAX_PORT = 65535
 private const val DEFAULT_STATIC_ROOT = "static"
 
 /**
@@ -121,7 +126,7 @@ object Configuration {
         return ServeConfig(
             database = database(env),
             httpPort =
-                port.toIntOrNull()
+                port.toIntOrNull()?.takeIf { it in MIN_PORT..MAX_PORT }
                     ?: throw ConfigurationError("NODERA_HTTP_PORT is '$port', which is not a port number."),
             staticRoot = env.optional("NODERA_STATIC_ROOT", DEFAULT_STATIC_ROOT),
         )

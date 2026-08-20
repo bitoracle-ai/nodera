@@ -183,10 +183,15 @@ longer copies them separately, and the build **fails** when the directory is mis
 Gradle treats a missing `from` as a no-op, which would otherwise ship an image whose `migrate`
 applies nothing and reports success.
 
-**9.3 — A migration failure never echoes the role password.** A Flyway exception message quotes the
-statement that failed, and for `V4` that statement is `create role nodera_app login password '…'`
-with the placeholder already substituted. `Migrator` redacts the value before returning it, and
-Flyway types do not cross the module boundary at all.
+**9.3 — Redaction of the role password, labelled for what it is.** The first draft claimed a
+Flyway failure would otherwise echo `create role nodera_app login password '…'`. Review checked
+that and it is not true by default: Flyway Core says "Run Flyway with -X option to see the actual
+statement" instead of quoting it. So `redactSecret` is **defence in depth for the debug-logging
+case** — which is precisely the configuration someone turns on while a migration is failing — not
+a fix for a leak that exists today. It is top-level and `internal` so a unit test can reach it,
+because the container check that appeared to prove it could not: the privilege refusal happens
+before Flyway runs, so that path never calls it. Flyway types still do not cross the module
+boundary.
 
 **9.4 — Four defects in committed configuration that no gate had ever run against.** The Dockerfile
 cache layer (already in the ticket); `vite.config.ts` importing `defineConfig` from `vite`, which
@@ -218,6 +223,22 @@ next release — which is the same argument ADR-0006 makes for keeping migration
 **9.9 — The container checks are committed as `scripts/verify_image.sh`.** They were a throwaway
 script until the run above found something real. A proof that only its author can repeat is not a
 proof; `docs/ci.md` names the command and states plainly that CI does not run it yet.
+
+**9.10 — The module-boundary guard had never executed.** Phase-4 review found `ci.yml` calling
+`:domain:checkModuleBoundaries`, a task registered on the root project — "task not found", so the CI
+step failed and the guard had never run once. Correcting the invocation exposed the second half:
+its action referenced `logger` and reached across projects through lazy providers, which
+`org.gradle.configuration-cache=true` cannot serialise. So the rule that `:api-rest` may not depend
+on `:persistence` — the whole reason `ReadinessProbe` exists rather than a direct `Migrator` import —
+had never been enforced by anything but attention.
+
+It now runs at configuration time and throws there, which also makes it unavoidable: a violation
+fails every Gradle invocation, not only the command a pipeline remembers to call. Demonstrated live
+rather than asserted — adding the forbidden edge fails with `:api-rest depends on :persistence`.
+
+The general lesson is worth more than the fix: this repository has three separate places where a
+`.kts` task action was silently incompatible with its own configuration-cache setting. A guard that
+has never been executed is indistinguishable from one that does not exist.
 
 ## 10. Answers to § 8
 

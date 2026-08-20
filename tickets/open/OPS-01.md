@@ -125,6 +125,35 @@ On top of that:
 - [ ] `make check` green.
 - [ ] Independent review (phase 4, run in a sub-agent): 0 BLOCKING findings.
 
+
+## Review history
+
+Append-only across rounds. A later verdict never replaces an earlier one — the disagreement is the
+most informative part of the record.
+
+### Round 1 — 2026-08-20 · CHANGES REQUIRED · 4 BLOCKING, 9 NON-BLOCKING
+
+Run in a sub-agent against commit `30ec267`.
+
+| | Finding | Resolution |
+|---|---|---|
+| **B1** | `ci.yml` invoked `:domain:checkModuleBoundaries`; the task is registered on the **root** project, so the step failed with "task not found" and the guard had never run. `make check-backend` did not invoke it at all despite its help text. The claim in `Health.kt` that the `:api-rest` → `:persistence` edge is a build failure — the entire justification for introducing `ReadinessProbe` rather than importing `Migrator` — was therefore false. | Fixed, and **the finding went deeper than the review reached**: correcting the invocation showed the task could not run at all. Its action referenced `logger` and reached across projects through lazy providers, so with `org.gradle.configuration-cache=true` it failed with "cannot serialize Gradle script object references". The guard was dead twice over. The check now runs at configuration time in `gradle.projectsEvaluated` and throws there, so a violation fails **every** Gradle invocation rather than the one command someone remembered to wire up. Proved live: adding `implementation(project(":persistence"))` to `:api-rest` fails the build with `:api-rest depends on :persistence`, and passes again when removed. |
+| **B2** | The password-redaction claim had no paired-negative test, and the container check presented as its proof could not fail: the privilege refusal happens before Flyway runs, so that path never calls the redactor. The reviewer further established that Flyway Core does not quote the failing statement by default at all. | Fixed: `redactSecret` extracted to `internal` top-level with four unit tests; the container check renamed to what it actually proves; `docs/plan/OPS-01.md` § 9.3 rewritten to call the guard defence in depth for the debug-logging case rather than a fix for a present leak. |
+| **B3** | The `SchemaState` → `ReadinessReport` mapping had no test. Turning the `Unreachable` branch into `ready = true` left all 17 backend tests green while four places in the tree promised "unknown is never ready". | Fixed: extracted as `internal fun readinessReport`, four tests including that branch. |
+| **B4** | `logback.xml`'s `ConsoleAppender` defaults to `System.out`. The first library log line on the `mcp-stdio` path — which MCP-01 will add — would put plain text into the JSON-RPC framing channel, with every test still green. Introduced by this package's own logging fix. | Fixed: `<target>System.err</target>`, guarded by `LoggingTargetTest` asserting the appender's target. |
+
+Non-blocking N1–N9 all fixed in the same session: `make backend`'s static path resolved one level
+short; `compose.prod.yml` configured an inert `NODERA_LOG_FORMAT`; the healthcheck ignored
+`NODERA_HTTP_PORT`; the wrapper had no `distributionSha256Sum`; the readiness body leaked the driver's
+exception class on an unauthenticated endpoint; `NODERA_HTTP_PORT` was validated as a number rather
+than a port; `state()` opens an unpooled connection per probe (documented as an operator-set timeout
+in `.env.example` rather than changed); a citation pointed at a section of ADR-0006 that does not
+exist; and `make check-frontend` omitted the generated-client freshness step that CI runs.
+
+The reviewer's NOT VERIFIED list is retained as-is: nothing image-level was checked by the reviewer,
+and no release run exists, so multi-arch, provenance, SBOM and `cosign verify` remain unproven by
+anyone. Also noted: `release.yml` signs but nothing in the repository ever verifies.
+
 ## Affected files
 
 - `backend/gradlew`, `backend/gradlew.bat`, `backend/gradle/wrapper/` — new, committed.

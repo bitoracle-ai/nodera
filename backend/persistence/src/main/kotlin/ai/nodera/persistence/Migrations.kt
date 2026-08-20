@@ -22,6 +22,22 @@ private const val APP_PASSWORD_PLACEHOLDER = "nodera_app_password"
 
 private const val REDACTED = "***"
 
+/**
+ * Removes a secret from a message before it can reach a log or a terminal.
+ *
+ * Defence in depth, and honestly labelled as such: Flyway Core's default message says
+ * "Run Flyway with -X option to see the actual statement" rather than quoting it, so the
+ * statement text this scrubs is normally absent. It is present with debug logging on, which is
+ * exactly the configuration someone reaches for while a migration is failing — the moment the
+ * `create role … password '…'` in V4 would otherwise be echoed into a terminal or a log
+ * aggregator. Top-level and `internal` so the guard is reachable from a test rather than only
+ * from a code path that has to fail first.
+ */
+internal fun redactSecret(
+    message: String,
+    secret: String,
+): String = if (secret.isEmpty()) message else message.replace(secret, REDACTED)
+
 /** No parameters and no interpolation: `current_user` is resolved by the server, not by us. */
 private const val CREATE_PRIVILEGE_QUERY =
     "select has_schema_privilege(current_user, 'public', 'create')"
@@ -136,7 +152,9 @@ class Migrator(private val settings: DatabaseSettings) {
                     .migrationsExecuted
             MigrationOutcome.Applied(executed)
         } catch (e: FlywayException) {
-            MigrationOutcome.Failed(redact(e.message ?: e.javaClass.simpleName, appRolePassword))
+            MigrationOutcome.Failed(
+                redactSecret(e.message ?: e.javaClass.simpleName, appRolePassword),
+            )
         }
 
     private fun flyway() =
@@ -161,15 +179,4 @@ class Migrator(private val settings: DatabaseSettings) {
                 }
             }
         }
-
-    /**
-     * Removes the role password from a message before it can reach a log or a terminal.
-     *
-     * Redacting where the message leaves this class means an upstream mistake — an operator piping
-     * stderr into a log aggregator — is still contained.
-     */
-    private fun redact(
-        message: String,
-        secret: String,
-    ): String = if (secret.isEmpty()) message else message.replace(secret, REDACTED)
 }

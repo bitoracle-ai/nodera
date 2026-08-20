@@ -61,7 +61,7 @@ EXPOSE 8080 8081
 # start when a required secret is absent (invariant #6), so an unhealthy container here means a
 # missing configuration value or an unapplied migration, not a transient fault.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-    CMD wget -qO- http://localhost:8080/health/ready || exit 1
+    CMD wget -qO- "http://localhost:${NODERA_HTTP_PORT:-8080}/health/ready" || exit 1
 
 # The Gradle start script ends in `exec "$JAVACMD" "$@"`, so the JVM is PID 1 and receives SIGTERM
 # directly — which is what makes the graceful shutdown in Serve.kt reachable at all.

@@ -66,55 +66,68 @@ val forbiddenInDomain =
         "org.jetbrains.kotlinx:kotlinx-serialization",
     )
 
-tasks.register("checkModuleBoundaries") {
-    group = "verification"
-    description = "Dependencies point inward only; :domain stays framework-free."
+// The check runs at CONFIGURATION time, after every project has been evaluated, and it throws
+// there rather than inside a task action.
+//
+// That is not a style choice. `org.gradle.configuration-cache=true` means a task action declared in
+// a `.kts` script cannot be serialised once it touches anything on the script — `logger`, `project`,
+// a lazy provider that reaches across projects — and the previous version did all three. It failed
+// with "cannot serialize Gradle script object references" the first time anyone actually invoked it,
+// which nobody had: CI addressed it as `:domain:checkModuleBoundaries`, and that task does not
+// exist on `:domain`. The guard was dead twice over while reading as present, and the claim it
+// backs — that an `:api-rest` → `:persistence` edge is a build failure — was false for as long as
+// it was.
+//
+// Checking here also makes it unavoidable: a violation fails EVERY Gradle invocation, not only the
+// one command someone remembered to wire into a pipeline.
+gradle.projectsEvaluated {
+    val problems = mutableListOf<String>()
 
-    val domainDeps =
-        provider {
-            project(":domain")
-                .configurations
-                .getByName("compileClasspath")
-                .allDependencies
-                .map { "${it.group}:${it.name}" }
-        }
-    val adapterDeps =
-        provider {
-            listOf(":api-rest", ":api-mcp").associateWith { path ->
-                project(path)
-                    .configurations
-                    .getByName("compileClasspath")
-                    .allDependencies
-                    .mapNotNull { (it as? ProjectDependency)?.path }
-            }
-        }
-
-    doLast {
-        val problems = mutableListOf<String>()
-
-        domainDeps.get().forEach { coordinate ->
+    project(":domain")
+        .configurations
+        .getByName("compileClasspath")
+        .allDependencies
+        .forEach { dependency ->
+            val coordinate = "${dependency.group}:${dependency.name}"
             forbiddenInDomain.firstOrNull { coordinate.startsWith(it) }?.let {
                 problems += ":domain depends on $coordinate — the domain module is framework-free " +
                     "(docs/ARCHITECTURE.md § 2). Move the adapter concern outward."
             }
         }
 
-        // An adapter that can see :persistence can issue SQL. Keeping the edge out of the
-        // graph turns "no SQL in an adapter" from a rule into a compile error.
-        adapterDeps.get().forEach { (adapter, deps) ->
-            if (":persistence" in deps) {
-                problems += "$adapter depends on :persistence — adapters must not reach the database directly."
-            }
-            deps.filter { it in setOf(":api-rest", ":api-mcp") && it != adapter }.forEach {
-                problems += "$adapter depends on $it — REST and MCP are siblings, never one over the other (ADR-0005)."
-            }
-        }
+    // An adapter that can see :persistence can issue SQL. Keeping the edge out of the graph turns
+    // "no SQL in an adapter" from a rule into a compile error.
+    listOf(":api-rest", ":api-mcp").forEach { adapter ->
+        val deps =
+            project(adapter)
+                .configurations
+                .getByName("compileClasspath")
+                .allDependencies
+                .mapNotNull { (it as? ProjectDependency)?.path }
 
-        if (problems.isNotEmpty()) {
-            problems.forEach { logger.error("  - $it") }
-            throw GradleException("${problems.size} module boundary violation(s).")
+        if (":persistence" in deps) {
+            problems += "$adapter depends on :persistence — adapters must not reach the database directly."
         }
-        logger.lifecycle("OK - module boundaries hold.")
+        deps.filter { it in setOf(":api-rest", ":api-mcp") && it != adapter }.forEach {
+            problems += "$adapter depends on $it — REST and MCP are siblings, never one over the other (ADR-0005)."
+        }
+    }
+
+    if (problems.isNotEmpty()) {
+        throw GradleException(
+            "${problems.size} module boundary violation(s):" +
+                problems.joinToString("") { "\n  - $it" },
+        )
+    }
+}
+
+// Exists so `./gradlew checkModuleBoundaries` is a real command for CI and the Makefile to call.
+// Reaching its action at all means configuration succeeded, which means the check above passed.
+tasks.register("checkModuleBoundaries") {
+    group = "verification"
+    description = "Dependencies point inward only; :domain stays framework-free."
+    doLast {
+        println("OK - module boundaries hold.")
     }
 }
 

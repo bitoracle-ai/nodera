@@ -1,7 +1,6 @@
 package ai.nodera.app
 
 import ai.nodera.api.rest.ReadinessProbe
-import ai.nodera.api.rest.ReadinessReport
 import ai.nodera.api.rest.healthRoutes
 import ai.nodera.persistence.DatabaseSettings
 import ai.nodera.persistence.Migrator
@@ -15,6 +14,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.PrintStream
 
@@ -25,6 +25,8 @@ import java.io.PrintStream
  * request it was serving becomes an error the client sees. Draining is the difference between a
  * rolling deployment nobody notices and one that shows up in the error rate.
  */
+private val logger = LoggerFactory.getLogger("ai.nodera.app")
+
 private const val SHUTDOWN_GRACE_MILLIS = 5_000L
 private const val SHUTDOWN_TIMEOUT_MILLIS = 15_000L
 
@@ -79,22 +81,23 @@ internal fun runServe(
 }
 
 /**
- * Translates the schema state into the readiness answer.
+ * Asks the database, off the event loop, and hands the answer to [readinessReport].
  *
  * The JDBC calls behind this block, so they run on [Dispatchers.IO]: a slow database must not stall
  * the event loop, or an unrelated liveness probe times out and the orchestrator kills a container
  * that was merely waiting.
+ *
+ * The driver's exception class is logged, never returned. `/health/ready` is unauthenticated and,
+ * in the published compose topology, reachable from the host; the operator needs the category and a
+ * stranger does not.
  */
 private fun readinessProbe(migrator: Migrator): ReadinessProbe =
     ReadinessProbe {
         withContext(Dispatchers.IO) {
-            when (val state = migrator.state()) {
-                is SchemaState.UpToDate -> ReadinessReport(ready = true, detail = "schema is current")
-                is SchemaState.Pending ->
-                    ReadinessReport(ready = false, detail = "${state.count} migration(s) pending")
-
-                is SchemaState.Unreachable ->
-                    ReadinessReport(ready = false, detail = "database unreachable (${state.category})")
+            val state = migrator.state()
+            if (state is SchemaState.Unreachable) {
+                logger.warn("Readiness: the database could not be read ({})", state.category)
             }
+            readinessReport(state)
         }
     }

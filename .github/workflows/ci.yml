@@ -128,9 +128,12 @@ jobs:
         working-directory: backend
         run: ./gradlew detekt --no-daemon
 
+      # Registered on the ROOT project, not on :domain. Addressing it as
+      # `:domain:checkModuleBoundaries` fails with 'task not found', which is how this guard
+      # managed to be dead while looking present.
       - name: Module boundaries hold (:domain stays framework-free)
         working-directory: backend
-        run: ./gradlew :domain:checkModuleBoundaries --no-daemon
+        run: ./gradlew checkModuleBoundaries --no-daemon
 
       # Testcontainers needs a Docker daemon; ubuntu-latest has one. RLS policies and
       # append-only triggers cannot be tested against a substitute, so they are tested

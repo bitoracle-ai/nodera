@@ -57,7 +57,7 @@ seed: ## Load the development seed (one project, one human, one agent)
 # it. Piping keeps the same command working on every contributor's machine.
 
 backend: ## Run the backend
-	cd backend && $(DEV_DB_ENV) NODERA_STATIC_ROOT=../frontend/dist ./gradlew :app:run --no-daemon
+	cd backend && $(DEV_DB_ENV) NODERA_STATIC_ROOT=../../frontend/dist ./gradlew :app:run --no-daemon
 
 frontend: ## Run the frontend dev server
 	cd frontend && yarn dev
@@ -89,9 +89,10 @@ check-db: ## SQL conventions
 	$(PY) scripts/lint_sql.py
 
 check-backend: ## ktlint, detekt, module boundaries, tests (needs Docker)
-	cd backend && ./gradlew ktlintCheck detekt test --no-daemon
+	cd backend && ./gradlew ktlintCheck detekt checkModuleBoundaries test --no-daemon
 
-check-frontend: ## lint, types, coverage, build
+check-frontend: ## generated client fresh, lint, types, coverage, build
+	cd frontend && yarn api:generate && git diff --exit-code -- src/api/generated
 	cd frontend && yarn lint && yarn typecheck && yarn test:coverage && yarn build
 
 test: ## Tests only, both sides

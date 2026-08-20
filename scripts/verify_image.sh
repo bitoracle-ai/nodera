@@ -138,10 +138,14 @@ if [ $rc -ne 0 ] && echo "$out" | grep -q "cannot create objects"; then
 else
     bad "migrate as nodera_app" "rc=$rc out=$out"
 fi
+# The refusal above is produced before Flyway runs anything, so this asserts that the REFUSAL
+# path is clean — not that redaction works. Redaction is a separate guard with its own unit
+# test in :persistence (RedactionTest); claiming it here would be claiming a check that cannot
+# fail.
 if echo "$out" | grep -q "$APP_PW"; then
-    bad "a migration failure redacts the role password" "the password appeared in the output"
+    bad "the refusal names the role, not the password" "the password appeared in the output"
 else
-    ok "a migration failure never echoes the role password"
+    ok "the refusal names the role, never the password"
 fi
 
 # ---------------------------------------------------------------------------

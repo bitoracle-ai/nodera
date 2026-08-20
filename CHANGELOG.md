@@ -53,7 +53,16 @@ evaluate is not a release.
 - The `Dockerfile` dependency-cache layer copied six same-named module build files into one
   directory, overwriting each other and then the root build script, with the failure hidden by a
   trailing `|| true`. It cached nothing and reported nothing.
-- The healthcheck pointed at `/health`, an endpoint that was specified nowhere.
+- The healthcheck pointed at `/health`, an endpoint that was specified nowhere, and hardcoded port
+  8080 while `NODERA_HTTP_PORT` is a supported variable.
+- The module-boundary guard had never run: CI addressed it on the wrong project, and its task
+  action was incompatible with the configuration cache. The rule that adapters cannot reach the
+  database was enforced by nothing. It now runs at configuration time, so a violation fails every
+  Gradle invocation.
+- Logback's `ConsoleAppender` defaulted to stdout, which on the `mcp-stdio` entrypoint is the MCP
+  framing channel. Diagnostics now go to stderr, guarded by a test on the appender's target.
+- The readiness body returned the driver's exception class on an unauthenticated endpoint.
+- The Gradle wrapper had no `distributionSha256Sum`, so the distribution was fetched unverified.
 - `vite.config.ts` imported `defineConfig` from `vite`, which has no `test` section, so the Vitest
   configuration never type-checked. `vitest` also pulled a second Vite major, whose `Plugin` type is
   not assignable to the declared one; both are now pinned to a single version.
