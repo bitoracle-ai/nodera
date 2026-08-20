@@ -35,7 +35,7 @@ jobs:
           persist-credentials: false
 
       - name: Scan for secrets
-        uses: gitleaks/gitleaks-action@44c470ffc35caa8b1eb3e8012ca53c2f9bea4c92  # v2.3.9
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7  # v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # gitleaks-action v2+ needs a (free) licence key for organisation-owned repos.
