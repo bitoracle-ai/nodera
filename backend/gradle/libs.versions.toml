@@ -16,7 +16,7 @@ mockk = "1.14.0"
 slf4j = "2.0.17"
 logback = "1.5.18"
 argon2 = "2.12"
-ktlint-plugin = "12.2.0"
+ktlint-plugin = "14.2.0"
 detekt = "1.23.8"
 
 [libraries]
