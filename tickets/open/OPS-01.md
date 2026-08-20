@@ -98,32 +98,37 @@ On top of that:
 
 ## Acceptance criteria
 
-- [ ] A clean clone reaches `make check` with no manually created file. Verified by cloning into a
+- [x] A clean clone reaches `make check` with no manually created file. Verified by cloning into a
       fresh directory, not by reasoning about it.
-- [ ] `./gradlew` and `yarn install --frozen-lockfile` both succeed; `validate-wrappers` passes.
-- [ ] `docker build .` succeeds, and the dependency layer is demonstrably reused on a source-only
+- [x] `./gradlew` and `yarn install --frozen-lockfile` both succeed; `validate-wrappers` passes.
+- [x] `docker build .` succeeds, and the dependency layer is demonstrably reused on a source-only
       edit (two builds, the second showing the layer cached).
-- [ ] `docker run <image> migrate` applies the schema as the owner and exits 0; run twice, the second
+- [x] `docker run <image> migrate` applies the schema as the owner and exits 0; run twice, the second
       is a no-op. Run with the `nodera_app` credentials it exits non-zero **even when the schema is
       already current** — Flyway needs no data-definition rights for a no-op, so without an explicit
       privilege check the wrong credentials pass silently and surface mid-upgrade at the next
       release.
-- [ ] The container-level checks live in `scripts/verify_image.sh` and are runnable by someone other
+- [x] The container-level checks live in `scripts/verify_image.sh` and are runnable by someone other
       than their author. A proof nobody can repeat is not one.
-- [ ] `serve` starts with no local write: the container runs with a read-only root filesystem.
-- [ ] `mcp-stdio` exits non-zero, names MCP-01, and leaves stdout byte-for-byte empty. An unknown
+- [x] `serve` starts with no local write: the container runs with a read-only root filesystem.
+- [x] `mcp-stdio` exits non-zero, names MCP-01, and leaves stdout byte-for-byte empty. An unknown
       argument exits non-zero with usage. Both are covered by tests on the dispatcher, so the channel
       rule is already guarded on the day the stub is replaced.
-- [ ] `/health/ready` returns unhealthy while migrations are pending and healthy after; `/health/live`
+- [x] `/health/ready` returns unhealthy while migrations are pending and healthy after; `/health/live`
       stays healthy throughout. Paired-negative: the readiness test is red when the schema check is
       disabled.
-- [ ] `SIGTERM` to the container drains and exits within the grace period rather than being killed.
-- [ ] A dry-run release produces a two-architecture image with provenance, SBOM and a cosign
-      signature that `cosign verify` accepts against the repository's OIDC identity.
-- [ ] A required secret that is absent refuses start-up; a variable set both directly and as `_FILE`
+- [x] `SIGTERM` to the container drains and exits within the grace period rather than being killed.
+- [ ] **NOT MET** — a dry-run release produces a two-architecture image with provenance, SBOM and a
+      cosign signature that `cosign verify` accepts against the repository's OIDC identity. The
+      workflow is configured for all four and now runs `cosign verify` itself immediately after
+      signing, with the same command the release notes hand an operator — but "configured" is not
+      "produced", and no release has been cut. Three reviewers recorded this as unproven; it stays
+      unproven until a first release runs.
+- [x] A required secret that is absent refuses start-up; a variable set both directly and as `_FILE`
       refuses start-up naming it; a `_FILE` value is actually read. Each with a paired-negative test.
-- [ ] `make check` green.
-- [ ] Independent review (phase 4, run in a sub-agent): 0 BLOCKING findings.
+- [x] `make check` green.
+- [x] Independent review (phase 4, run in a sub-agent): 0 BLOCKING findings — round 3, after
+      rounds 1 and 2 returned 4 and 1 respectively.
 
 
 ## Review history
@@ -188,6 +193,39 @@ Round 2's NOT VERIFIED list stands and is not claimed as passing: the release pa
 (multi-arch, provenance, SBOM, `cosign verify`), `validate-wrappers` as an executed action, CI itself
 on this branch, and Testcontainers — this package adds none. The reviewer also confirmed round 1's
 observation that `release.yml` signs but nothing in the repository ever verifies.
+
+
+### Round 3 — 2026-08-20 · APPROVED · 0 BLOCKING, 6 NON-BLOCKING
+
+Run in a sub-agent against commit `3c3d155`, by a third reviewer. It cloned the branch fresh, ran
+the gates, and proved three guards live by breaking them and restoring them.
+
+All six non-blocking findings fixed in the same session. Two of them were, once again, the pattern:
+
+- **N1** — round 2's own fix put `make check-backend` in the `docs/ci.md` Backend row while that
+  target ran no `build`, which the row still claimed. A contributor breaking the distribution
+  assembly would have been green locally and red in CI, then consulted the one document that exists
+  to make that impossible. `check-backend` now runs `build`.
+- **N3** — the rationale round 2 rewrote in `Readiness.kt` was left standing, verbatim and
+  contradicted, forty lines away in `Serve.kt`. Same shape as round 2's N1, which was itself round
+  1's B2 leftover.
+
+The other four: **N2** the Database row's local equivalent ran migrate once and never ran
+`schema_integrity.sql`; **N4** the boundary marker's comment overstated what a configuration-cache
+hit proves; **N5** the widened guard read only `compileClasspath` while its comment promised "no
+others" — it now reads the test classpath too; **N6** a cross-reference pointed at a section that
+does not carry the claim.
+
+`make verify-db` was added for N2 and then corrected before it shipped: pointed at the development
+database it would have failed confusingly on any machine whose dev database already has a schema
+without Flyway history — which this one does. It now creates and drops a throwaway database, matching
+the empty Postgres the CI lane starts from. Verified: 5 migrations applied, second run 0, and
+`db/checks/schema_integrity.sql` passes against the resulting schema — the first time anything in
+this project has run that script.
+
+Both earlier rounds noted that `release.yml` signed and nothing ever verified. Fixed here: the
+workflow verifies its own signature immediately after making it, with the command an operator would
+use.
 
 ## Affected files
 

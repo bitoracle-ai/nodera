@@ -238,7 +238,8 @@ rather than asserted — adding the forbidden edge fails with `:api-rest depends
 
 The general lesson is worth more than the fix. Two `.kts` task actions in this package turned out
 to be silently incompatible with the build's own configuration-cache setting — this one and the
-migrations check in § 9.2 — and neither failed until something invoked it. A guard that has never
+migrations check whose move out of `doFirst` is recorded in § 10 — and neither failed until
+something invoked it. A guard that has never
 been executed is indistinguishable from one that does not exist.
 
 ## 10. Answers to § 8

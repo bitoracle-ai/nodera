@@ -134,6 +134,17 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: cosign sign --yes "ghcr.io/${{ github.repository }}@${DIGEST}"
 
+      # Signing without verifying is ceremony. This proves the signature is checkable with the
+      # exact command the release notes hand to an operator, at the moment it is made — rather
+      # than leaving the first real check to whoever first doubts the image.
+      - name: Verify the signature the way an operator would
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          cosign verify "ghcr.io/${{ github.repository }}@${DIGEST}" \
+            --certificate-identity-regexp "^https://github.com/${{ github.repository }}/" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com
+
       - name: Record the digest in the job summary
         run: echo "Image digest ${{ steps.build.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
 

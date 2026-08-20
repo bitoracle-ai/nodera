@@ -87,9 +87,8 @@ internal fun runServe(
  * the event loop, or an unrelated liveness probe times out and the orchestrator kills a container
  * that was merely waiting.
  *
- * The driver's exception class is logged, never returned. `/health/ready` is unauthenticated and,
- * in the published compose topology, reachable from the host; the operator needs the category and a
- * stranger does not.
+ * The driver's exception class is logged, never returned — see [readinessReport] for why that
+ * distinction is about failure detail rather than about hiding the instance.
  */
 private fun readinessProbe(migrator: Migrator): ReadinessProbe =
     ReadinessProbe {

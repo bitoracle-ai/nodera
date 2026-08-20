@@ -18,7 +18,7 @@ COMPOSE ?= docker compose
 DEV_DB_ENV  = NODERA_DB_URL=jdbc:postgresql://localhost:5432/nodera NODERA_DB_USER=nodera NODERA_DB_PASSWORD=nodera-local-dev-only
 DEV_APP_ENV = $(DEV_DB_ENV) NODERA_APP_PASSWORD=nodera-local-dev-only
 
-.PHONY: help dev up down logs migrate seed check check-repo check-db check-backend \
+.PHONY: help dev up down logs migrate seed check check-repo check-db verify-db check-backend \
         check-frontend backend frontend test fmt clean ticket
 
 help: ## Show this help
@@ -85,11 +85,29 @@ check-repo: ## Docs, tickets, adapters, language, invariants, release triggers
 	$(PY) scripts/lint_workflow_triggers.py
 	$(PY) scripts/lint_invariants.py
 
-check-db: ## SQL conventions
+check-db: ## SQL conventions (no database needed)
 	$(PY) scripts/lint_sql.py
 
-check-backend: ## ktlint, detekt, module boundaries, tests (needs Docker)
-	cd backend && ./gradlew ktlintCheck detekt checkModuleBoundaries test --no-daemon
+# Runs against a THROWAWAY database, not the development one. The CI lane always starts from an
+# empty Postgres; a contributor's dev database usually is not empty, and pointing this at it would
+# either fail confusingly (Flyway refuses a non-empty schema with no history table) or migrate over
+# data somebody was using. Created and dropped here, so running it costs nothing and destroys
+# nothing.
+VERIFY_DB  = nodera_verify
+VERIFY_ENV = NODERA_DB_URL=jdbc:postgresql://localhost:5432/$(VERIFY_DB) NODERA_DB_USER=nodera              NODERA_DB_PASSWORD=nodera-local-dev-only NODERA_APP_PASSWORD=nodera-local-dev-only
+
+verify-db: up ## What the CI database lane does: apply twice on an empty database, then the checks
+	@$(COMPOSE) exec -T postgres psql -U nodera -d postgres -q -c 'drop database if exists $(VERIFY_DB)'
+	@$(COMPOSE) exec -T postgres psql -U nodera -d postgres -q -c 'create database $(VERIFY_DB)'
+	cd backend && $(VERIFY_ENV) ./gradlew :app:run --args=migrate --no-daemon
+# Twice on purpose. A migration that applies once but not twice fails on the next deployment, and
+# that is the worst possible moment to find out.
+	cd backend && $(VERIFY_ENV) ./gradlew :app:run --args=migrate --no-daemon
+	@$(COMPOSE) exec -T postgres psql -U nodera -d $(VERIFY_DB) -v ON_ERROR_STOP=1 -q < db/checks/schema_integrity.sql
+	@$(COMPOSE) exec -T postgres psql -U nodera -d postgres -q -c 'drop database $(VERIFY_DB)'
+
+check-backend: ## ktlint, detekt, module boundaries, tests, build (needs Docker)
+	cd backend && ./gradlew ktlintCheck detekt checkModuleBoundaries test build --no-daemon
 
 check-frontend: ## install, generated client fresh, lint, types, coverage, build
 	cd frontend && yarn install --frozen-lockfile

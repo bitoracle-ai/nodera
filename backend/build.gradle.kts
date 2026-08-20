@@ -67,7 +67,9 @@ val forbiddenInDomain =
     )
 
 // The inward-only graph, stated once, exactly as the table in docs/ARCHITECTURE.md § 2 states it.
-// A module may depend on the modules listed for it and on no others — so `:persistence` cannot
+// A module may depend on the modules listed for it and on no others, in its main sources AND in
+// its tests — a test that reaches across a boundary writes the SQL the boundary exists to keep
+// out, and then someone moves it into main. So `:persistence` cannot
 // reach an adapter, nothing may depend on `:app`, and a new module has to declare its allowed set
 // here before it can depend on anything, which is what settings.gradle.kts already asks for in
 // prose.
@@ -123,12 +125,14 @@ gradle.projectsEvaluated {
 
     allowedProjectDependencies.forEach { (module, allowed) ->
         val actual =
-            project(module)
-                .configurations
-                .getByName("compileClasspath")
-                .allDependencies
-                .mapNotNull { (it as? ProjectDependency)?.path }
-                .toSet()
+            listOf("compileClasspath", "testCompileClasspath")
+                .flatMap { configuration ->
+                    project(module)
+                        .configurations
+                        .getByName(configuration)
+                        .allDependencies
+                        .mapNotNull { (it as? ProjectDependency)?.path }
+                }.toSet()
 
         (actual - allowed).forEach { forbidden ->
             val adapters = setOf(":api-rest", ":api-mcp")
@@ -161,8 +165,11 @@ gradle.projectsEvaluated {
 }
 
 // Exists so `./gradlew checkModuleBoundaries` is a real command for CI and the Makefile to call.
-// It asserts the check ran rather than assuming it: a task that prints "OK" unconditionally is the
-// same dead guard in a new costume.
+// It asserts the check ran when this configuration was computed, rather than assuming it — a task
+// that prints "OK" unconditionally is the same dead guard in a new costume. On a configuration
+// cache hit the block below does not re-execute and the marker is restored from the entry; that is
+// sound because any edit to a build script invalidates the entry, and a configuration that threw
+// is never stored.
 tasks.register("checkModuleBoundaries") {
     group = "verification"
     description = "Dependencies point inward only; :domain stays framework-free."
