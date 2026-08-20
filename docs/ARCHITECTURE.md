@@ -169,15 +169,44 @@ makes the permission check impossible to skip silently.
 
 ## 7. Deployment
 
-One backend process, one Postgres instance, static frontend assets behind any web server.
+**One image, one Postgres database, one customer.** The backend distribution, the built frontend
+assets and the migration files ship in a single OCI image; the API serves the assets from its own
+origin, so the frontend's API base URL is relative and CORS is not part of the deployment at all.
+Recorded as [`adr/0006-one-image-three-entrypoints.md`](adr/0006-one-image-three-entrypoints.md).
 
-```
-docker compose up   →   postgres:16 · nodera-api (JVM) · nodera-web (static)
-```
+The image carries three entrypoints, because the same artifact has to be three different processes:
+
+| Entrypoint | Runs as | Purpose |
+|---|---|---|
+| `serve` (default) | `nodera_app` | REST on 8080, MCP streamable HTTP on 8081 |
+| `migrate` | the schema owner | Flyway, one shot, non-zero exit on failure |
+| `mcp-stdio` | `nodera_app` | An agent-spawned server: `docker run -i --rm` |
+
+**Migrations never run at application start-up.** `nodera_app` holds `INSERT` and `SELECT` on
+`audit_event` and nothing else, so it cannot run DDL — and granting it those rights would let it
+remove its own restrictions, which is the end of invariant AU1. Migration is therefore its own
+invocation with its own credentials, out of the same image so the schema and the code that runs
+against it can never be different versions.
+
+An upgrade follows from forward-only expand/contract: apply the expand migration, start the new
+image, ship the contract migration in the *next* release. **Rollback is a rollback of the image,
+never of the database.**
 
 The image is built once and promoted; configuration comes from the environment, never from a baked-in
 file. No environment-specific build exists — a build that differs per environment is a build that was
-never tested where it runs.
+never tested where it runs. Nodera pulls nothing and reports nothing home; an update is a deliberate
+act by the operator.
+
+**The deployment is the tenant boundary.** One customer means one instance and one database; there is
+no `tenant` above `project`, and a hosted offering multiplies instances rather than partitioning a
+shared one. What that requires of this codebase — statelessness, secrets from files, distinct
+liveness and readiness, no in-process singletons, an instance identity taken from configuration —
+is specified in [`adr/0007-deployment-is-the-tenant-boundary.md`](adr/0007-deployment-is-the-tenant-boundary.md)
+and in ADR-0006 § 6. Those are acceptance criteria, not aspirations: each one is cheap now and
+expensive to retrofit.
+
+`docker-compose.yml` in this repository is a **development** topology — Postgres only. The production
+compose file ships with the release.
 
 ## 8. Decisions recorded elsewhere
 

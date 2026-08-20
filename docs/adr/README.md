@@ -30,3 +30,5 @@ information.
 | [0003](0003-ticket-frontmatter-source-of-truth.md) | Ticket frontmatter is the source of truth | Accepted |
 | [0004](0004-markdown-tickets-until-self-hosting.md) | Markdown tickets until Nodera can host its own backlog | Accepted |
 | [0005](0005-mcp-as-sibling-surface.md) | MCP as a sibling surface, not a wrapper over REST | Accepted |
+| [0006](0006-one-image-three-entrypoints.md) | One image, three entrypoints; migrations are a separate step | Accepted |
+| [0007](0007-deployment-is-the-tenant-boundary.md) | The deployment is the tenant boundary | Accepted |

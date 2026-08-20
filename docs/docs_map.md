@@ -183,6 +183,22 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - Consequences
   - Alternatives considered
 
+## `docs/adr/0006-one-image-three-entrypoints.md`
+
+- ADR-0006 — One image, three entrypoints; migrations are a separate step
+  - Context
+  - Decision
+  - Consequences
+  - Alternatives considered
+
+## `docs/adr/0007-deployment-is-the-tenant-boundary.md`
+
+- ADR-0007 — The deployment is the tenant boundary
+  - Context
+  - Decision
+  - Consequences
+  - Alternatives considered
+
 ## `docs/adr/README.md`
 
 - Architecture decision records
