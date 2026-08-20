@@ -54,6 +54,34 @@ agents and is not recursive beyond one level; the full chain is available from `
 This envelope is the API-side expression of the product's premise. A response that omits `kind`,
 or a client that ignores it in favour of a name pattern, is a BLOCKING review finding.
 
+## 2a. Health — the only implemented endpoints today
+
+Deliberately **outside `/api/v1`**, and unauthenticated. An orchestrator's probe configuration must
+not have to change when the API's major version does, and these two carry no domain data, so they
+have nothing to version and nothing to protect.
+
+| Method | Path | Capability |
+|---|---|---|
+| `GET` | `/health/live` | none — unauthenticated |
+| `GET` | `/health/ready` | none — unauthenticated |
+
+`/health/live` answers whether the process is running and **never consults the database**. It is the
+signal an orchestrator uses to destroy and replace a container; wiring a dependency's state into it
+turns a wait — a pending migration, a database that blinked — into a crash loop.
+
+`/health/ready` answers whether this instance may receive traffic. It reports `503` while migrations
+from this build are unapplied or the database cannot be read. Fail closed: a probe that cannot read
+the migration history does not know the schema is current, and "unknown" is never reported as ready.
+
+```json
+{ "status": "not_ready", "version": "1.4.2", "detail": "2 migration(s) pending" }
+```
+
+`detail` is a short fixed category, never a driver message — this endpoint is unauthenticated, and a
+JDBC exception string routinely carries the host, the port and the connecting user.
+
+Everything below this point is **specified and not yet implemented**; API-01 builds it.
+
 ## 3. Resources
 
 ### Projects

@@ -26,6 +26,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
 - REST API contract — Nodera
   - 1. Conventions
   - 2. The actor envelope
+  - 2a. Health — the only implemented endpoints today
   - 3. Resources
     - Projects
     - Tickets
@@ -213,8 +214,10 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
 - CI — jobs and their local equivalents
   - Job-to-local mapping
   - Repository checks, step by step
+  - The database lane runs the same migrator the image runs
   - Why the database lane runs the migrations twice
   - Why the frontend lane regenerates the API client
+  - The image is verified separately
   - What CI does not check
   - Adding a lane
 
@@ -234,6 +237,8 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - 6. Deliberate non-goals
   - 7. What this package cannot make green, stated rather than worked around
   - 8. Open questions
+  - 9. Added or corrected during implementation
+  - 10. Answers to § 8
 
 ## `docs/plan/README.md`
 

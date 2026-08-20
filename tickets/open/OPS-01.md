@@ -104,7 +104,12 @@ On top of that:
 - [ ] `docker build .` succeeds, and the dependency layer is demonstrably reused on a source-only
       edit (two builds, the second showing the layer cached).
 - [ ] `docker run <image> migrate` applies the schema as the owner and exits 0; run twice, the second
-      is a no-op. Run with the `nodera_app` credentials, it exits non-zero.
+      is a no-op. Run with the `nodera_app` credentials it exits non-zero **even when the schema is
+      already current** — Flyway needs no data-definition rights for a no-op, so without an explicit
+      privilege check the wrong credentials pass silently and surface mid-upgrade at the next
+      release.
+- [ ] The container-level checks live in `scripts/verify_image.sh` and are runnable by someone other
+      than their author. A proof nobody can repeat is not one.
 - [ ] `serve` starts with no local write: the container runs with a read-only root filesystem.
 - [ ] `mcp-stdio` exits non-zero, names MCP-01, and leaves stdout byte-for-byte empty. An unknown
       argument exits non-zero with usage. Both are covered by tests on the dispatcher, so the channel
@@ -133,7 +138,16 @@ On top of that:
 - `.github/workflows/release.yml` — `platforms:`, cosign, publish the production compose file.
 - `compose.prod.yml` — new, released alongside the image.
 - `.env.example` — `_FILE` counterparts. `Makefile` — one migration path.
-- `backend/gradle/libs.versions.toml` — drop the unused Flyway plugin entry.
+- `backend/gradle/libs.versions.toml` and `backend/persistence/build.gradle.kts` — the Flyway Gradle
+  plugin goes; `:persistence` packages the migrations onto the classpath instead.
+- `db/migrations/V5__readiness_probe_reads_migration_history.sql` — new. `nodera_app` needs `select`
+  on the migration history or the readiness probe can never tell "current" from "behind".
+- `frontend/package.json` — the `yaml` devDependency for the code generator, the undeclared
+  `@testing-library/dom` peer, and a `resolutions` pin so `vitest` does not bring a second Vite
+  major whose `Plugin` type is not assignable to the declared one.
+- `frontend/vite.config.ts` — `defineConfig` from `vitest/config`; the `vite` one has no `test`
+  section, so the Vitest configuration never type-checked.
+- `docs/API_CONTRACT.md`, `docs/ci.md`, `CHANGELOG.md` — pulled along in the same package.
 
 ## Verification
 

@@ -234,7 +234,7 @@ jobs:
           NODERA_DB_USER: nodera_owner
           NODERA_DB_PASSWORD: ci-dummy
           NODERA_APP_PASSWORD: ci-dummy
-        run: ./gradlew flywayMigrate --no-daemon
+        run: ./gradlew :app:run --args=migrate --no-daemon
 
       # A migration that applies once but not twice is a migration that will fail on the
       # next deployment. Running it against an already-migrated database proves the
@@ -246,7 +246,7 @@ jobs:
           NODERA_DB_USER: nodera_owner
           NODERA_DB_PASSWORD: ci-dummy
           NODERA_APP_PASSWORD: ci-dummy
-        run: ./gradlew flywayMigrate --no-daemon
+        run: ./gradlew :app:run --args=migrate --no-daemon
 
       - name: Schema integrity (actor subtypes exhaustive and exclusive)
         env:

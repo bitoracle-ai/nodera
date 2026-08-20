@@ -65,6 +65,7 @@ jobs:
     permissions:
       contents: write   # create the tag and the release
       packages: write   # push the container image
+      id-token: write   # keyless cosign signing via the OIDC token
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
 
@@ -100,16 +101,41 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392  # v3.6.0
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435  # v3.11.1
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159  # v3.9.2
+
+      # arm64 is not a niche among self-hosters: Ampere instances, Apple Silicon and Raspberry Pi
+      # all land there, and an amd64-only image quietly excludes every one of them.
       - name: Build and push the image
+        id: build
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83  # v6.18.0
         with:
           context: .
           push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            VERSION=${{ inputs.version }}
           tags: |
             ghcr.io/${{ github.repository }}:${{ inputs.version }}
             ghcr.io/${{ github.repository }}:latest
           provenance: true
           sbom: true
+
+      # Provenance and an SBOM say what is in the image; a signature is what lets someone who did
+      # not build it check that claim. Keyless, so there is no signing key to store or rotate.
+      - name: Sign the image
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: cosign sign --yes "ghcr.io/${{ github.repository }}@${DIGEST}"
+
+      - name: Record the digest in the job summary
+        run: echo "Image digest ${{ steps.build.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Tag and publish the release
         env:
@@ -119,4 +145,5 @@ jobs:
           git push origin "v${{ inputs.version }}"
           gh release create "v${{ inputs.version }}" \
             --title "v${{ inputs.version }}" \
-            --notes-file <(awk '/^## \[${{ inputs.version }}\]/{f=1;next} /^## \[/{f=0} f' CHANGELOG.md)
+            --notes-file <(awk '/^## \[${{ inputs.version }}\]/{f=1;next} /^## \[/{f=0} f' CHANGELOG.md) \
+            compose.prod.yml

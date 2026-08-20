@@ -1,0 +1,91 @@
+# Nodera — production topology. One image, one Postgres, one customer (ADR-0006, ADR-0007).
+#
+# This file ships with the release. `docker-compose.yml` in the repository root is the development
+# topology and is not this: it starts Postgres alone, with a password that is deliberately literal.
+#
+# Usage:
+#   printf '%s' "$(openssl rand -base64 32)" > secrets/db_owner_password
+#   printf '%s' "$(openssl rand -base64 32)" > secrets/app_role_password
+#   NODERA_VERSION=1.2.3 docker compose -f compose.prod.yml up -d
+#
+# Pin NODERA_VERSION to a released version, or better to a digest (`@sha256:…`). `latest` means the
+# deployment you can reproduce is whichever one you happen to pull.
+
+name: nodera
+
+x-image: &image ${NODERA_IMAGE:-ghcr.io/bitoracle-ai/nodera}:${NODERA_VERSION:?set NODERA_VERSION to a released version}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nodera
+      POSTGRES_USER: nodera_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_owner_password
+      # Deterministic collation, so an index sorts the way it sorted where the schema was tested.
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    secrets: [db_owner_password]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # No published port. The database is reachable from the compose network and from nowhere else;
+    # exposing 5432 to the host is the single most common way a self-hosted database ends up on the
+    # internet.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nodera_owner -d nodera"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Runs to completion before the server starts, as the schema OWNER — the role that may run
+  # data-definition statements. The serving container never holds these credentials (ADR-0006).
+  migrate:
+    image: *image
+    command: ["migrate"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODERA_DB_URL: jdbc:postgresql://postgres:5432/nodera
+      NODERA_DB_USER: nodera_owner
+      NODERA_DB_PASSWORD_FILE: /run/secrets/db_owner_password
+      # Substituted into V4's `create role nodera_app`. Required by migrate and by nothing else.
+      NODERA_APP_PASSWORD_FILE: /run/secrets/app_role_password
+    secrets: [db_owner_password, app_role_password]
+    read_only: true
+    tmpfs: [/tmp]
+
+  nodera:
+    image: *image
+    command: ["serve"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODERA_DB_URL: jdbc:postgresql://postgres:5432/nodera
+      NODERA_DB_USER: nodera_app
+      NODERA_DB_PASSWORD_FILE: /run/secrets/app_role_password
+      NODERA_LOG_FORMAT: json
+    secrets: [app_role_password]
+    ports:
+      - "8080:8080"
+    # Nothing is written to the container filesystem, so nothing needs to be writable. This is the
+    # property that lets an instance be replaced rather than repaired.
+    read_only: true
+    tmpfs: [/tmp]
+    # Longer than Serve.kt's grace + timeout (5s + 15s), so a rolling restart drains rather than
+    # being killed halfway through a request.
+    stop_grace_period: 25s
+
+secrets:
+  db_owner_password:
+    file: ./secrets/db_owner_password
+  app_role_password:
+    file: ./secrets/app_role_password
+
+volumes:
+  pgdata:

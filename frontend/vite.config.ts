@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
@@ -27,7 +27,13 @@ export default defineConfig({
         functions: 80,
         lines: 80,
       },
+      // Vitest REPLACES its default excludes when this is given, so build output has to be
+      // named explicitly. Without `dist/**` the gate passes on a clean tree and fails the moment
+      // anyone has run `yarn build` first — an order-dependent gate nobody ends up trusting.
       exclude: [
+        'dist/**',
+        'coverage/**',
+        'node_modules/**',
         'src/api/generated/**',
         'src/test/**',
         '**/*.config.*',

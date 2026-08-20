@@ -1,0 +1,22 @@
+-- V5 — Let the application role read the migration history, so readiness can fail closed.
+--
+-- The readiness probe answers one question: may this instance receive traffic yet. Part of that
+-- answer is whether a migration is still outstanding — a container started against a database the
+-- migration job has not finished with must report not-ready rather than serve requests against a
+-- schema its code does not match. The probe runs inside the serving process, so it asks as
+-- nodera_app, and until now nodera_app had no grant on Flyway's bookkeeping table at all. A probe
+-- that cannot read the history table cannot tell "current" from "behind", and a probe that cannot
+-- tell must answer not-ready. That is the correct polarity, but it is also permanently not-ready,
+-- which makes the instance undeployable.
+--
+-- This does NOT weaken invariant AU1. AU1 is a statement about audit_event: the application role
+-- holds insert and select there and nothing else, so it cannot rewrite history. flyway_schema_history
+-- is Flyway's own bookkeeping and is not audit_event; select on it is neither a data-definition right
+-- nor a write path. What the role split forbids nodera_app is DDL and rewriting — reading which
+-- migrations have run is neither, and no policy or trigger elsewhere depends on it being unreadable.
+--
+-- See docs/DOMAIN_MODEL.md § 9 and docs/adr/0006-one-image-three-entrypoints.md.
+
+-- Read-only, and only this table. The probe needs the applied-version list and nothing else; a
+-- broader grant would buy nothing and would have to be justified again at every later review.
+grant select on flyway_schema_history to nodera_app;

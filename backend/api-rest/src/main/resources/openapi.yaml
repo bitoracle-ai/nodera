@@ -1,0 +1,105 @@
+openapi: 3.1.0
+
+# The REST contract, written before the routes rather than derived from them (invariant #11).
+# The frontend's types and Zod schemas are generated from this document; CI regenerates and fails
+# on a diff, so the client cannot drift from the contract silently.
+#
+# This document currently describes the two health endpoints OPS-01 adds. API-01 extends it with
+# the resources specified in docs/API_CONTRACT.md — it does not create it, because a package that
+# adds a REST endpoint owes that endpoint a contract entry on the day it adds it.
+
+info:
+  title: Nodera
+  version: 0.1.0
+  summary: Project and issue tracking in which people and AI agents are the same kind of participant.
+  license:
+    name: MIT
+    identifier: MIT
+
+servers:
+  - url: /
+    description: The instance itself. The web assets are served from this same origin, which is why
+      no CORS configuration is part of a normal deployment.
+
+tags:
+  - name: health
+    description: >-
+      Operational probes. Deliberately outside /api/v1: an orchestrator's probe configuration must
+      not have to change when the API's major version does, and these endpoints carry no domain
+      data, so they have nothing to version.
+
+paths:
+  /health/live:
+    get:
+      operationId: healthLive
+      tags: [health]
+      summary: Whether the process is running.
+      description: >-
+        Never consults the database. This is the signal an orchestrator uses to destroy and replace
+        a container, so reporting a dependency's state here turns a wait — a pending migration, a
+        database that blinked — into a crash loop.
+      security: []
+      responses:
+        '200':
+          description: The process is running.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LivenessResponse'
+
+  /health/ready:
+    get:
+      operationId: healthReady
+      tags: [health]
+      summary: Whether this instance may receive traffic.
+      description: >-
+        Reports not-ready while the database is unreachable or migrations from this build have not
+        been applied. Fail closed: a probe that cannot read the migration history does not know the
+        schema is current, and "unknown" is never reported as ready.
+      security: []
+      responses:
+        '200':
+          description: The schema is current and the instance can serve requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: Migrations are outstanding, or the database could not be read.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+
+components:
+  schemas:
+    LivenessResponse:
+      type: object
+      required: [status, version]
+      properties:
+        status:
+          type: string
+          enum: [alive]
+        version:
+          type: string
+          description: >-
+            The version this image was stamped with, or "unknown" for a build that was not given
+            one. Visible rather than silently plausible — an instance that cannot say what it is
+            says so.
+          examples: ['1.4.2', 'unknown']
+
+    ReadinessResponse:
+      type: object
+      required: [status, version, detail]
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+        version:
+          type: string
+        detail:
+          type: string
+          description: >-
+            A short, fixed category — never a driver message. This endpoint is unauthenticated, and
+            a JDBC exception string routinely carries the host, the port and the connecting user.
+          examples: ['schema is current', '2 migration(s) pending', 'database unreachable']

@@ -54,29 +54,40 @@ subprojects {
 // a database, a server or a container — and it is exactly the property that erodes the
 // first time somebody needs "just a logger in here".
 
-val forbiddenInDomain = listOf(
-    "io.ktor", "org.jetbrains.exposed", "org.postgresql", "org.flywaydb",
-    "org.slf4j", "ch.qos.logback", "com.zaxxer", "org.jetbrains.kotlinx:kotlinx-serialization",
-)
+val forbiddenInDomain =
+    listOf(
+        "io.ktor",
+        "org.jetbrains.exposed",
+        "org.postgresql",
+        "org.flywaydb",
+        "org.slf4j",
+        "ch.qos.logback",
+        "com.zaxxer",
+        "org.jetbrains.kotlinx:kotlinx-serialization",
+    )
 
 tasks.register("checkModuleBoundaries") {
     group = "verification"
     description = "Dependencies point inward only; :domain stays framework-free."
 
-    val domainDeps = provider {
-        project(":domain").configurations
-            .getByName("compileClasspath")
-            .allDependencies
-            .map { "${it.group}:${it.name}" }
-    }
-    val adapterDeps = provider {
-        listOf(":api-rest", ":api-mcp").associateWith { path ->
-            project(path).configurations
+    val domainDeps =
+        provider {
+            project(":domain")
+                .configurations
                 .getByName("compileClasspath")
                 .allDependencies
-                .mapNotNull { (it as? ProjectDependency)?.path }
+                .map { "${it.group}:${it.name}" }
         }
-    }
+    val adapterDeps =
+        provider {
+            listOf(":api-rest", ":api-mcp").associateWith { path ->
+                project(path)
+                    .configurations
+                    .getByName("compileClasspath")
+                    .allDependencies
+                    .mapNotNull { (it as? ProjectDependency)?.path }
+            }
+        }
 
     doLast {
         val problems = mutableListOf<String>()

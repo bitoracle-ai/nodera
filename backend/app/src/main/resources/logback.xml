@@ -1,0 +1,21 @@
+<configuration>
+    <!--
+      Without a configuration file Logback defaults the root logger to DEBUG. In this image that
+      means every Flyway classpath scan and every driver internal on stdout — noise that buries the
+      one line an operator needs, and a disclosure risk the moment a library logs a statement or a
+      connection string at that level.
+
+      INFO by default, overridable per deployment. NODERA_LOG_FORMAT is documented in .env.example
+      but not honoured yet: structured JSON output needs an encoder dependency and belongs with the
+      observability work, not with the build chain.
+    -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="${NODERA_LOG_LEVEL:-INFO}">
+        <appender-ref ref="console"/>
+    </root>
+</configuration>

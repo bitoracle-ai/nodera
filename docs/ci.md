@@ -24,7 +24,7 @@ succeed makes the gate red.
 | **Repository checks** | Docs, tickets, adapters, language, invariants, release triggers | `make check-repo` |
 | **Backend** | ktlint, detekt, module boundaries, tests, build | `cd backend && ./gradlew ktlintCheck detekt test build` |
 | **Frontend** | Generated client fresh, lint, types, coverage, build | `cd frontend && yarn lint && yarn typecheck && yarn test:coverage && yarn build` |
-| **Database** | SQL conventions, migrations apply twice, schema integrity | `make check-db` |
+| **Database** | SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make up && make migrate` |
 | **CI Gate** | Every lane above succeeded | — (aggregation only) |
 
 `make check` runs all of it.
@@ -46,6 +46,13 @@ too, which is exactly the kind that tempts people to skip the heavy lanes.
 | Invariant firewall | `scripts/lint_invariants.py` | A permission decision branching on actor kind; SQL interpolation; a second `PermissionService` |
 | No TODO/FIXME | inline `grep` | A finding hidden in a comment |
 
+## The database lane runs the same migrator the image runs
+
+`./gradlew :app:run --args=migrate` — not a Gradle Flyway plugin with its own url, locations and
+placeholders. There was such a plugin, and it was a second implementation of "apply the migrations"
+configured separately from the one that actually runs in production. The copy that drifts is always
+the one CI does not exercise, so there is now one.
+
 ## Why the database lane runs the migrations twice
 
 A migration that applies once but not twice is a migration that will fail on the next
@@ -59,6 +66,22 @@ an upgrade, which is the worst possible moment.
 diff means the contract moved and the client did not. That drift is exactly what generation exists
 to prevent, so it fails here rather than as a runtime type error nobody traces back to a schema
 change three weeks earlier.
+
+## The image is verified separately
+
+`make check` proves the code compiles, lints and passes its tests. It cannot prove the *image*
+behaves — that migrations apply as the owner and refuse the application role, that readiness fails
+while the schema is behind, that the root filesystem can be read-only, that `SIGTERM` drains. Those
+are properties of an artefact:
+
+```
+docker build --build-arg VERSION=0.0.0-local -t nodera:local .
+sh scripts/verify_image.sh nodera:local
+```
+
+**CI does not run this yet.** It needs a Docker daemon and roughly two minutes, and wiring it into a
+lane is its own decision. Stated here rather than left to be discovered, because a gate list reads
+as a completeness claim.
 
 ## What CI does not check
 

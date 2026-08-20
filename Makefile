@@ -10,6 +10,14 @@ SHELL := /bin/sh
 PY ?= python
 COMPOSE ?= docker compose
 
+# Local development values, deliberately literal and unmistakably local — the same reasoning
+# as the password in docker-compose.yml. A Makefile that reads them from the environment
+# teaches contributors to put real credentials in shell history. The application itself has no
+# defaults: it refuses to start without these (invariant #6), which is why they are named here
+# rather than buried in a fallback nobody reads.
+DEV_DB_ENV  = NODERA_DB_URL=jdbc:postgresql://localhost:5432/nodera NODERA_DB_USER=nodera NODERA_DB_PASSWORD=nodera-local-dev-only
+DEV_APP_ENV = $(DEV_DB_ENV) NODERA_APP_PASSWORD=nodera-local-dev-only
+
 .PHONY: help dev up down logs migrate seed check check-repo check-db check-backend \
         check-frontend backend frontend test fmt clean ticket
 
@@ -39,8 +47,8 @@ down: ## Stop everything and remove the containers (keeps the volume)
 logs: ## Follow the Postgres log
 	$(COMPOSE) logs -f postgres
 
-migrate: ## Apply migrations
-	cd backend && ./gradlew flywayMigrate --no-daemon
+migrate: ## Apply migrations — the same code path the `migrate` entrypoint runs in the image
+	cd backend && $(DEV_APP_ENV) ./gradlew :app:run --args=migrate --no-daemon
 
 seed: ## Load the development seed (one project, one human, one agent)
 	@$(COMPOSE) exec -T postgres psql -U nodera -d nodera -v ON_ERROR_STOP=1 -q < db/seed/dev-seed.sql
@@ -49,7 +57,7 @@ seed: ## Load the development seed (one project, one human, one agent)
 # it. Piping keeps the same command working on every contributor's machine.
 
 backend: ## Run the backend
-	cd backend && ./gradlew :app:run --no-daemon
+	cd backend && $(DEV_DB_ENV) NODERA_STATIC_ROOT=../frontend/dist ./gradlew :app:run --no-daemon
 
 frontend: ## Run the frontend dev server
 	cd frontend && yarn dev

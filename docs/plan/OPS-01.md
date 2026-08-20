@@ -106,11 +106,15 @@ configuration resolves silently, and the operator learns which value won during 
 and naming the variable costs one line and one test. The ticket's criterion is corrected alongside
 this plan.
 
-**4.2 — One migration implementation, not two.** `libs.versions.toml` declares a Flyway *Gradle
-plugin* and the Makefile calls `flywayMigrate`, while ADR-0006 requires a `migrate` entrypoint using
-Flyway *Core*. Two implementations of "apply the migrations" drift in baseline, placeholders and
-locations, and the one that drifts is the one CI does not run. `make migrate` becomes
-`./gradlew :app:run --args=migrate`, and the unused plugin entry leaves the catalogue.
+**4.2 — One migration implementation, not two.** ADR-0006 requires a `migrate` entrypoint using
+Flyway *Core*, and the repository already had a Flyway *Gradle plugin*. **Corrected during
+implementation:** the plan first called that plugin an unused catalogue entry. It was not — it was
+fully configured in `backend/persistence/build.gradle.kts` with its own url, user, password,
+`locations` and the `nodera_app_password` placeholder, and it was what `make migrate` and the CI
+database lane actually ran. That makes the case stronger rather than weaker: it was a second
+implementation of "apply the migrations", configured separately from the one that would run in
+production, and the copy that drifts is always the one CI does not exercise. `make migrate` and the
+CI database lane now both run `./gradlew :app:run --args=migrate`, and the plugin is gone.
 
 **4.3 — The version is stamped into the image, not read from git.** `-Pversion` already flows through
 `release.yml`; the `serve` entrypoint logs it once at start-up and `/health/ready` reports it. An
@@ -159,3 +163,69 @@ the honest outcome is a recorded "not run locally" rather than an assumed pass.
   the wrapper takes the version the `gradle:8-jdk21` image ships, and this plan is only correct if
   `./gradlew build` with Kotlin 2.1.20, ktlint 12.2.0 and detekt 1.23.8 passes on it. If it does not,
   the pin moves down and the result is recorded here.
+
+## 9. Added or corrected during implementation
+
+Recorded here rather than silently, because the plan is the record of what was considered.
+
+**9.1 — `V5`, a migration the plan did not foresee.** Readiness has to distinguish "schema current"
+from "schema behind", which means reading `flyway_schema_history` — and `V4` grants `nodera_app`
+nothing on that table. Without the grant the probe cannot tell, must therefore answer not-ready
+(correct polarity), and the instance is permanently undeployable. `V5` grants `select` on that one
+table. It does not touch invariant AU1, which is a statement about `audit_event`: what the role
+split forbids `nodera_app` is data-definition and rewriting, and reading which migrations ran is
+neither.
+
+**9.2 — Migrations are packaged onto the classpath.** `:persistence` copies `db/migrations` into
+`db/migration` on its resources, so Flyway finds them at `classpath:db/migration` in a checkout and
+in the image alike. One location means "which migration ran" has one answer. The Dockerfile no
+longer copies them separately, and the build **fails** when the directory is missing or empty —
+Gradle treats a missing `from` as a no-op, which would otherwise ship an image whose `migrate`
+applies nothing and reports success.
+
+**9.3 — A migration failure never echoes the role password.** A Flyway exception message quotes the
+statement that failed, and for `V4` that statement is `create role nodera_app login password '…'`
+with the placeholder already substituted. `Migrator` redacts the value before returning it, and
+Flyway types do not cross the module boundary at all.
+
+**9.4 — Four defects in committed configuration that no gate had ever run against.** The Dockerfile
+cache layer (already in the ticket); `vite.config.ts` importing `defineConfig` from `vite`, which
+has no `test` section; `vitest` pulling a second Vite major whose `Plugin` type is not assignable to
+the declared one under `exactOptionalPropertyTypes`, fixed by a `resolutions` pin; and
+`@testing-library/dom` being an undeclared peer dependency, so `screen` did not exist at type level.
+`ktlintFormat` additionally reformatted `backend/build.gradle.kts`, which had been violating the
+style gate since the scaffold.
+
+**9.5 — A new devDependency, with its reason.** `yaml`, used only by `scripts/generate-zod.mjs` to
+read the OpenAPI document. `skills/secure-coding.md` requires a new dependency to carry a reason:
+the alternative was a hand-rolled YAML parser, which is a worse dependency than a well-known one.
+
+**9.6 — Invariant F1 became a lint rule.** `no-restricted-globals` on `fetch`, with `src/api/**`
+exempt. It was previously enforced by review only, and this costs nothing.
+
+**9.7 — `serve` reports a missing static directory instead of failing.** In the image the assets are
+always present; on a development machine Vite serves them. The absence is printed, so a broken image
+cannot quietly look like a development machine.
+
+**9.8 — `migrate` checks its own privilege before it starts.** The container run found that
+`migrate` with the *application* role's credentials exits zero against an already-current schema:
+Flyway needs no data-definition rights for a no-op. The acceptance criterion said it must exit
+non-zero, and the tempting fix was to soften the criterion to match the behaviour. Instead `Migrator`
+now asks `has_schema_privilege(current_user, 'public', 'create')` first and refuses when the answer
+is no. The wrong credentials become a first-run refusal rather than a surprise mid-upgrade at the
+next release — which is the same argument ADR-0006 makes for keeping migrations out of start-up.
+
+**9.9 — The container checks are committed as `scripts/verify_image.sh`.** They were a throwaway
+script until the run above found something real. A proof that only its author can repeat is not a
+proof; `docs/ci.md` names the command and states plainly that CI does not run it yet.
+
+## 10. Answers to § 8
+
+**Gradle 8.14.5 holds.** The wrapper takes the version the `gradle:8-jdk21` image ships; `./gradlew
+ktlintFormat build` passes with Kotlin 2.1.20, ktlint 12.2.0 and detekt 1.23.8. The pin did not have
+to move down.
+
+One caveat found the hard way: `org.gradle.configuration-cache=true` means a task action closure in
+a `.kts` build script cannot be serialised. The migrations check moved from `doFirst` to
+configuration time, which is where it belonged anyway — there is no valid build of `:persistence`
+without the migrations.
