@@ -29,4 +29,6 @@ A plan that lists only files is a checklist. The justification is the part worth
 
 ## Current plans
 
-_None yet — no work package has reached phase 2._
+| Plan | Status |
+|---|---|
+| [`OPS-01.md`](OPS-01.md) — build chain and release package | `active` |

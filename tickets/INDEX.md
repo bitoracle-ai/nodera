@@ -59,7 +59,7 @@ _15 open (P1 5 · P2 7 · P3 3 · P4 0) · 0 closed → [REVIEW_REPORT.md](../RE
 | [CORE-01](open/CORE-01.md) | Actor model and permission engine in the domain core | ~3 d | Everything references this — nothing else starts before it is reviewed. |
 | [CORE-02](open/CORE-02.md) | Audit recorder — one event per mutation, in the mutation's transaction | ~2 d | CORE-01, DB-01 |
 | [DB-01](open/DB-01.md) | Apply the baseline schema and prove row-level security with negative tests | ~2 d | — |
-| [OPS-01](open/OPS-01.md) | Build chain and release package: wrapper, lockfile, image, signed multi-arch release | ~2 d | Blocks every backend and frontend package — no ./gradlew and no yarn.lock exist. |
+| [OPS-01](open/OPS-01.md) | Build chain and release package: wrapper, lockfile, image, signed multi-arch release | ~3 d | Blocks every backend and frontend package — the repository contains no source file at all. |
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
 
 ### 🟠 P2 — High (7)

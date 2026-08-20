@@ -218,6 +218,23 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - What CI does not check
   - Adding a lane
 
+## `docs/plan/OPS-01.md`
+
+- Plan — OPS-01 · Build chain and release package
+  - 1. What phase 1 found, and how it differs from the ticket
+  - 2. The rule this plan refuses to break
+  - 3. Files to change, and why each one
+    - 3.1 Unblock the toolchain
+    - 3.2 The three entrypoints (ADR-0006)
+    - 3.3 Health, and the contract it owes
+    - 3.4 The minimum buildable frontend
+    - 3.5 Image and release
+  - 4. Decisions taken in this plan
+  - 5. Test plan
+  - 6. Deliberate non-goals
+  - 7. What this package cannot make green, stated rather than worked around
+  - 8. Open questions
+
 ## `docs/plan/README.md`
 
 - Plans
