@@ -8,9 +8,14 @@ read_when:
 
 # Code review — Nodera
 
-The review is the load-bearing quality mechanism, and it is **never performed by the author**. A
-separate session, a different tool, a different model, or a person. Continuing the implementation
-conversation is not a review: the context that produced the code produced its blind spots too.
+The review is the load-bearing quality mechanism, and it **runs in a sub-agent** — a context that did
+not write the code. The same session is fine; the same context is not. Continuing the implementation
+conversation and asking it to check its own work is not a review: the context that produced the code
+produced its blind spots too, and a sub-agent avoids inheriting them by construction rather than by
+discipline.
+
+A separate session, a different tool, a different model or a person satisfy the rule as well. A
+sub-agent is simply the cheapest way to get it right every time, which is why it is the default.
 
 An agent may review a human's work and a human may review an agent's. What is refused is reviewing
 one's own — the same rule Nodera enforces in its own domain model (invariant R1).

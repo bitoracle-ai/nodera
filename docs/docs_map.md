@@ -118,6 +118,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - 1. The ticket system, and why it is Markdown
   - 2. Session start protocol
   - 3. The five-phase workflow
+    - What "independent" means here
   - 4. Repository language
   - 5. Priorities
   - 6. ID prefixes

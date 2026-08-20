@@ -20,7 +20,7 @@ Then read [`docs/INDEX.md`](docs/INDEX.md). Every rule in this repository is rea
 1. Pick or open a ticket. `tickets/INDEX.md` is the working order.
 2. **Plan before code.** Files, justification, acceptance criteria, test plan.
 3. Implement, running the gates after each chunk rather than at the end.
-4. **Get an independent review.** Not the session or the person that wrote the code.
+4. **Get an independent review** — in a sub-agent, not inline in the context that wrote the code.
 5. Fix BLOCKING findings, re-test, review again.
 6. Open a pull request with the template filled in honestly.
 
@@ -31,7 +31,7 @@ Full reference: [`docs/PROJECT_MANAGEMENT.md`](docs/PROJECT_MANAGEMENT.md).
 Requires Docker, JDK 21 and Node 22.
 
 ```bash
-cp .env.example .env && make dev
+cp .env.example .env && make up && make migrate && make seed
 ```
 
 ```bash
@@ -41,6 +41,9 @@ make check
 `make check` runs everything CI runs. If it is green locally it will be green in CI, with one
 exception worth knowing: the backend tests need a running Docker daemon for Testcontainers, and
 skipping them locally is the most common cause of a surprise red build.
+
+**`make dev` also starts the backend and frontend, and those do not run yet** — they are the open
+tickets. The database, the migrations and every gate do work today.
 
 ## The rules that will get a pull request declined
 
@@ -104,8 +107,10 @@ attachment, but because the bug fix will be reviewed with less attention than it
 
 ## Reviews
 
-Phase 4 is not optional and is never done by the author. A separate session, a different tool, a
-different model, or a person — the context that produced the code produced its blind spots too.
+Phase 4 is not optional and runs in a **sub-agent** — a context that did not write the code. The same
+session is fine; a fresh chat, a different tool or a person work too. What does not count is checking
+the work inline in the conversation that produced it, because that context produced the blind spots
+along with the code.
 
 The canonical, tool-neutral prompt is
 [`docs/prompts/code-review.prompt.md`](docs/prompts/code-review.prompt.md). Paste it into any

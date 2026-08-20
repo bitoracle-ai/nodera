@@ -59,7 +59,7 @@ been written.
       enforces it and fails on a deliberately introduced violation.
 - [ ] Every use case signature takes `ActorContext` as its first parameter.
 - [ ] `make check` green.
-- [ ] Independent review (phase 4, never the author): 0 BLOCKING findings.
+- [ ] Independent review (phase 4, run in a sub-agent): 0 BLOCKING findings.
 
 ## Affected files
 

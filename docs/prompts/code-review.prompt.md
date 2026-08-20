@@ -1,8 +1,9 @@
 # Canonical review prompt — Nodera phase 4
 
-Paste this into a **fresh** assistant session, or into a different tool entirely. Do not run it in
-the session that wrote the code: the context that produced the change produced its blind spots too,
-and a reviewer who already believes the design will read the diff looking for confirmation.
+Run this in a **sub-agent** — a context that did not write the code. The same session is fine; a
+fresh chat, a different tool or a person work too. What does not work is running it inline in the
+conversation that produced the change: that context produced the blind spots along with the code, and
+a reviewer who already believes the design reads the diff looking for confirmation.
 
 ---
 

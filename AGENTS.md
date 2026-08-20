@@ -87,8 +87,10 @@ make help       # all targets
 3. **Implementation** file by file; run the gates after each chunk, not at the end. Every new frontend
    component/hook/utility ships with a test file. A safety claim ships with a paired-negative test that
    is demonstrably red when the guard is disabled.
-4. **Independent review** — never the author, in a separate instance. Findings as BLOCKING /
-   NON-BLOCKING per `skills/code-review.md`. Tool-neutral prompt: `docs/prompts/code-review.prompt.md`.
+4. **Independent review** — run it in a **sub-agent**, i.e. a context that did not write the code. The
+   same session is fine; reviewing inline in the implementing conversation is not. Findings as BLOCKING
+   / NON-BLOCKING per `skills/code-review.md`. Tool-neutral prompt:
+   `docs/prompts/code-review.prompt.md`.
 5. **Findings:** fix BLOCKING → re-test → review again. NON-BLOCKING fixed in the same session by
    default; a ticket only through the ladder in `docs/PROJECT_MANAGEMENT.md` § 8. Never a TODO comment.
 

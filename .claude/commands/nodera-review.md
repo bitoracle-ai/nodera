@@ -5,8 +5,9 @@ argument-hint: "<TICKET-ID>"
 
 Run the phase-4 independent review for $ARGUMENTS.
 
-Use the `reviewer` subagent (`.claude/agents/reviewer.md`). It runs in its own context, which is
-the entire point: the context that produced the code produced its blind spots too.
+Use the `reviewer` subagent (`.claude/agents/reviewer.md`). Running it from this session is fine —
+the subagent has its own context, which is the entire point. What is not a review: checking the work
+inline here, in the context that produced it.
 
 Give the subagent:
 

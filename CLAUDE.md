@@ -80,8 +80,9 @@ Job ↔ local equivalence: `docs/ci.md`.
 2. **Plan before code** — files, justification, acceptance criteria, test plan. Package ≥ ~1 day or
    carrying a structural decision → persist it as `docs/plan/<ID>.md`.
 3. **Implement** file by file, gates after each chunk rather than at the end.
-4. **Independent review** — use the `reviewer` subagent (`.claude/agents/reviewer.md`). It must not be
-   the session that wrote the code; the context that produced the code produced its blind spots too.
+4. **Independent review** — spawn the `reviewer` subagent (`.claude/agents/reviewer.md`). The same
+   session is fine; a subagent has its own context, and that is the whole point. What is not a review:
+   checking the work inline in the conversation that wrote it.
 5. **Findings** — fix BLOCKING, re-test, review again. NON-BLOCKING fixed in the same session by
    default. A session creates at most as many tickets as it closes.
 

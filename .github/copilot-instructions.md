@@ -32,7 +32,8 @@ runtime, custom field builders. A change that crosses it is refused however well
 
 ## Workflow
 
-Five phases: overview → plan → implementation → **independent review (never the author)** → findings.
+Five phases: overview → plan → implementation → **independent review (in a sub-agent, never inline)**
+→ findings.
 Full reference: `docs/PROJECT_MANAGEMENT.md`. Session start: `tickets/INDEX.md`, then the next open
 ticket.
 

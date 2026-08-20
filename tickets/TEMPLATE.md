@@ -43,7 +43,7 @@ intended. This section is the one most often found to be wrong in review.>
 
 - [ ] <Verifiable criterion — a reader must be able to check it without asking you.>
 - [ ] `make check` green.
-- [ ] Independent review (phase 4, never the author): 0 BLOCKING findings.
+- [ ] Independent review (phase 4, run in a sub-agent): 0 BLOCKING findings.
 
 ## Affected files
 

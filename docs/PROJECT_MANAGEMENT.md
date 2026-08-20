@@ -53,20 +53,32 @@ Machine-readable export: `python scripts/tickets_index.py --json`.
 
 ## 3. The five-phase workflow
 
-Every work package runs through the same five phases. Phase 4 is not optional and is never performed
-by the author.
+Every work package runs through the same five phases. Phase 4 is not optional and never runs in the
+context that wrote the code.
 
 | Phase | What happens | Output |
 |---|---|---|
 | **1 · Overview** | Read the ticket, the skills it routes to, and the code it names. | Understanding of what is actually there. |
 | **2 · Plan** | Files to change and why, acceptance criteria, test plan — **before any line of code**. | A plan. Packages ≥ ~1 day or carrying a structural decision persist it as `docs/plan/<ID>.md`. |
 | **3 · Implementation** | File by file. Gates after each chunk, not at the end. | A verifiable diff. |
-| **4 · Independent review** | A different actor — human or agent, never the author — reviews against the acceptance criteria. | Findings, each classified **BLOCKING** or **NON-BLOCKING**. |
+| **4 · Independent review** | Runs in a **sub-agent** — a fresh context that did not write the code — against the acceptance criteria. | Findings, each classified **BLOCKING** or **NON-BLOCKING**. |
 | **5 · Findings** | BLOCKING → fix, re-test, review again. NON-BLOCKING → fix in the same session by default. | 0 BLOCKING, then closure. |
 
-An agent may perform any phase, including phase 4 — provided it is not the actor that did phase 3.
-This is the same rule for both actor kinds, and it is enforced by the domain model Nodera itself
-implements (invariant R1).
+### What "independent" means here
+
+**Phase 4 runs in a sub-agent. The same session is fine; the same context is not.**
+
+The reason is about context, not about calendars: the context that produced the code produced its
+blind spots too, and a reviewer carrying it reads the diff looking for confirmation. A sub-agent
+starts clean by construction, which is why it is *the* mechanism rather than one option among
+several — you do not have to remember to be impartial, and a reviewer who has not seen the
+reasoning cannot be persuaded by it.
+
+So this is a valid phase 4: implement in a session, then spawn a reviewer sub-agent from that same
+session. This is not: continue the implementation conversation and ask it to check its own work.
+
+A human reviewer, a different tool or a separate session all satisfy the rule too — they are just
+not required. What is required is that the reviewing context did not write the code.
 
 ## 4. Repository language
 
@@ -194,7 +206,7 @@ All steps mandatory.
 
 1. **Every acceptance criterion met** — each `[ ]` becomes `[x]`, and each is actually true.
 2. **Gates green:** `make check` — no error.
-3. **Independent review returned with 0 BLOCKING** (phase 4, never the author).
+3. **Independent review returned with 0 BLOCKING** — phase 4, run in a sub-agent (§ 3).
 4. **Move the file** `tickets/open/<ID>.md` → `tickets/closed/<ID>.md`; set `status: closed` and
    `closed: YYYY-MM-DD` (mandatory — the closed index sorts by it).
 5. **Record the review result** as `## Review result` in that same file. `REVIEW_REPORT.md` carries no

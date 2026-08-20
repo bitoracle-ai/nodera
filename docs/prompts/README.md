@@ -10,7 +10,7 @@ adapter at the file. They are versioned, so a change to how reviews are conducte
 
 | Prompt | Use |
 |---|---|
-| [`code-review.prompt.md`](code-review.prompt.md) | The canonical phase-4 independent review. Run in a **separate instance** from the one that wrote the code. |
+| [`code-review.prompt.md`](code-review.prompt.md) | The canonical phase-4 independent review. Run it in a **sub-agent** — a context that did not write the code. |
 | [`maintain-adapters.prompt.md`](maintain-adapters.prompt.md) | Catch semantic drift between layer-2 sources and their layer-1 distillates — the thing `lint_adapters.py` cannot see. |
 
 ## Adding one

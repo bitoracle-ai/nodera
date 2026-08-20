@@ -60,7 +60,7 @@ from [`INDEX.md`](INDEX.md) § Mandatory-reading rules. A role never lifts a sco
 |---|---|---|---|
 | Claude Code | `CLAUDE.md` | local `CLAUDE.md` | `.claude/agents/reviewer.md` |
 | OpenAI Codex | `AGENTS.md` | local `AGENTS.md` | `.codex/agents/reviewer.toml` |
-| Copilot CLI / OpenCode / Cursor | `AGENTS.md` | local `AGENTS.md` | canonical review prompt in a separate instance |
+| Copilot CLI / OpenCode / Cursor | `AGENTS.md` | local `AGENTS.md` | canonical review prompt in a sub-agent or a fresh chat |
 | GitHub Copilot IDE/Chat | `.github/copilot-instructions.md` | `.github/instructions/*.instructions.md` | [`prompts/code-review.prompt.md`](prompts/code-review.prompt.md) in a separate chat |
 | Any other tool | give [`INDEX.md`](INDEX.md) explicitly as context | give the matching local `AGENTS.md` | a separate human, agent or model with the canonical prompt |
 
@@ -73,12 +73,15 @@ No migration, no duplicated rules.
 
 ## 4. The independent review, concretely
 
-Phase 4 is the load-bearing quality mechanism, and the rule is the same one Nodera enforces in its own
-domain model: **the reviewer is not the author.**
+Phase 4 is the load-bearing quality mechanism, and the rule is about context rather than calendars:
+**the reviewing context did not write the code.**
 
-- A **separate instance** — a new session, a different tool, a different model, or a person. Continuing
-  the implementation conversation is not a review; the context that produced the code also produced its
-  blind spots.
+- **Run it in a sub-agent.** The same session is fine; the same *context* is not. A sub-agent starts
+  clean by construction, so impartiality is a property of the setup rather than something the reviewer
+  has to remember. Continuing the implementation conversation and asking it to check its own work is
+  not a review — that context produced the blind spots along with the code.
+- A separate session, a different tool, a different model or a person all satisfy the rule as well.
+  They are simply not required.
 - Findings are classified **BLOCKING** or **NON-BLOCKING**, with the file and line.
 - `APPROVED` is only returned at **0 BLOCKING**.
 - A review that contradicts an earlier one is **recorded, not reconciled**. Both verdicts stay in the

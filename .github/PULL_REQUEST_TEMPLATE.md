@@ -12,7 +12,7 @@
 
 - [ ]
 - [ ] `make check` green
-- [ ] Independent review (phase 4, not the author): 0 BLOCKING findings
+- [ ] Independent review (phase 4, run in a sub-agent): 0 BLOCKING findings
 
 ## Gates
 
