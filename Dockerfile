@@ -4,7 +4,7 @@
 # that was never tested where it runs; configuration comes from the environment at start-up.
 
 # ---- Frontend build -------------------------------------------------------
-FROM node:22-alpine AS frontend
+FROM node:26-alpine AS frontend
 WORKDIR /build
 COPY frontend/package.json frontend/yarn.lock ./
 RUN yarn install --frozen-lockfile
