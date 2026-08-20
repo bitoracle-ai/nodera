@@ -20,10 +20,15 @@ for a key in a first, contentless message.
 
 | | |
 |---|---|
-| Acknowledgement | within 3 working days |
-| Initial assessment | within 10 working days |
+| Acknowledgement | within 10 working days |
+| Initial assessment | within 20 working days |
 | Fix or a dated plan | depends on severity; you will be told which, and when |
 | Credit | offered by default in the advisory — say if you would rather not be named |
+
+These windows are set to what can actually be held, not to what sounds responsive. A policy
+that promises a reply in three days and delivers in twelve teaches reporters that the dates
+mean nothing — and the next person with a real finding takes it elsewhere. If a report needs
+faster attention than this, say so in the first message and why.
 
 Nodera is **pre-alpha and not production-ready.** That is stated plainly because it changes
 what a report means: there is no deployed instance to protect, and reports at this stage are
