@@ -1,27 +1,33 @@
 # Code owners. A review from the listed owner is requested automatically.
 #
-# The paths below are the ones where a mistake is expensive and hard to see in a diff:
-# the invariants, the schema, the permission engine and the rules themselves.
+# Currently a single maintainer, so every path resolves to the same handle. The per-path
+# entries below are kept anyway: they record WHICH parts of this repository are the ones a
+# mistake is expensive in, and when a second maintainer arrives this file becomes a team
+# split rather than a rewrite.
+#
+# Do not name a team that does not exist. GitHub treats an unresolvable owner as an invalid
+# CODEOWNERS file and silently requests no review at all — the failure looks exactly like
+# having no rule, which is why it survives unnoticed.
 
-*                               @bitoracle-ai/nodera-maintainers
+*                               @silvio-vl
 
 # The premise. A change here changes what the product is.
-/docs/VISION.md                 @bitoracle-ai/nodera-maintainers
-/docs/DOMAIN_MODEL.md           @bitoracle-ai/nodera-maintainers
-/skills/critical-invariants.md  @bitoracle-ai/nodera-maintainers
+/docs/VISION.md                 @silvio-vl
+/docs/DOMAIN_MODEL.md           @silvio-vl
+/skills/critical-invariants.md  @silvio-vl
 
 # Forward-only and unforgiving.
-/db/migrations/                 @bitoracle-ai/nodera-maintainers
+/db/migrations/                 @silvio-vl
 
 # Identity, permissions, audit.
-/backend/domain/src/main/kotlin/ai/nodera/domain/permission/    @bitoracle-ai/nodera-maintainers
-/backend/application/src/main/kotlin/ai/nodera/application/audit/  @bitoracle-ai/nodera-maintainers
+/backend/domain/src/main/kotlin/ai/nodera/domain/permission/       @silvio-vl
+/backend/application/src/main/kotlin/ai/nodera/application/audit/  @silvio-vl
 
 # The rules every contributor and every tool loads first.
-/CLAUDE.md                      @bitoracle-ai/nodera-maintainers
-/AGENTS.md                      @bitoracle-ai/nodera-maintainers
-/.github/copilot-instructions.md @bitoracle-ai/nodera-maintainers
-/docs/INDEX.md                  @bitoracle-ai/nodera-maintainers
+/CLAUDE.md                       @silvio-vl
+/AGENTS.md                       @silvio-vl
+/.github/copilot-instructions.md @silvio-vl
+/docs/INDEX.md                   @silvio-vl
 
 # Supply chain.
-/.github/workflows/             @bitoracle-ai/nodera-maintainers
+/.github/workflows/             @silvio-vl
