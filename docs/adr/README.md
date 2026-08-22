@@ -34,3 +34,4 @@ information.
 | [0007](0007-deployment-is-the-tenant-boundary.md) | The deployment is the tenant boundary | Accepted |
 | [0008](0008-kotlin-on-the-jvm-for-the-backend.md) | Kotlin on the JVM for the backend | Accepted |
 | [0009](0009-mcp-protocol-layer-from-the-official-sdk.md) | The MCP server stays in-process; its protocol layer is not written here | Accepted |
+| [0010](0010-external-references-are-links-not-copies.md) | External references are links, not copies; the integration is an agent | Accepted |

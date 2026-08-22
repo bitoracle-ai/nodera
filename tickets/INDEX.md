@@ -53,7 +53,7 @@ their shape.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_15 open (P1 4 · P2 8 · P3 3 · P4 0) · 1 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_16 open (P1 4 · P2 8 · P3 4 · P4 0) · 1 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (4)
 
@@ -77,12 +77,13 @@ _15 open (P1 4 · P2 8 · P3 3 · P4 0) · 1 closed → [REVIEW_REPORT.md](../RE
 | [WEB-01](open/WEB-01.md) | Frontend shell — routing, authentication, generated API client | ~2 d | API-01 |
 | [WEB-02](open/WEB-02.md) | Ticket list and detail views, mobile-first | ~3 d | WEB-01, CORE-04 |
 
-### 🟡 P3 — Medium (3)
+### 🟡 P3 — Medium (4)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
 | [CORE-05](open/CORE-05.md) | Markdown ticket import and export with round-trip fidelity | ~2 d | CORE-04 |
 | [DOC-01](open/DOC-01.md) | Deployment guide and the self-hosting path | ~1 d | API-01, WEB-01 |
+| [GH-01](open/GH-01.md) | Link branches, commits and pull requests onto tickets automatically | ~2 d | CORE-01, CORE-03, DB-01 · Shape settled in ADR-0010 — the fence runs through the payload, so it is enforced in the schema. |
 | [MCP-03](open/MCP-03.md) | MCP resources and prompts | ~1 d | MCP-02, CORE-05 |
 
 ### ⚪ P4 — Nice-to-have (0)

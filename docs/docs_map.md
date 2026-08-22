@@ -216,6 +216,14 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - Consequences
   - Alternatives considered
 
+## `docs/adr/0010-external-references-are-links-not-copies.md`
+
+- ADR-0010 — External references are links, not copies; the integration is an agent
+  - Context
+  - Decision
+  - Consequences
+  - Alternatives considered
+
 ## `docs/adr/README.md`
 
 - Architecture decision records
