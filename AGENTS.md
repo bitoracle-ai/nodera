@@ -108,5 +108,10 @@ make help       # all targets
 - **SQL:** identifiers are unquoted lowercase `snake_case`. No string interpolation into SQL, ever.
 - **Frontend:** never call `fetch` directly in a component — only through `src/api/`, whose types are
   generated from the OpenAPI document. Render `actor.kind`; never infer it from a name.
-- **Mobile-first:** build every view at 375 px first, then widen.
+- **Mobile-first:** build every view at 375 px first, then widen. Touch targets are at least
+  44x44 px; the primary action sits in thumb reach, destructive actions deliberately do not.
+- **Design:** exactly two themes, light and dark — following the OS is a selection mode, not a third
+  theme. Colour is always a semantic token, never a literal; a token missing from either theme is a
+  defect. Agent output gets the same visual weight as human output: no muting, no tinting, no
+  collapsing.
 - Timestamps are `timestamptz`, always UTC.

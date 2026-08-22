@@ -29,6 +29,7 @@ Load on demand — not permanently in context.
 | `skills/agent-actors.md` | Identity, permissions, assignment, audit. |
 | `skills/backend-kotlin.md` | Any change under `backend/`. |
 | `skills/frontend-react.md` | Any change under `frontend/`. |
+| `skills/design-system.md` | Any view, component or styling decision. |
 | `skills/database-design.md` | Any migration. |
 | `skills/mcp-integration.md` | Any change under `backend/api-mcp/`. |
 | `skills/secure-coding.md` | Auth, tokens, input handling, anything on the network. |

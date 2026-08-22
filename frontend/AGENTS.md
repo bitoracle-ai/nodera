@@ -4,6 +4,7 @@ Read before any change in this subtree. Root rules still apply; these are the ad
 only matter here.
 
 Full reference: [`../skills/frontend-react.md`](../skills/frontend-react.md) ·
+[`../skills/design-system.md`](../skills/design-system.md) ·
 [`../docs/API_CONTRACT.md`](../docs/API_CONTRACT.md).
 
 ## The three rules broken most often here
@@ -23,6 +24,24 @@ gated **per file** at 80 % — an aggregate number lets a well-tested file hide 
 
 Test behaviour through the DOM. A test asserting on internal state passes through a refactor
 that broke the feature.
+
+## Two themes, and colour is always a token
+
+Light and dark, exactly. Following the OS is a selection mode, not a third theme. A component
+never contains a literal colour — not a hex value and not `bg-white` or `bg-blue-600` — only a
+semantic token such as `bg-surface-raised` or `text-content-muted`. A token without a value in
+**both** themes is a defect, and dark is not inverted light: elevation there is a lighter
+surface, not a heavier shadow.
+
+Touch targets are at least 44x44 px including padding. The primary action sits in the bottom
+third; destructive actions deliberately do not, because the easiest place to hit by accident is
+the wrong place for what cannot be undone.
+
+**Agent output is styled exactly like human output** — same typography, same background, same
+spacing. No muting, no tint, no reduced opacity, no collapsed-by-default. The kind badge
+distinguishes by icon and label; it never tints the message. Demoting agent content in the
+stylesheet demotes the participant this product exists to treat as equal, somewhere no lint can
+see it.
 
 ## Accessibility floor — not a later ticket
 

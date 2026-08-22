@@ -13,12 +13,20 @@ evaluate is not a release.
 
 - Repository foundation: vision and scope fence, domain model, architecture, MCP surface
   specification, and the baseline database schema as four forward-only migrations.
-- The rule set: twelve critical invariants, nine skills, and the phase-4 review rubric.
+- The rule set: twelve critical invariants, ten skills, and the phase-4 review rubric.
 - Tool-agnostic adapter layer (ADR-0002) with mechanical consistency checks, so a
   contributor's choice of AI assistant is not a quality variable.
 - Markdown ticket system with generated views, plus the tooling that keeps them honest.
 - CI with one aggregated required check, CodeQL analysis, and a manual-only release path
   enforced by a gate rather than by a comment.
+- **The stack and surface decisions, recorded rather than inherited:** Kotlin on the JVM with the
+  alternatives stated fairly (ADR-0008); the MCP server staying in-process with its protocol layer
+  taken from the official SDK instead of hand-written (ADR-0009); external references stored as links
+  rather than copies, with a forge integration modelled as an ordinary agent actor so attenuation and
+  revocation apply to it unchanged (ADR-0010).
+- A design system with **exactly two themes**, semantic colour tokens that must have a value in both,
+  touch ergonomics for one-handed use, and the rule that agent output is never styled as
+  second-class — demoting it in a stylesheet is the one place no invariant lint can see.
 - **The deployment shape, decided before implementation:** one image with three entrypoints
   (`serve`, `migrate`, `mcp-stdio`) and migrations as their own step (ADR-0006); the deployment
   as the tenant boundary, with the control plane outside this repository (ADR-0007).

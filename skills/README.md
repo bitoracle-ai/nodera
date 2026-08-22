@@ -22,7 +22,8 @@ Skills describe *how to do the work correctly*. Process rules live in
 | [`critical-invariants.md`](critical-invariants.md) | **Every change** | The twelve hard rules. A violation is a BLOCKING finding. |
 | [`agent-actors.md`](agent-actors.md) | Identity, permissions, assignment, comments, audit | How to build for two kinds of participant without demoting one of them. |
 | [`backend-kotlin.md`](backend-kotlin.md) | Any change under `backend/` | Module boundaries, `ActorContext`, error modelling, transactions. |
-| [`frontend-react.md`](frontend-react.md) | Any change under `frontend/` | Mobile-first, the generated API layer, rendering actor kind, accessibility floor. |
+| [`frontend-react.md`](frontend-react.md) | Any change under `frontend/` | Mobile-first, the generated API layer, the component/hook boundary, rendering actor kind, accessibility floor. |
+| [`design-system.md`](design-system.md) | Any view, component or styling | Exactly two themes, semantic tokens, touch ergonomics, and why agent output is never styled as second-class. |
 | [`database-design.md`](database-design.md) | Any migration | Forward-only, identifier casing, RLS, indexing, where an invariant belongs. |
 | [`mcp-integration.md`](mcp-integration.md) | Any change under `backend/api-mcp/` | Tool definition, capability declaration, idempotency, parity testing. |
 | [`secure-coding.md`](secure-coding.md) | Auth, tokens, input, anything on the network | Fail closed, credential handling, permission placement, paired-negative tests. |

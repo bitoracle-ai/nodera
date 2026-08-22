@@ -1,5 +1,5 @@
 ---
-summary: React and TypeScript conventions — mobile-first layout, the generated API layer, rendering actor kind, component testing, and the accessibility floor every view meets.
+summary: React and TypeScript conventions — mobile-first layout, the generated API layer, the component/hook boundary, rendering actor kind, component testing, and the accessibility floor every view meets.
 read_when:
   - Before any change under `frontend/`.
   - When adding a view, a data hook or a component that displays an actor.
@@ -28,6 +28,31 @@ checks.
 
 Server state is TanStack Query. Caching, retry and invalidation are decided in one place, not per
 component.
+
+## Where logic lives — the component/hook boundary
+
+**A component renders. A hook decides.** That is the whole rule, and it is this codebase's answer to
+the separation a ViewModel layer would otherwise be invented for — without adding a third place for
+state to live beside TanStack Query and React Hook Form, each of which already owns its half.
+
+Move logic into a named hook beside the component when any of these appears:
+
+- State derived from server state — a `useState` kept in sync with a query result. Usually it should
+  be computed rather than stored, and noticing that is half the value of the move.
+- A `useEffect` coordinating two queries, or a query and a form.
+- The same derivation in a second component.
+- A branch a reviewer has to read twice to be sure of.
+
+What does **not** move: layout, conditional class names, formatting a value for display. A hook that
+returns one string for one caller is indirection wearing the costume of separation.
+
+Name it for what it produces — `useTicketList`, `useClosureGate` — never for the component it serves.
+`useTicketPageLogic` is a bag, and bags grow.
+
+Testing follows the same split. A hook that only composes queries is tested through the component
+that uses it; asserting on it directly is the implementation-detail test the section below warns
+about. A hook that carries a **decision** — which tickets are ready, what the closure gate blocks on
+— gets its own test, because at that point it is behaviour.
 
 ## Render `actor.kind` — never infer it
 

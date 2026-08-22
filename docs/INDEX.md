@@ -66,6 +66,7 @@ Catalogue: [`../skills/README.md`](../skills/README.md).
 | [`agent-actors.md`](../skills/agent-actors.md) | Anything touching identity, permissions or the audit trail. |
 | [`backend-kotlin.md`](../skills/backend-kotlin.md) | Any change under `backend/`. |
 | [`frontend-react.md`](../skills/frontend-react.md) | Any change under `frontend/`. |
+| [`design-system.md`](../skills/design-system.md) | Any view, component or styling decision. |
 | [`database-design.md`](../skills/database-design.md) | Any migration. |
 | [`mcp-integration.md`](../skills/mcp-integration.md) | Any change under `backend/api-mcp/`. |
 | [`secure-coding.md`](../skills/secure-coding.md) | Auth, tokens, input handling, anything reaching the network. |

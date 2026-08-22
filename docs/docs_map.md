@@ -368,13 +368,27 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - Types
   - What does not belong in the database
 
+## `skills/design-system.md`
+
+> The visual system — exactly two themes, semantic tokens instead of literal colours, touch ergonomics that make the app usable one-handed, and what "modern and elegant" is allowed to mean here.
+
+- Design system — Nodera
+  - Exactly two themes
+  - Colour is a token, never a literal
+  - One accent, and restraint as the house style
+  - Usable on a phone, one-handed
+  - Colour never carries meaning alone
+  - Agent output is not styled as second-class
+  - What a review checks
+
 ## `skills/frontend-react.md`
 
-> React and TypeScript conventions — mobile-first layout, the generated API layer, rendering actor kind, component testing, and the accessibility floor every view meets.
+> React and TypeScript conventions — mobile-first layout, the generated API layer, the component/hook boundary, rendering actor kind, component testing, and the accessibility floor every view meets.
 
 - Frontend (React) — conventions
   - Mobile-first is a constraint, not a preference
   - Never call `fetch` in a component
+  - Where logic lives — the component/hook boundary
   - Render `actor.kind` — never infer it
   - Every unit ships with a test
   - Accessibility floor
