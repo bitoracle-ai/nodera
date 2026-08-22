@@ -59,6 +59,14 @@ evaluate is not a release.
   action was incompatible with the configuration cache. The rule that adapters cannot reach the
   database was enforced by nothing. It now runs at configuration time, so a violation fails every
   Gradle invocation.
+- The forward-only migration guard had never been armed. `scripts/lint_sql.py` compares each
+  migration against a sha256 ledger at `db/migrations/.checksums`, but that file did not exist and
+  an absent ledger returned "no problems" — so `make check-db` and the CI database lane both passed
+  on an in-place edit to any migration. Flyway's own `validateOnMigrate` could not cover the gap
+  either: the database lane starts from an empty Postgres and so has nothing to compare against,
+  which left the mismatch to surface on the next `make migrate` of whoever already had the old
+  version applied. The ledger now records `V1` to `V5`, and a missing ledger or an unrecorded
+  migration is itself a finding rather than a silent pass.
 - Logback's `ConsoleAppender` defaulted to stdout, which on the `mcp-stdio` entrypoint is the MCP
   framing channel. Diagnostics now go to stderr, guarded by a test on the appender's target.
 - The readiness body returned the driver's exception class on an unauthenticated endpoint.

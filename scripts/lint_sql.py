@@ -5,15 +5,21 @@
    works perfectly until something addresses it unquoted, and then fails in a way that
    reads like a missing table. Only extension names may be quoted.
 2. **Every foreign key is indexed.** Without one, a delete on the parent scans the child.
-3. **An applied migration is never edited.** Enforced by comparing checksums against
-   `db/migrations/.checksums` — a changed file that is already listed is a finding.
+3. **An applied migration is never edited.** Every migration is recorded in
+   `db/migrations/.checksums`, and a recorded file is frozen. A changed file, an unrecorded
+   one, and a missing ledger are all findings — `_checksum_drift` explains why all three.
+
+   This is not a duplicate of Flyway's own checksum validation. CI applies the migrations to
+   an empty database on every run, so Flyway has nothing to compare against and an in-place
+   edit passes; it surfaces later, on the machine of whoever already applied the old version.
+   This ledger is the only thing that sees the drift where the edit was made.
 
 SQL line comments are stripped before the identifier check, so a quoted word inside a
 `--` comment is not reported.
 
 Usage:
     python scripts/lint_sql.py              # check
-    python scripts/lint_sql.py --accept     # record checksums for NEW migrations
+    python scripts/lint_sql.py --accept     # record checksums when ADDING a migration
 """
 
 from __future__ import annotations
@@ -106,18 +112,49 @@ def _table_body(sql: str, table: str) -> str:
     return sql[start:]
 
 
+def _recorded(ledger: Path) -> dict[str, str]:
+    """Ledger as `{filename: sha256}`.
+
+    Comment lines are skipped: the header carries a double space of its own and would
+    otherwise parse as an entry for a file named "filename — every migration is …".
+    """
+    if not ledger.is_file():
+        return {}
+    return dict(
+        line.split("  ", 1)[::-1]
+        for line in ledger.read_text(encoding="utf-8").splitlines()
+        if "  " in line and not line.lstrip().startswith("#")
+    )
+
+
 def _checksum_drift(root: Path, migrations: list[Path]) -> list[str]:
+    """Three ways the forward-only guarantee breaks. All three are findings.
+
+    A migration whose content changed is the obvious one. The other two are how this check
+    goes quiet without anyone deciding that it should: a migration nobody recorded is never
+    compared against anything, and a deleted ledger disables every comparison at once.
+    Treating either as "nothing to check here" is what left this inert for its first five
+    migrations, while the surrounding documentation described it as enforced.
+    """
     ledger = root / "db" / "migrations" / ".checksums"
     if not ledger.is_file():
-        return []
-    recorded = dict(
-        line.split("  ", 1)[::-1] for line in ledger.read_text(encoding="utf-8").splitlines() if "  " in line
-    )
+        return [
+            "db/migrations/.checksums: missing — the forward-only check has nothing to "
+            "compare against and passes on any edit. Restore it from git; --accept creates "
+            "one only for a repository that has never applied a migration anywhere."
+        ]
+    recorded = _recorded(ledger)
     problems: list[str] = []
     for path in migrations:
         name = path.name
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        if name in recorded and recorded[name] != digest:
+        if name not in recorded:
+            problems.append(
+                f"db/migrations/{name}: not recorded in .checksums — a migration this check "
+                f"cannot protect. Run `python scripts/lint_sql.py --accept` and commit the "
+                f"ledger in the same change as the migration."
+            )
+        elif recorded[name] != digest:
             problems.append(
                 f"db/migrations/{name}: content changed after being recorded as applied — "
                 f"migrations are forward-only; correct it with a NEW migration"
@@ -125,27 +162,55 @@ def _checksum_drift(root: Path, migrations: list[Path]) -> list[str]:
     return problems
 
 
-def accept(root: Path) -> None:
+HEADER = (
+    "# sha256  filename — every migration is listed here, and a listed file is frozen.\n"
+    "# Adding a migration means running `python scripts/lint_sql.py --accept` in that commit.\n"
+    "# Re-recording an existing line is how a forward-only violation gets hidden. Don't.\n"
+)
+
+
+def accept(root: Path) -> int:
+    """Record the current checksums.
+
+    Re-recording a line that already exists is the one genuinely dangerous use of this flag:
+    afterwards the ledger is indistinguishable from one where the file was never edited. So it
+    is reported rather than performed quietly, because the operator sees the terminal even
+    when nobody reads the diff.
+    """
     ledger = root / "db" / "migrations" / ".checksums"
-    lines = [
-        f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}"
-        for p in sorted((root / "db" / "migrations").glob("*.sql"))
-    ]
-    header = "# sha256  filename — recorded once a migration is applied anywhere.\n"
-    ledger.write_text(header + "\n".join(lines) + "\n", encoding="utf-8", newline="\n")
-    print(f"recorded {len(lines)} migration checksum(s)")
+    previous = _recorded(ledger)
+    lines: list[str] = []
+    added: list[str] = []
+    rerecorded: list[str] = []
+    for path in sorted((root / "db" / "migrations").glob("*.sql")):
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        lines.append(f"{digest}  {path.name}")
+        if path.name not in previous:
+            added.append(path.name)
+        elif previous[path.name] != digest:
+            rerecorded.append(path.name)
+
+    ledger.write_text(HEADER + "\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    print(f"recorded {len(lines)} migration checksum(s) — {len(added)} newly listed")
+    for name in rerecorded:
+        print(
+            f"WARNING: {name} was already recorded and its content has changed. If it has been "
+            f"applied anywhere, this ledger edit hides a forward-only violation, and the "
+            f"correction belongs in a NEW migration instead.",
+            file=sys.stderr,
+        )
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Migration convention gate.")
-    parser.add_argument("--accept", action="store_true", help="record checksums for new migrations")
+    parser.add_argument("--accept", action="store_true", help="record checksums when adding a migration")
     args = parser.parse_args(argv)
 
     force_utf8()
     root = repo_root()
     if args.accept:
-        accept(root)
-        return 0
+        return accept(root)
 
     problems = lint(root)
     if problems:

@@ -1,0 +1,8 @@
+# sha256  filename — every migration is listed here, and a listed file is frozen.
+# Adding a migration means running `python scripts/lint_sql.py --accept` in that commit.
+# Re-recording an existing line is how a forward-only violation gets hidden. Don't.
+04469b251f5fb52be079e6427fb6b0d90276a031188d4ca4862e90a539d7c75c  V1__actors_projects_permissions.sql
+adcd597b8dfd167b492ea0aa474eabd7688e1ade87cb47fafaa7c2f223adf709  V2__tickets.sql
+f73c91bfe4d2cea1e13c29f1383c6c8a7e58a1bf3d1c1a9bc308828ed5becbdc  V3__collaboration.sql
+ddd6cfbc6cc6740e4812aeedf105ef773ed2bc2f8853c9558e31486d50b2fa53  V4__audit_and_rls.sql
+008ba704d786cf9cd4514022934dfd12d6fdef7d7ff845cff03f1c3a9d709112  V5__readiness_probe_reads_migration_history.sql
