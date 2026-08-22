@@ -200,6 +200,14 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - Consequences
   - Alternatives considered
 
+## `docs/adr/0008-kotlin-on-the-jvm-for-the-backend.md`
+
+- ADR-0008 — Kotlin on the JVM for the backend
+  - Context
+  - Decision
+  - Consequences
+  - Alternatives considered
+
 ## `docs/adr/README.md`
 
 - Architecture decision records
@@ -286,15 +294,17 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
 
 ## `skills/backend-kotlin.md`
 
-> Kotlin backend conventions — module boundaries and what the build enforces, ActorContext as a parameter, error modelling, transactions, and the patterns that keep adapters thin.
+> Kotlin backend conventions — module boundaries and what the build enforces, SOLID as it actually applies here, ActorContext as a parameter, error modelling, transactions, the language baseline, and the patterns that keep adapters thin.
 
 - Backend (Kotlin) — conventions
   - Module boundaries
+  - SOLID, and which of it the build already holds
   - ActorContext is a parameter, never ambient
   - Errors are values in the domain, exceptions at the edge
   - Transactions
   - Nullability and value types
   - Concurrency
+  - Language baseline
   - Style gates
 
 ## `skills/code-review.md`

@@ -32,3 +32,4 @@ information.
 | [0005](0005-mcp-as-sibling-surface.md) | MCP as a sibling surface, not a wrapper over REST | Accepted |
 | [0006](0006-one-image-three-entrypoints.md) | One image, three entrypoints; migrations are a separate step | Accepted |
 | [0007](0007-deployment-is-the-tenant-boundary.md) | The deployment is the tenant boundary | Accepted |
+| [0008](0008-kotlin-on-the-jvm-for-the-backend.md) | Kotlin on the JVM for the backend | Accepted |

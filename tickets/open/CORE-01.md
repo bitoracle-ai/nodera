@@ -6,7 +6,7 @@ status: open
 effort: ~3 d
 depends_on: []
 created: 2026-08-20
-updated: 2026-08-20
+updated: 2026-08-22
 note: Everything references this — nothing else starts before it is reviewed.
 ---
 
@@ -47,6 +47,18 @@ been written.
 - Whether `Capability` is an enum or a sealed hierarchy. Recommendation: enum with a `verb` string,
   because the database stores it as text and the mapping should be trivial in both directions.
 
+## Toolchain baseline — first, not after
+
+This package writes the first `:domain` types, so it fixes the identifier representation for
+everything that follows. The version catalogue is behind and must be raised **before** that, because
+afterwards every change to it is a migration across the whole domain: Kotlin `2.1.20` → `2.4.x`
+(`kotlin.uuid.Uuid` is stable there, and K1 support has ended), Ktor `3.1.2` → `3.4.x` (native
+OpenAPI, which API-01 needs for invariant #11), Exposed `0.60.0` → `1.x` (the `0.60` pin predates
+Exposed's stable-API guarantee).
+
+Raising versions is not an ADR — see `docs/adr/README.md` — but doing it after `:domain` exists is a
+much larger package than doing it before.
+
 ## Acceptance criteria
 
 - [ ] `:domain` compiles with no dependency on Ktor, SQL, JSON or a logging framework, enforced by
@@ -58,6 +70,11 @@ been written.
 - [ ] No code path in the diff compares `ActorKind` to decide permission; `scripts/lint_invariants.py`
       enforces it and fails on a deliberately introduced violation.
 - [ ] Every use case signature takes `ActorContext` as its first parameter.
+- [ ] The version catalogue is raised as above and `make check` is green on it **before** any
+      `:domain` type is written — recorded in the review result, since the diff cannot show ordering.
+- [ ] `:domain` uses `kotlin.uuid.Uuid`; `java.util.UUID` appears only in adapters, at the boundary.
+- [ ] Explicit API mode (`-Xexplicit-api=strict`) is on for every module and the build is green
+      under it.
 - [ ] `make check` green.
 - [ ] Independent review (phase 4, run in a sub-agent): 0 BLOCKING findings.
 
