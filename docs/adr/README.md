@@ -33,3 +33,4 @@ information.
 | [0006](0006-one-image-three-entrypoints.md) | One image, three entrypoints; migrations are a separate step | Accepted |
 | [0007](0007-deployment-is-the-tenant-boundary.md) | The deployment is the tenant boundary | Accepted |
 | [0008](0008-kotlin-on-the-jvm-for-the-backend.md) | Kotlin on the JVM for the backend | Accepted |
+| [0009](0009-mcp-protocol-layer-from-the-official-sdk.md) | The MCP server stays in-process; its protocol layer is not written here | Accepted |

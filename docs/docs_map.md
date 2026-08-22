@@ -208,6 +208,14 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - Consequences
   - Alternatives considered
 
+## `docs/adr/0009-mcp-protocol-layer-from-the-official-sdk.md`
+
+- ADR-0009 — The MCP server stays in-process; its protocol layer is not written here
+  - Context
+  - Decision
+  - Consequences
+  - Alternatives considered
+
 ## `docs/adr/README.md`
 
 - Architecture decision records
