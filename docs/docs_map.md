@@ -241,6 +241,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - The database lane runs the same migrator the image runs
   - Why the database lane runs the migrations twice
   - Why the frontend lane regenerates the API client
+  - Why every action is pinned to a SHA, and when the pins move
   - The image is verified separately
   - What CI does not check
   - Adding a lane

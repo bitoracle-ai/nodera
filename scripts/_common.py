@@ -4,7 +4,10 @@ stdlib-only and Windows-safe, deliberately: these gates run in CI, on a maintain
 Windows machine and inside an agent's sandbox, and a dependency that has to be installed
 first is a gate people learn to skip.
 
-Consumed by every script in this directory and unit-tested by ``tests/test_tooling.py``.
+Consumed by every script in this directory. There is no unit-test suite for it yet: the
+helpers are exercised only through the gates that import them, in the CI ``repo-checks``
+lane and in ``make check-repo``.
+
 """
 
 from __future__ import annotations

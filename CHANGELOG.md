@@ -47,6 +47,11 @@ evaluate is not a release.
 
 ### Changed
 
+- Every workflow job sets `timeout-minutes`; the previous default was six hours.
+- Every `actions/checkout` sets `persist-credentials: false`, except the release step that pushes
+  the tag.
+- Every JavaScript action pin moved to a node24 major, ahead of Node 20's removal from GitHub
+  runners on 2026-09-16. `sigstore/cosign-installer` is composite and stays on v3.
 - One migration implementation instead of two. The Flyway *Gradle plugin* carried its own url,
   locations and placeholders beside the runtime's; `make migrate` and the CI database lane now run
   the same `migrate` entrypoint the image runs, and the migrations are packaged onto the classpath
@@ -58,6 +63,15 @@ evaluate is not a release.
 
 ### Fixed
 
+- **CI had never been green — 23 runs, 23 failures.** `backend/gradlew` was recorded in the git
+  index as `100644`, so every `./gradlew` step failed with `Permission denied` and exit code 126,
+  taking the `backend` and `database` lanes and `CI Gate` with them. The bit is restored on the
+  wrapper and on every other tracked file carrying a shebang, and `scripts/lint_executable_bits.py`
+  reads the git index to keep it from recurring (CI-01).
+- `release.yml` treated an unreachable remote as "this tag is free" and could have re-cut a
+  published version; the tag probe now separates exit 0, exit 2 and everything else.
+- `release.yml` verified fewer repository gates than a pull request did.
+- `scripts/_common.py` claimed to be unit-tested by `tests/test_tooling.py`, which does not exist.
 - The `Dockerfile` dependency-cache layer copied six same-named module build files into one
   directory, overwriting each other and then the root build script, with the failure hidden by a
   trailing `|| true`. It cached nothing and reported nothing.

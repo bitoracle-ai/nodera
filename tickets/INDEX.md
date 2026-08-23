@@ -53,7 +53,7 @@ their shape.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_16 open (P1 4 · P2 8 · P3 4 · P4 0) · 1 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_17 open (P1 4 · P2 9 · P3 4 · P4 0) · 1 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (4)
 
@@ -64,11 +64,12 @@ _16 open (P1 4 · P2 8 · P3 4 · P4 0) · 1 closed → [REVIEW_REPORT.md](../RE
 | [DB-01](open/DB-01.md) | Apply the baseline schema and prove row-level security with negative tests | ~2 d | — |
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
 
-### 🟠 P2 — High (8)
+### 🟠 P2 — High (9)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
 | [API-01](open/API-01.md) | REST API skeleton with a contract-first OpenAPI document | ~3 d | CORE-01, SEC-01, CORE-03 |
+| [CI-01](open/CI-01.md) | CI has never been green — restore the gradlew executable bit and gate it | ~0.5 d | — |
 | [CORE-03](open/CORE-03.md) | Ticket lifecycle, key allocation and the closure gate | ~3 d | CORE-01, CORE-02 |
 | [CORE-04](open/CORE-04.md) | Comments, mentions and the review record | ~2 d | CORE-02, CORE-03 |
 | [MCP-01](open/MCP-01.md) | MCP server with the orientation and read tools | ~3 d | CORE-01, SEC-01, CORE-03 · Depends on API-01 only for the shared error taxonomy, not for logic. |

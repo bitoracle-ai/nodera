@@ -21,7 +21,7 @@ succeed makes the gate red.
 | Job | What it enforces | Run it locally |
 |---|---|---|
 | **Secret scan** | No credential in the history | `gitleaks detect --config .gitleaks.toml` |
-| **Repository checks** | Docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME ban | `make check-repo` |
+| **Repository checks** | Executable bits, docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME ban | `make check-repo` |
 | **Backend** | ktlint, detekt, module boundaries, tests, build | `make check-backend` |
 | **Frontend** | Generated client fresh, lint, types, coverage, build | `make check-frontend` |
 | **Database** | SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make verify-db` |
@@ -39,6 +39,7 @@ too, which is exactly the kind that tempts people to skip the heavy lanes.
 
 | Step | Script | Catches |
 |---|---|---|
+| Executable bits | `scripts/lint_executable_bits.py` | A file with a shebang recorded `100644` in the git index (or the reverse) — the defect that made every CI run before CI-01 fail at its first `./gradlew` line |
 | Documentation frontmatter | `scripts/docs_list.py` | A knowledge doc with no `summary`/`read_when` |
 | Documentation map fresh | `scripts/generate_docs_map.py --check` | Heading drift in the generated inventory |
 | Ticket consistency | `scripts/check_tickets.py --check` | Status/directory mismatch, duplicate id, dependency cycle, dead link, stale views |
@@ -69,6 +70,24 @@ an upgrade, which is the worst possible moment.
 diff means the contract moved and the client did not. That drift is exactly what generation exists
 to prevent, so it fails here rather than as a runtime type error nobody traces back to a schema
 change three weeks earlier.
+
+## Why every action is pinned to a SHA, and when the pins move
+
+`uses:` names a commit SHA with the tag in a trailing comment. A tag is a mutable pointer: a
+compromised maintainer account can repoint `v4` and change what runs here without touching a
+line of this repository.
+
+The cost is that pins do not move on their own, so they move in a package that says why. They
+were last moved wholesale for the Node runtime retirement — GitHub made Node 24 the runner
+default on 2026-06-16 and removes Node 20 on 2026-09-16, after which an action declaring
+`using: node20` stops running. Every JavaScript action here now declares node24.
+`sigstore/cosign-installer` is the exception: composite, so no deadline reaches it, and its next
+major installs a different cosign major under the signing steps — a decision for
+[OPS-02](../tickets/open/OPS-02.md), the package that first runs the release path.
+
+Resolve a pin with `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`, not with
+`git/ref/tags/<tag>`: for an annotated tag the latter returns the tag object, and `uses:` will
+never match it.
 
 ## The image is verified separately
 
