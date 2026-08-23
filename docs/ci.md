@@ -21,13 +21,16 @@ succeed makes the gate red.
 | Job | What it enforces | Run it locally |
 |---|---|---|
 | **Secret scan** | No credential in the history | `gitleaks detect --config .gitleaks.toml` |
-| **Repository checks** | Docs, tickets, adapters, language, invariants, release triggers | `make check-repo` |
+| **Repository checks** | Docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME ban | `make check-repo` |
 | **Backend** | ktlint, detekt, module boundaries, tests, build | `make check-backend` |
 | **Frontend** | Generated client fresh, lint, types, coverage, build | `make check-frontend` |
 | **Database** | SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make verify-db` |
 | **CI Gate** | Every lane above succeeded | — (aggregation only) |
 
-`make check` runs all of it.
+`make check` runs all of it **except the secret scan**: gitleaks is a separate binary that
+`make check` does not invoke, so that lane stays CI-only unless you install gitleaks and run the
+command above yourself. Every other lane has a `make` equivalent (the backend and database lanes
+additionally need a running Docker daemon).
 
 ## Repository checks, step by step
 

@@ -39,5 +39,5 @@ ticket.
 
 ## Gates
 
-`make check` runs everything CI runs. Backend `./gradlew ktlintCheck detekt test`; frontend
+`make check` runs everything CI runs except the CI-only gitleaks secret lane. Backend, from `backend/`: `./gradlew ktlintCheck detekt test`; frontend
 `yarn typecheck && yarn lint && yarn test:coverage && yarn build`. Job-to-local mapping: `docs/ci.md`.

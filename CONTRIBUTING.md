@@ -28,7 +28,19 @@ Full reference: [`docs/PROJECT_MANAGEMENT.md`](docs/PROJECT_MANAGEMENT.md).
 
 ## Setting up
 
-Requires Docker, JDK 21 and Node 22.
+Requires:
+
+- **Docker** — Postgres, Testcontainers, the image build.
+- **JDK 21** — the backend toolchain.
+- **Node 22** with **yarn 1 (classic)** — `package.json` has no `packageManager` field, so corepack
+  will not provision yarn for you; install it once (`npm install -g yarn`).
+- **GNU make** — every routine task is a Makefile target.
+- **Python 3** — the repository gates in `scripts/`; the Makefile defaults to `PY ?= python`.
+- **gitleaks** — CI-only, optional locally (see below).
+
+**Windows, in three lines:** work in Git Bash (ships with Git for Windows) — the Makefile assumes a
+POSIX shell. GNU make is not bundled with Git Bash; install it via e.g. Chocolatey (`choco install
+make`) or MSYS2. If Python is on your machine only as the `py` launcher, run `make PY=py <target>`.
 
 ```bash
 cp .env.example .env && make up && make migrate && make seed
@@ -38,9 +50,11 @@ cp .env.example .env && make up && make migrate && make seed
 make check
 ```
 
-`make check` runs everything CI runs. If it is green locally it will be green in CI, with one
-exception worth knowing: the backend tests need a running Docker daemon for Testcontainers, and
-skipping them locally is the most common cause of a surprise red build.
+`make check` runs everything CI runs. If it is green locally it will be green in CI, with two
+exceptions worth knowing: the backend tests need a running Docker daemon for Testcontainers, and
+skipping them locally is the most common cause of a surprise red build; and the secret scan
+(gitleaks) runs only in CI — `gitleaks detect --config .gitleaks.toml` reproduces it locally if
+you have gitleaks installed.
 
 **`make dev` also starts the backend and frontend, and those do not run yet** — they are the open
 tickets. The database, the migrations and every gate do work today.

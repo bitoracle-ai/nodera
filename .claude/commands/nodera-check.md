@@ -1,5 +1,5 @@
 ---
-description: Run every gate CI runs, and report honestly which passed
+description: Run every local gate (all CI lanes except the CI-only gitleaks secret scan) and report honestly which passed
 ---
 
 Run the local gates and report the result.

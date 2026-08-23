@@ -13,6 +13,7 @@ updated: {{DATE}}
 
 **Priority:** {{PRIORITY}}
 **Effort:** {{EFFORT}}
+**Skills:** `critical-invariants.md` + <area skills>
 
 <!-- Scaffold: `python scripts/ticket_new.py <ID> "<title>" [--priority P2] [--effort "~1 d"]`
      The INDEX row is DERIVED from this frontmatter — never paste it by hand. Add

@@ -62,3 +62,5 @@ yarn lint && yarn typecheck && yarn test:coverage && yarn build
 
 TypeScript runs in `strict` mode with `noUncheckedIndexedAccess`. `any` needs a comment naming
 why; `@ts-ignore` is a review finding.
+
+e2e is not wired yet — no Playwright config exists; do not run `test:e2e`.

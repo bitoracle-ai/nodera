@@ -1,8 +1,10 @@
 # Nodera — one entry point for every routine task.
 #
-# `make check` runs everything CI runs. If it is green here it is green there, with one
-# exception worth knowing: the backend tests need a running Docker daemon (Testcontainers),
-# and skipping them locally is the most common cause of a surprise red build.
+# `make check` runs everything CI runs. If it is green here it is green there, with two
+# exceptions worth knowing: the backend tests need a running Docker daemon (Testcontainers),
+# and skipping them locally is the most common cause of a surprise red build; and the secret
+# scan (gitleaks) stays CI-only — `make check` does not invoke the gitleaks binary. Run
+# `gitleaks detect --config .gitleaks.toml` yourself if you have it installed (docs/ci.md).
 
 .DEFAULT_GOAL := help
 SHELL := /bin/sh
@@ -71,11 +73,11 @@ ticket: ## Scaffold a ticket: make ticket ID=CORE-06 T="Title" [P=P2] [E="~1 d"]
 # Gates — the local equivalents of the CI lanes (docs/ci.md)
 # ---------------------------------------------------------------------------
 
-check: check-repo check-db check-backend check-frontend ## Everything CI runs
+check: check-repo check-db check-backend check-frontend ## Everything CI runs (except the CI-only gitleaks scan)
 	@echo ""
 	@echo "All gates green."
 
-check-repo: ## Docs, tickets, adapters, language, invariants, release triggers
+check-repo: ## Docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME
 	$(PY) scripts/docs_list.py
 	$(PY) scripts/generate_docs_map.py --check
 	$(PY) scripts/check_tickets.py --check
@@ -84,6 +86,21 @@ check-repo: ## Docs, tickets, adapters, language, invariants, release triggers
 	$(PY) scripts/lint_language.py
 	$(PY) scripts/lint_workflow_triggers.py
 	$(PY) scripts/lint_invariants.py
+# The same grep the CI repo-checks lane runs (ci.yml "No TODO/FIXME comments") — keep the
+# pattern, includes and paths byte-identical to it, or the two drift. One deliberate delta:
+# the --exclude-dir list. CI greps a fresh checkout; a working tree additionally carries the
+# git-ignored output directories (node_modules/ alone ships hundreds of third-party TODOs),
+# and without the excludes this gate is red on every machine that ever ran `yarn install`.
+	@if grep -rInE '(^|[^A-Za-z])(TODO|FIXME)([^A-Za-z]|$$)' \
+		--include='*.kt' --include='*.kts' --include='*.ts' --include='*.tsx' \
+		--include='*.sql' --include='*.py' \
+		--exclude-dir=node_modules --exclude-dir=build --exclude-dir=dist \
+		--exclude-dir=coverage --exclude-dir=.gradle \
+		backend/ frontend/ db/ scripts/ 2>/dev/null; then \
+		echo "TODO/FIXME found. Fix it, drop it with a recorded reason, or open a ticket (docs/PROJECT_MANAGEMENT.md § 8)."; \
+		exit 1; \
+	fi; \
+	echo "OK - no TODO/FIXME comments."
 
 check-db: ## SQL conventions (no database needed)
 	$(PY) scripts/lint_sql.py

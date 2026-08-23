@@ -15,6 +15,11 @@ failure mode a passing test suite would not show you.
 Where an invariant is enforced by the database or the build, that is said explicitly — an invariant
 enforced only by attention is an invariant waiting to be broken.
 
+The twelve here are numbered, never lettered; the lettered invariants cited elsewhere (F1/F2, R1/R2,
+AU1, CM1/CM2, CR1/CR2, …) are the per-area catalogues in
+[`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) and
+[`../docs/DOMAIN_MODEL.md`](../docs/DOMAIN_MODEL.md).
+
 ---
 
 ## 1. Actor kind never gates permission
@@ -35,8 +40,10 @@ is why none of them actually deliver it. The moment the branch exists, agents ar
 and every other invariant here is decoration. If an agent genuinely must not close tickets *in a given
 project*, that is a capability grant, and it is expressed as one.
 
-Enforced by: `scripts/lint_invariants.py` (AST sweep for `kind` comparisons outside display and audit
-modules) plus review.
+Enforced by: `scripts/lint_invariants.py` (a **regex line scan** for `kind` comparisons outside
+display and audit modules — not an AST sweep) plus review. Two shapes the scan cannot see are
+therefore explicit reviewer duties: a `when (actor.kind) { AGENT -> … }` branch, and a comparison
+through an aliased kind (`val k = actor.kind; if (k == …)`).
 
 ## 2. One permission engine
 

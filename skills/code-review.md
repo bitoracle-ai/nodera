@@ -18,7 +18,8 @@ A separate session, a different tool, a different model or a person satisfy the 
 sub-agent is simply the cheapest way to get it right every time, which is why it is the default.
 
 An agent may review a human's work and a human may review an agent's. What is refused is reviewing
-one's own — the same rule Nodera enforces in its own domain model (invariant R1).
+one's own — the same rule Nodera enforces in its own domain model (invariant R1,
+[`../docs/DOMAIN_MODEL.md`](../docs/DOMAIN_MODEL.md) § 7).
 
 ---
 
@@ -83,6 +84,15 @@ one.
 
 **Where a claim cannot be verified from the diff, say so explicitly:** "not verified — I could not run
 Testcontainers in this environment" is honest and useful. Asserting it passes is not.
+
+Two rules OPS-01's three review rounds paid for:
+
+- **A corrected claim has siblings.** When a fix corrects a stated claim or rationale, grep the tree
+  for the same claim before closing the finding — distillates, headers and doc comments repeat it,
+  and the copy left standing is the one the next reader believes (OPS-01 round 2, N1).
+- **Build-chain and clean-clone claims are verified by actually cloning and running, never by
+  reasoning.** "It works on a fresh clone" reasoned from the Makefile was false; the reviewer who
+  cloned the commit found it in one command (OPS-01 round 2, B1).
 
 ## 4. The review checklist, in order
 

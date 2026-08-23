@@ -99,8 +99,9 @@ This one is a product rule wearing a design costume, and it is the easiest to vi
 intentions.
 
 An agent's comment, review or assignment gets the **same visual weight** as a human's: the same
-typography, the same background, the same spacing. `actor.kind` is shown — that is invariant F2 — but
-it is shown the way a name is shown, not the way a warning is shown.
+typography, the same background, the same spacing. `actor.kind` is shown — that is invariant F2,
+[`../docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) § 3 — but it is shown the way a name is shown,
+not the way a warning is shown.
 
 - No muted text, no reduced opacity, no collapsed-by-default, no smaller font for agent content.
 - No tinted background that reads as "machine-generated, skim this".

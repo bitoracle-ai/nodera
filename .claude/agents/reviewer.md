@@ -62,6 +62,9 @@ ACCEPTANCE CRITERIA
 
 - Any conditional mentioning `actor.kind`. Describing something to a reader is fine; deciding
   what is permitted is **BLOCKING, always**.
+- The two shapes `scripts/lint_invariants.py` cannot see (it is a regex line scan, not an AST
+  sweep): a `when (actor.kind) { … }` branch deciding behaviour, and a kind comparison through
+  an aliased variable. Catching these is the reviewer's duty, not the linter's.
 - A permission check present on one surface and absent on the other.
 - An audit write outside the mutation's transaction, or a mutation with no audit write.
 - A safety claim with no paired-negative test — one demonstrably red with the guard disabled.

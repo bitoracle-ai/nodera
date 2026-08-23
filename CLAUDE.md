@@ -9,6 +9,9 @@ first-class Model Context Protocol server beside the REST API.
 
 Read the scope fence before proposing anything: `docs/VISION.md` § 3.
 
+Local layout: this clone sits inside the `bitoracle-ai/hq` umbrella checkout — the hq management
+repo resolves via `../`, sibling project repos via `../oracleai`, `../webadmin`, `../studio`.
+
 ## Start here, every session
 
 1. **`docs/INDEX.md`** — the hub. Every rule is reachable from it.
@@ -62,16 +65,20 @@ Load on demand — not permanently in context.
 
 ```
 make dev        # postgres + migrations + backend + frontend
-make check      # everything CI runs, locally
+make check      # every CI lane locally, except the CI-only gitleaks scan
+make verify-db  # the CI database lane: migrations twice on a throwaway database + schema checks
 make help       # all targets
 ```
 
-Backend: `./gradlew build` · `./gradlew ktlintCheck detekt` · `./gradlew test` (Testcontainers needs
-Docker running).
+Backend, from `backend/`: `./gradlew build` · `./gradlew ktlintCheck detekt` · `./gradlew test`
+(Testcontainers needs Docker running; there is no root `gradlew`).
 Frontend, from `frontend/`: `yarn typecheck` · `yarn lint` · `yarn test:coverage` · `yarn build`.
 Doc/ticket gates: `python scripts/check_tickets.py --check` · `python scripts/lint_adapters.py` ·
 `python scripts/lint_docs_index.py` · `python scripts/lint_language.py` · `python scripts/docs_list.py`.
 Job ↔ local equivalence: `docs/ci.md`.
+
+Windows gotcha: run the gate scripts with `py` (`py scripts/lint_adapters.py`) or override
+`make PY=py`; Git Bash is the recommended shell — the Makefile assumes POSIX `sh`.
 
 ## How I want you to work
 
@@ -93,6 +100,15 @@ Job ↔ local equivalence: `docs/ci.md`.
 - "Current state (honest)" in a ticket means honest — describe what is there, not what was intended.
 - A safety claim ("this guard prevents X") ships with a paired-negative test that is demonstrably red
   when the guard is disabled. Otherwise it is an assertion, not a guarantee.
+
+## When I say — you do
+
+| I say | You do |
+|---|---|
+| "done" | Closure per `docs/PROJECT_MANAGEMENT.md` § 9: criteria checked, gates green, review recorded, ticket moved, views regenerated. |
+| "commit" | Stage + commit the current branch, conventional message. Never push. |
+| "review" | Phase-4 via the `reviewer` subagent (`/nodera-review`). |
+| "push" / "deploy" | Deliberately undefined — stop and ask; I act. |
 
 ## Slash commands
 

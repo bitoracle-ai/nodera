@@ -50,7 +50,8 @@ production-ready yet, and the documentation says so wherever it is true.
 
 ## Quick start
 
-Requires Docker, JDK 21 and Node 22.
+Requires Docker, JDK 21, Node 22 with yarn 1 (classic), GNU make and Python 3 — the full list and
+a Windows note are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ```bash
 git clone https://github.com/bitoracle-ai/nodera.git
@@ -64,7 +65,7 @@ cd nodera && cp .env.example .env
 make up && make migrate && make seed
 ```
 
-That much works today: Postgres starts, the four migrations apply, and the seed creates a project,
+That much works today: Postgres starts, the migrations apply, and the seed creates a project,
 a human actor and an agent actor whose grants are deliberately narrower than its owner's — the
 model, running, before any application code exists.
 
@@ -89,7 +90,8 @@ tickets. `make help` lists every target, and `make check` runs every gate that d
 }
 ```
 
-Mint the token in the web app under **Settings → Agents**. The full tool and resource surface is in
+Tokens will be minted in the web app under **Settings → Agents** once that surface exists — the
+web app is one of the open tickets. The full tool and resource surface is in
 [`docs/MCP.md`](docs/MCP.md).
 
 ## Documentation

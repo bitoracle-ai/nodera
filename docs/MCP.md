@@ -8,6 +8,10 @@ read_when:
 
 # MCP server — Nodera
 
+**Status: specified, not implemented.** The surface below is the contract the MCP work packages
+(MCP-01 onward) build against. Where this document and the code disagree, the code is wrong —
+the contract is written first, on purpose.
+
 Nodera ships a Model Context Protocol server as a **first-class surface**, not an add-on. It is how
 an agent actor works: the same domain services, the same permission engine and the same audit trail
 that serve the web application.

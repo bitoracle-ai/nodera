@@ -10,6 +10,9 @@ design, with a first-class Model Context Protocol server beside the REST API.
 Scope fence — what is deliberately **not** built: `docs/VISION.md` § 3. A change that crosses it is
 refused in review, however well built.
 
+Local layout: this clone sits inside the `bitoracle-ai/hq` umbrella checkout — the hq management
+repo resolves via `../`, sibling project repos via `../oracleai`, `../webadmin`, `../studio`.
+
 ## Language
 
 - **English is the only language in this repository** — docs, tickets, skills, plans, ADRs, code,
@@ -64,19 +67,32 @@ Work-package lifecycle and closure protocol: `docs/PROJECT_MANAGEMENT.md`.
 
 ```
 make dev        # postgres + migrations + backend + frontend
-make check      # everything CI runs, locally
+make check      # every CI lane locally, except the CI-only gitleaks scan
+make verify-db  # the CI database lane: migrations twice on a throwaway database + schema checks
 make help       # all targets
 ```
 
-- Backend: `./gradlew build` · `./gradlew ktlintCheck detekt` · `./gradlew test`
-  (Testcontainers needs a running Docker daemon).
+- Backend, from `backend/`: `./gradlew build` · `./gradlew ktlintCheck detekt` · `./gradlew test`
+  (Testcontainers needs a running Docker daemon; there is no root `gradlew`).
 - Frontend (from `frontend/`): `yarn typecheck` · `yarn lint` · `yarn test:coverage` · `yarn build`.
-- Database: `./gradlew flywayMigrate` against the compose Postgres.
+- Database migrations, from `backend/`: `./gradlew :app:run --args=migrate` against the compose
+  Postgres (there is no Gradle Flyway plugin — the app is its own migrator, `docs/ci.md`).
 - Doc/ticket gates (always run in CI): `python scripts/docs_list.py` ·
   `python scripts/generate_docs_map.py --check` · `python scripts/check_tickets.py --check` ·
   `python scripts/lint_adapters.py` · `python scripts/lint_docs_index.py` ·
   `python scripts/lint_language.py`.
 - Full job ↔ local equivalence table: `docs/ci.md`.
+- Windows: run the gate scripts with `py` (`py scripts/lint_adapters.py`) or override `make PY=py`;
+  use Git Bash — the Makefile assumes POSIX `sh`.
+
+## User verbs (org protocol, pinned for this repo)
+
+| The user says | The assistant does |
+|---|---|
+| "done" | Closure per `docs/PROJECT_MANAGEMENT.md` § 9: criteria checked, gates green, review recorded, ticket moved, views regenerated. |
+| "commit" | Stage + commit the current branch, conventional message. Never push. |
+| "review" | Independent phase-4 review in a sub-agent — canonical prompt `docs/prompts/code-review.prompt.md`. |
+| "push" / "deploy" | Deliberately undefined — stop and ask; the user acts. |
 
 ## Workflow (short form — full reference `docs/PROJECT_MANAGEMENT.md` § 3)
 
