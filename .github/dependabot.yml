@@ -1,4 +1,5 @@
-# Keep dependencies and pinned Action SHAs current.
+# Keep dependencies and pinned Action SHAs current. cooldown: never propose a version published
+# in the last two days — a compromised release is usually pulled within hours.
 #
 # One window per week (Monday 06:00 Europe/Vienna) so dependency review is a single task
 # rather than a trickle. Caveat, stated rather than hidden: Dependabot also re-evaluates
@@ -15,6 +16,8 @@
 version: 2
 updates:
   - package-ecosystem: gradle
+    cooldown:
+      default-days: 2
     directory: /backend
     schedule:
       interval: weekly
@@ -30,6 +33,8 @@ updates:
       prefix: "chore(deps)"
 
   - package-ecosystem: npm
+    cooldown:
+      default-days: 2
     directory: /frontend
     schedule:
       interval: weekly
@@ -45,6 +50,8 @@ updates:
       prefix: "chore(deps)"
 
   - package-ecosystem: github-actions
+    cooldown:
+      default-days: 2
     directory: /
     schedule:
       interval: weekly
@@ -54,10 +61,13 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+        update-types: [minor, patch]
     commit-message:
       prefix: "chore(ci)"
 
   - package-ecosystem: docker
+    cooldown:
+      default-days: 2
     directory: /
     schedule:
       interval: monthly
