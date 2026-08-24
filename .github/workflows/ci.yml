@@ -18,7 +18,7 @@ concurrency:
 
 env:
   JAVA_VERSION: "21"
-  NODE_VERSION: "22"
+  # No NODE_VERSION: the Node lane reads .nvmrc (docs/ci.md).
 
 # Every job sets timeout-minutes; the default is six hours. Every checkout sets
 # persist-credentials: false except the tag-pushing job in release.yml. Actions are SHA-pinned
@@ -184,7 +184,8 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          # From .nvmrc, not a major — see docs/ci.md.
+          node-version-file: .nvmrc
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
 

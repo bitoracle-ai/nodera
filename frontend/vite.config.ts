@@ -27,18 +27,13 @@ export default defineConfig({
         functions: 80,
         lines: 80,
       },
-      // Vitest REPLACES its default excludes when this is given, so build output has to be
-      // named explicitly. Without `dist/**` the gate passes on a clean tree and fails the moment
-      // anyone has run `yarn build` first — an order-dependent gate nobody ends up trusting.
-      exclude: [
-        'dist/**',
-        'coverage/**',
-        'node_modules/**',
-        'src/api/generated/**',
-        'src/test/**',
-        '**/*.config.*',
-        '**/*.d.ts',
-      ],
+      // REQUIRED. Vitest 4 removed `coverage.all` and gates the untested-file sweep on `include`,
+      // which has no default — without it, a file no test imports is absent from the report and
+      // the per-file threshold never sees it. See WEB-04 § Verification.
+      include: ['src/**', 'scripts/**'],
+      // Generated code and test helpers live under `src/`. The config and .d.ts entries match
+      // nothing today; they are kept for the files that will, such as src/vite-env.d.ts.
+      exclude: ['src/api/generated/**', 'src/test/**', '**/*.config.*', '**/*.d.ts'],
     },
   },
 })

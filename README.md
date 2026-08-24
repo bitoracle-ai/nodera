@@ -50,8 +50,8 @@ production-ready yet, and the documentation says so wherever it is true.
 
 ## Quick start
 
-Requires Docker, JDK 21, Node 22 with yarn 1 (classic), GNU make and Python 3 — the full list and
-a Windows note are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Requires Docker, JDK 21, Node ≥ 22.22.0 (`.nvmrc` pins it) with yarn 1 (classic), GNU make and
+Python 3 — the full list and a Windows note are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ```bash
 git clone https://github.com/bitoracle-ai/nodera.git

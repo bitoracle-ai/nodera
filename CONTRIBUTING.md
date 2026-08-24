@@ -32,8 +32,11 @@ Requires:
 
 - **Docker** — Postgres, Testcontainers, the image build.
 - **JDK 21** — the backend toolchain.
-- **Node 22** with **yarn 1 (classic)** — `package.json` has no `packageManager` field, so corepack
-  will not provision yarn for you; install it once (`npm install -g yarn`).
+- **Node ≥ 22.22.0** with **yarn 1 (classic)**. `.nvmrc` pins the exact version CI uses, so
+  `nvm use` in the checkout is the reliable way to get it; the floor is not decorative, because
+  `frontend/package.json` declares it in `engines` and yarn 1 *aborts* an install that does not meet
+  it rather than warning. `package.json` has no `packageManager` field, so corepack will not
+  provision yarn for you; install it once (`npm install -g yarn`).
 - **GNU make** — every routine task is a Makefile target.
 - **Python 3** — the repository gates in `scripts/`; the Makefile defaults to `PY ?= python`.
 - **gitleaks** — CI-only, optional locally (see below).
