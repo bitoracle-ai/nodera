@@ -135,6 +135,7 @@ detector rather than of the project:
 | Frontend | `WEB-` | `WEB-01` |
 | Identity, permissions, audit | `SEC-` | `SEC-01` |
 | CI/CD, build, release | `CI-` | `CI-01` |
+| Deployment, operations, release execution | `OPS-` | `OPS-01` |
 | Documentation and process | `DOC-` | `DOC-01` |
 | Defect in committed code | `FIX-` | `FIX-01` |
 

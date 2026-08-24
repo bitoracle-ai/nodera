@@ -21,7 +21,7 @@ succeed makes the gate red.
 | Job | What it enforces | Run it locally |
 |---|---|---|
 | **Secret scan** | No credential in the history | `gitleaks detect --config .gitleaks.toml` |
-| **Repository checks** | Executable bits, docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME ban | `make check-repo` |
+| **Repository checks** | Executable bits, line endings, docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME ban | `make check-repo` |
 | **Backend** | ktlint, detekt, module boundaries, tests, build | `make check-backend` |
 | **Frontend** | Generated client fresh, lint, types, coverage, build | `make check-frontend` |
 | **Database** | SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make verify-db` |
@@ -40,6 +40,7 @@ too, which is exactly the kind that tempts people to skip the heavy lanes.
 | Step | Script | Catches |
 |---|---|---|
 | Executable bits | `scripts/lint_executable_bits.py` | A file with a shebang recorded `100644` in the git index (or the reverse) — the defect that made every CI run before CI-01 fail at its first `./gradlew` line |
+| Line endings | `scripts/lint_line_endings.py` | A text blob recorded CRLF where `.gitattributes` stores LF — the file then reads as modified in every fresh clone (FIX-01) |
 | Documentation frontmatter | `scripts/docs_list.py` | A knowledge doc with no `summary`/`read_when` |
 | Documentation map fresh | `scripts/generate_docs_map.py --check` | Heading drift in the generated inventory |
 | Ticket consistency | `scripts/check_tickets.py --check` | Status/directory mismatch, duplicate id, dependency cycle, dead link, stale views |
@@ -88,6 +89,19 @@ major installs a different cosign major under the signing steps — a decision f
 Resolve a pin with `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`, not with
 `git/ref/tags/<tag>`: for an annotated tag the latter returns the tag object, and `uses:` will
 never match it.
+
+## What a Dependabot bump gets past every lane
+
+Dependabot commits through the GitHub API, which writes blob bytes verbatim: git's clean filter
+never runs, so `.gitattributes` normalisation does not apply to what it pushes. The wrapper bump in
+[#23](https://github.com/bitoracle-ai/nodera/pull/23) landed `backend/gradlew.bat` as a CRLF blob
+where the repository stores LF, and every lane stayed green because no lane looked — leaving the
+file modified in a fresh clone before anyone had touched it. `scripts/lint_line_endings.py` is the
+answer (FIX-01).
+
+The executable bit is the same defect on the other axis, and the two together are why a wrapper bump
+is read rather than waved through: `backend/gradlew` did survive #23 as `100755`, but that was
+confirmed after the merge, not a property the merge could assume.
 
 ## The image is verified separately
 

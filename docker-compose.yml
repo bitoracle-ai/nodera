@@ -1,4 +1,5 @@
-# Local development. NOT a production topology — see docs/DEPLOYMENT.md for that.
+# Local development. NOT a production topology — that is compose.prod.yml, and running it is
+# docs/ops/deploy.md.
 #
 # The password here is a literal development value and is meant to be. A compose file
 # that reads a secret from the environment for local Postgres teaches contributors to

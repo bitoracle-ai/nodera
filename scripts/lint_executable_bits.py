@@ -11,13 +11,12 @@ Usage: python scripts/lint_executable_bits.py
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _common import force_utf8, repo_root  # noqa: E402
+from _common import force_utf8, git_output, repo_root  # noqa: E402
 
 EXEC_MODE = "100755"
 NON_EXEC_MODE = "100644"
@@ -28,24 +27,9 @@ SHEBANG = b"#!"
 REQUIRED_EXECUTABLE: tuple[str, ...] = ("backend/gradlew",)
 
 
-def _git(root: Path, args: list[str], stdin: bytes | None = None) -> bytes:
-    """Run git and return raw stdout, or raise with git's own error text attached."""
-    try:
-        proc = subprocess.run(
-            ["git", "-C", str(root), *args],
-            input=stdin, capture_output=True, timeout=60, check=False,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        raise RuntimeError(f"git {' '.join(args)} failed in {root}: {exc}") from exc
-    if proc.returncode != 0:
-        detail = proc.stderr.decode("utf-8", "replace").strip()
-        raise RuntimeError(f"git {' '.join(args)} failed in {root}: exit {proc.returncode}: {detail}")
-    return proc.stdout
-
-
 def index_entries(root: Path) -> list[tuple[str, str, str]]:
     """``(mode, object id, path)`` for every entry in the git index."""
-    out = _git(root, ["ls-files", "-s", "-z"])
+    out = git_output(root, ["ls-files", "-s", "-z"])
     entries: list[tuple[str, str, str]] = []
     for record in out.decode("utf-8", "surrogateescape").split("\0"):
         if not record:
@@ -61,7 +45,7 @@ def blob_heads(root: Path, oids: list[str], length: int = len(SHEBANG)) -> dict[
     unique = sorted(set(oids))
     if not unique:
         return {}
-    stream = _git(root, ["cat-file", "--batch"], stdin=("\n".join(unique) + "\n").encode("ascii"))
+    stream = git_output(root, ["cat-file", "--batch"], stdin=("\n".join(unique) + "\n").encode("ascii"))
 
     heads: dict[str, bytes] = {}
     pos = 0

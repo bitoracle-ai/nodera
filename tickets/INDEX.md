@@ -11,7 +11,27 @@
 
 ## Status (hand-maintained)
 
-**2026-08-23 — CI is green for the first time; the application is still unwritten.**
+**2026-08-24 — the production surface has a runbook and a restore that was walked; `main` is red on
+the frontend lane; the application is still unwritten.**
+
+`main` fails at `Frontend (React)` after two frontend majors were merged. Backend, database,
+repository checks and the secret scan are green. That failure is [WEB-03](open/WEB-03.md)'s and
+predates nothing else in the tree — but until it is fixed, `CI Gate` is red and no release can be
+cut honestly.
+
+**[OPS-03](closed/OPS-03.md) is closed.** `compose.prod.yml` shipped a production topology with no
+procedure for running it and no way to get the data back; the only mentions of backup or restore in
+the tree were two lines of ADR-0007 describing them as a consequence of the tenancy model.
+[`docs/ops/deploy.md`](../docs/ops/deploy.md) and
+[`docs/ops/backup-restore.md`](../docs/ops/backup-restore.md) close that. The restore was executed
+against the real compose file and a locally built image, not merely written — and the first attempt
+failed, because `nodera_app` is a cluster-level role that no single-database dump carries. Both
+documents state what a laptop rehearsal cannot prove.
+
+**[FIX-01](closed/FIX-01.md) is closed.** The Dependabot wrapper bump in #23 put `backend/gradlew.bat`
+into the index as CRLF, so the file read as modified in every fresh clone and every lane stayed
+green because no lane looked. `scripts/lint_line_endings.py` now checks how a blob is recorded, the
+way `lint_executable_bits.py` checks its mode.
 
 The repository scaffold is in place: vision and scope fence, domain model, architecture, MCP
 surface, the database schema, the rule set, the tool-agnostic adapter layer, CI, and this ticket
@@ -59,7 +79,7 @@ their shape.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_17 open (P1 4 · P2 8 · P3 5 · P4 0) · 2 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_17 open (P1 4 · P2 8 · P3 5 · P4 0) · 4 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (4)
 

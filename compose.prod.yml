@@ -6,10 +6,17 @@
 # Usage:
 #   printf '%s' "$(openssl rand -base64 32)" > secrets/db_owner_password
 #   printf '%s' "$(openssl rand -base64 32)" > secrets/app_role_password
-#   NODERA_VERSION=1.2.3 docker compose -f compose.prod.yml up -d
+#   printf 'NODERA_VERSION=1.2.3\n' > .env
+#   docker compose -f compose.prod.yml up -d
 #
-# Pin NODERA_VERSION to a released version, or better to a digest (`@sha256:…`). `latest` means the
-# deployment you can reproduce is whichever one you happen to pull.
+# NODERA_VERSION belongs in that `.env`, not in the command: it is declared `:?`, so every
+# subcommand re-interpolates it — `logs` and `down` included — and without the file they fail
+# with what reads like a broken configuration.
+#
+# Pin NODERA_VERSION to a released version. `latest` means the deployment you can reproduce is
+# whichever one you happen to pull. A digest is better still, but it has to be split across the
+# colon below — NODERA_IMAGE=…/nodera@sha256 with NODERA_VERSION=<hex>. Spelled `@sha256:…` in
+# NODERA_VERSION alone it produces an invalid reference (docs/ops/deploy.md § First install).
 
 name: nodera
 

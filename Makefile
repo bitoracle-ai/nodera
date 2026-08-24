@@ -77,8 +77,9 @@ check: check-repo check-db check-backend check-frontend ## Everything CI runs (e
 	@echo ""
 	@echo "All gates green."
 
-check-repo: ## Executable bits, docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME
+check-repo: ## Executable bits, line endings, docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME
 	$(PY) scripts/lint_executable_bits.py
+	$(PY) scripts/lint_line_endings.py
 	$(PY) scripts/docs_list.py
 	$(PY) scripts/generate_docs_map.py --check
 	$(PY) scripts/check_tickets.py --check

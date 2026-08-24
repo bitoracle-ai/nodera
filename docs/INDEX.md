@@ -56,6 +56,13 @@ Mechanical check: `python scripts/lint_adapters.py`.
 | [`plan/README.md`](plan/README.md) | Persisted plans for larger work packages. |
 | [`prompts/README.md`](prompts/README.md) | Reusable, tool-neutral prompts — the canonical review prompt lives here, not in a tool's private config. |
 
+## Operations
+
+| Document | Governs |
+|---|---|
+| [`ops/deploy.md`](ops/deploy.md) | Running `compose.prod.yml`: install, verification, update, rollback, and the boundaries the topology must keep. |
+| [`ops/backup-restore.md`](ops/backup-restore.md) | The `pgdata` volume — what a dump does **not** carry, the restore sequence that was walked, and the drill. |
+
 ## Skills — loaded on demand, not permanently in context
 
 Catalogue: [`../skills/README.md`](../skills/README.md).

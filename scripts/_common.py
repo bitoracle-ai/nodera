@@ -36,6 +36,8 @@ ALLOWLIST_DOCS: tuple[str, ...] = (
     "PROJECT_MANAGEMENT.md",
     "AI_COLLABORATION.md",
     "ci.md",
+    "ops/deploy.md",
+    "ops/backup-restore.md",
 )
 
 #: Directories whose ``*.md`` headings are inventoried in ``docs/docs_map.md``.
@@ -58,6 +60,21 @@ PRIORITY_LABELS: dict[str, str] = {
 }
 
 TICKET_ID_RE = re.compile(r"^[A-Z]+-\d+[a-z]?$")
+
+
+def git_output(root: Path, args: list[str], stdin: bytes | None = None) -> bytes:
+    """Raw stdout of ``git <args>`` in ``root``, or raise with git's own error text."""
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(root), *args],
+            input=stdin, capture_output=True, timeout=60, check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise RuntimeError(f"git {' '.join(args)} failed in {root}: {exc}") from exc
+    if proc.returncode != 0:
+        detail = proc.stderr.decode("utf-8", "replace").strip()
+        raise RuntimeError(f"git {' '.join(args)} failed in {root}: exit {proc.returncode}: {detail}")
+    return proc.stdout
 
 
 def repo_root() -> Path:

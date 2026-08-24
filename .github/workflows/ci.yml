@@ -70,6 +70,10 @@ jobs:
       - name: Executable bits are recorded in the git index
         run: python scripts/lint_executable_bits.py
 
+      # Same class of defect, the other axis: a blob written past git's clean filter.
+      - name: Line endings are recorded LF in the git index
+        run: python scripts/lint_line_endings.py
+
       - name: Documentation frontmatter (summary + read_when on every knowledge doc)
         run: python scripts/docs_list.py
 

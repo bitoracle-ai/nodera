@@ -84,6 +84,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - The two-layer architecture
   - Product and scope
   - Process
+  - Operations
   - Skills — loaded on demand, not permanently in context
   - Mandatory-reading rules
   - Maintenance
@@ -242,9 +243,38 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - Why the database lane runs the migrations twice
   - Why the frontend lane regenerates the API client
   - Why every action is pinned to a SHA, and when the pins move
+  - What a Dependabot bump gets past every lane
   - The image is verified separately
   - What CI does not check
   - Adding a lane
+
+## `docs/ops/backup-restore.md`
+
+> Backup and restore for the Nodera pgdata volume — what a dump does and does not carry, the restore sequence that was actually walked, and the drill that proves it.
+
+- Backup and restore (OPS-03)
+  - What a dump covers — and what it does not
+  - Backup
+    - What is not decided yet
+  - Restore
+  - The drill
+    - Record — 2026-08-23
+  - When something is wrong
+
+## `docs/ops/deploy.md`
+
+> Operator runbook for compose.prod.yml — what the host needs, first install, verification, updating, rolling back, diagnosis, and the boundaries the topology must keep.
+
+- Runbook — running and updating Nodera (OPS-03)
+  - What is proved and what is not
+  - What the host needs
+  - First install
+  - Verifying
+  - Reaching it
+  - Updating
+  - Rolling back
+  - When something is wrong
+  - What must never happen
 
 ## `docs/plan/OPS-01.md`
 
