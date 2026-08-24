@@ -8,10 +8,11 @@ Generated from ticket frontmatter: `python scripts/tickets_index.py --write`.
 
 <!-- BEGIN GENERATED: closed tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_4 closed work packages, newest first._
+_5 closed work packages, newest first._
 
 | ID | Title | Closed |
 |---|---|---|
+| [WEB-03](tickets/closed/WEB-03.md) | Frontend toolchain majors that need a migration, not a merge | 2026-08-24 |
 | [OPS-03](tickets/closed/OPS-03.md) | Operate the production surface: deploy runbook and a restore that has been walked | 2026-08-24 |
 | [FIX-01](tickets/closed/FIX-01.md) | gradlew.bat entered the index as CRLF — renormalise and gate it | 2026-08-24 |
 | [CI-01](tickets/closed/CI-01.md) | CI has never been green — restore the gradlew executable bit and gate it | 2026-08-23 |

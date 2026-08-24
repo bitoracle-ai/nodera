@@ -1,3 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss' source(none);
+
+/* v4 would otherwise scan every non-ignored file in this directory, including the prose in
+   CLAUDE.md and AGENTS.md — which is how `bg-blue-600` reached the bundle from a sentence
+   forbidding it. These two globs are what tailwind.config.js declared as `content`. */
+@source '../index.html';
+@source '../src/**/*.{ts,tsx}';
+
+/* Mobile-first is a constraint, not a preference: unprefixed classes ARE the phone case, and
+   `sm:` and up are additions. Ported from tailwind.config.js, which v4 no longer reads; rem
+   rather than v3's px, matching v4's own scale, so the breakpoint tracks the root font size. */
+@theme {
+  --breakpoint-xs: 23.4375rem;
+}

@@ -3,7 +3,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 /**
- * ESLint 9 flat configuration.
+ * ESLint 10 flat configuration.
  *
  * `yarn lint` runs with `--max-warnings 0`, so there is no difference here between `warn` and
  * `error` in effect. Rules are declared as `error` anyway, because a level that means something
@@ -13,7 +13,7 @@ export default tseslint.config(
   { ignores: ['dist/**', 'coverage/**', 'src/api/generated/**'] },
 
   ...tseslint.configs.recommended,
-  reactHooks.configs['recommended-latest'],
+  reactHooks.configs.flat['recommended-latest'],
 
   {
     files: ['**/*.{ts,tsx}'],

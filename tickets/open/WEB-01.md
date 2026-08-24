@@ -6,7 +6,7 @@ status: open
 effort: ~2 d
 depends_on: [API-01]
 created: 2026-08-20
-updated: 2026-08-22
+updated: 2026-08-24
 ---
 
 # WEB-01 · Frontend shell — routing, authentication, generated API client
@@ -21,7 +21,7 @@ later one copies the pattern.
 
 ## Current state (honest)
 
-`frontend/` holds `package.json`, the Vite and Tailwind configuration and an empty `src/`. No
+`frontend/` holds `package.json`, the Vite configuration and an empty `src/`. No
 routing, no auth, no API layer.
 
 ## Approach
@@ -38,8 +38,10 @@ routing, no auth, no API layer.
 - [ ] `ActorBadge` renders from `actor.kind` alone; no name pattern or heuristic appears anywhere.
 - [ ] The shell is usable at 375 px, checked at that width rather than assumed.
 - [ ] The token layer exists before any view does: semantic CSS custom properties with a value in
-      **both** themes, exposed to Tailwind, and `darkMode` configured. A token defined in one theme
-      only fails the build or a test — not review.
+      **both** themes, exposed to Tailwind through `@theme inline`, and the class strategy declared
+      with `@custom-variant dark (&:where(.dark, .dark *))`. Tailwind is v4 since WEB-03, so there is
+      no `darkMode` option and no `tailwind.config.js` to put it in; the mechanism is CSS. A token
+      defined in one theme only fails the build or a test — not review.
 - [ ] Exactly two themes plus a `system` selection mode that resolves to one of them. No third theme
       and no per-project palette (`skills/design-system.md`).
 - [ ] No component in the diff contains a literal colour — no hex value, no `bg-white`, no
