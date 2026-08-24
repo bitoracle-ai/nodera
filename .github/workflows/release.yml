@@ -17,8 +17,10 @@ on:
 permissions:
   contents: read
 
-# Conventions as in ci.yml. sigstore/cosign-installer stays on v3: composite, so the Node 20
-# removal does not reach it, and v4 swaps the cosign CLI under the untested signing steps.
+# Conventions as in ci.yml. sigstore/cosign-installer moved to v4 in #21, and v4 installs cosign
+# 3.x by default: the new protobuf bundle format and signatures stored as OCI 1.1 referring
+# artifacts, both on by default. This workflow has never run, so nothing below has been exercised
+# against that CLI — OPS-02 is the package that first does.
 
 jobs:
   verify:
@@ -118,10 +120,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb  # v6.3.0
         with:
           validate-wrappers: true
+          # Not the commercial default; see docs/ci.md § Why the Gradle cache is the basic one.
+          cache-provider: basic
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
         with:
-          node-version: "22"
+          node-version-file: .nvmrc
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
 
@@ -175,9 +179,10 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: cosign sign --yes "ghcr.io/${{ github.repository }}@${DIGEST}"
 
-      # Signing without verifying is ceremony. This proves the signature is checkable with the
-      # exact command the release notes hand to an operator, at the moment it is made — rather
-      # than leaving the first real check to whoever first doubts the image.
+      # Signing without verifying is ceremony. This checks the signature at the moment it is made,
+      # rather than leaving the first real check to whoever first doubts the image. It is not the
+      # published operator command — there is none yet; OPS-02 writes it, with a minimum cosign
+      # version, since cosign 3 signs in a format 2.6.x reads only when asked and older cannot.
       - name: Verify the signature the way an operator would
         env:
           DIGEST: ${{ steps.build.outputs.digest }}

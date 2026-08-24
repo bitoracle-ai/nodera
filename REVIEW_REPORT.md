@@ -8,10 +8,11 @@ Generated from ticket frontmatter: `python scripts/tickets_index.py --write`.
 
 <!-- BEGIN GENERATED: closed tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_5 closed work packages, newest first._
+_6 closed work packages, newest first._
 
 | ID | Title | Closed |
 |---|---|---|
+| [WEB-04](tickets/closed/WEB-04.md) | Vite 8 needs a vitest migration, not a merge | 2026-08-24 |
 | [WEB-03](tickets/closed/WEB-03.md) | Frontend toolchain majors that need a migration, not a merge | 2026-08-24 |
 | [OPS-03](tickets/closed/OPS-03.md) | Operate the production surface: deploy runbook and a restore that has been walked | 2026-08-24 |
 | [FIX-01](tickets/closed/FIX-01.md) | gradlew.bat entered the index as CRLF — renormalise and gate it | 2026-08-24 |

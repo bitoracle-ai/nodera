@@ -15,6 +15,62 @@
 toolchain is migrated forward off the two majors that reddened the lane, and the application is
 still unwritten.**
 
+**[WEB-04](closed/WEB-04.md) is closed, and the Dependabot backlog is empty of content.** All four
+open pull requests — [#26](https://github.com/bitoracle-ai/nodera/pull/26) zod 4,
+[#27](https://github.com/bitoracle-ai/nodera/pull/27) vite 8,
+[#28](https://github.com/bitoracle-ai/nodera/pull/28) react-router 8 and
+[#29](https://github.com/bitoracle-ai/nodera/pull/29), the rebased replacement for the conflicting
+#25 — are carried forward here in one lockfile rather than merged in four. Three of them were safe
+on their own; #27 was not, and merging it would have been the kind of green that means nothing.
+
+**#27 did not upgrade Vite, it added a second one.** A clean install of its lockfile produced five
+copies across two majors: `vite` at 8.2.2 while `vitest`, `vite-node`, `@vitest/mocker` and
+`@vitejs/plugin-react` each resolved 6.4.3 — because `vitest@3.2.7` carries
+`vite: "^5.0.0 || ^6.0.0 || ^7.0.0-0"` as a *dependency*, not a peer. The suite and the coverage gate
+would have run on Vite 6 while the production build ran Vite 8, and no lane here can tell those
+apart. The `resolutions` pin OPS-01 added was left at `^6.4.3` by that PR, so it stopped covering the
+direct dependency while still reading as though Vite were held at 6. WEB-04 takes **vitest 3 → 4**
+alongside, moves the pin to `^8.2.2`, and the tree now resolves **exactly one Vite**.
+
+**#28 would have stopped every contributor command.** `react-router@8.3.0` declares
+`engines.node ">=22.22.0"`, `.nvmrc` said 22.20.0, and Yarn 1 *refuses* an engines mismatch rather
+than warning it — so `make dev`, `make check`, `make test` and `make frontend` all die at install.
+CI stayed green only because `NODE_VERSION: "22"` resolved whatever 22.x the runner carried. Both
+workflows now read `node-version-file: .nvmrc`, and `.nvmrc`, `engines.node` and the
+`react`/`react-dom` ranges are all at or above what react-router 8 requires. **That binds the runner
+only.** Nothing forces a *contributor* onto that Node — `.nvmrc` does nothing without `nvm use`, and
+there is no engine-strict npmrc, Volta or mise pin — so raising the floor is a change contributors
+have to be told about, which is why `CONTRIBUTING.md` and `README.md` now name it and the
+`Dockerfile` pins `node:22.23-alpine`.
+
+**#26 and #29 were the easy ones and are recorded as such:** `react-hook-form` and `user-event` are
+declared but imported nowhere under `frontend/src`, and zod's generated schemas are declared but
+never parsed. `yarn api:generate` produces no diff under zod 4 — CI checks that every run — and the
+generated file is sixteen lines using three constructs, `z.object`, `z.enum([…])` and `z.string()`,
+each run against 4.4.3 for parse, reject, unknown-key strip and missing-key. (`react-router` is
+#28's bump and is imported nowhere either; its problem was the Node floor above, not its API.)
+
+**The pull requests themselves are still open.** The session that did this work could not merge or
+close one — the permission was denied. They are superseded **in content**: every version they
+propose is in this branch's `package.json` and `yarn.lock`. Pressing the button is the owner's.
+
+Review: **four independent sub-agent rounds, and the split matters.** Rounds 1 and 2 saw only the
+branch's first half — the Gradle `cache-provider` change and the cosign corrections — returning
+**CHANGES REQUIRED, 3 BLOCKING, 5 NON-BLOCKING** and then **APPROVED, 0 BLOCKING, 6 NON-BLOCKING**.
+**Round 3 was the first to see the toolchain migration** and returned **CHANGES REQUIRED, 4
+BLOCKING**; **round 4** returned **CHANGES REQUIRED, 1 BLOCKING, 4 NON-BLOCKING**. Every finding of
+every round is fixed.
+
+The one worth carrying: bumping vitest 3 → 4 **silently disabled the untested-file half of the
+coverage gate.** Vitest 3 swept untested files in via `coverage.all` (default true); vitest 4
+removed `all` and gates the sweep on `coverage.include`, which has no default and which this
+repository never set. A wholly untested file under `src/` was absent from the report and
+`yarn test:coverage` exited 0. This package shipped that regression and round 3 caught it;
+`coverage.include` in `frontend/vite.config.ts` is the fix, with a paired negative both ways. Every
+other BLOCKING finding across the four rounds was a false claim in prose — three of them introduced
+by a previous round's *fix*, which is the argument for reviewing again after fixing rather than
+once.
+
 **[WEB-03](closed/WEB-03.md) is closed.** `main` had been red at `Frontend (React)` since two
 frontend majors were merged without the source changes they need: eslint 9→10 with
 eslint-plugin-react-hooks 5→7, and tailwindcss 3→4. Both are migrated forward rather than reverted.
@@ -83,7 +139,7 @@ their shape.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_16 open (P1 4 · P2 8 · P3 4 · P4 0) · 5 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_16 open (P1 4 · P2 8 · P3 4 · P4 0) · 6 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (4)
 

@@ -82,13 +82,33 @@ The cost is that pins do not move on their own, so they move in a package that s
 were last moved wholesale for the Node runtime retirement — GitHub made Node 24 the runner
 default on 2026-06-16 and removes Node 20 on 2026-09-16, after which an action declaring
 `using: node20` stops running. Every JavaScript action here now declares node24.
-`sigstore/cosign-installer` is the exception: composite, so no deadline reaches it, and its next
-major installs a different cosign major under the signing steps — a decision for
-[OPS-02](../tickets/open/OPS-02.md), the package that first runs the release path.
+`sigstore/cosign-installer` is composite, so no deadline reached it, but it moved to v4 anyway in
+[#21](https://github.com/bitoracle-ai/nodera/pull/21). That was not only a pin move: v4 defaults to
+`cosign-release: v3.0.6`, and cosign 3 writes the new protobuf bundle format and stores container
+signatures as OCI Image 1.1 referring artifacts, both on by default. `release.yml` has never run, so
+this is correct by inspection only, and the operator-facing half is untested. Both halves of the
+workflow run the same CLI on the same runner, so its own verification step should hold; the reader
+is the open question. cosign gained this format in 2.6.0 behind `--new-bundle-format`, so a verifier
+older than 2.6.0 cannot read the signature at all, and a 2.6.x one reads it only when told to.
+Whatever `cosign verify` command OPS-02 publishes will therefore have to name a minimum cosign
+version. None is published yet: the only `cosign verify` in the tree is the workflow's own
+self-check, and the release notes are generated from `CHANGELOG.md`, which carries no such line.
+[OPS-02](../tickets/open/OPS-02.md) is the package that first runs the release path, and it now
+inherits that question.
 
 Resolve a pin with `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`, not with
 `git/ref/tags/<tag>`: for an annotated tag the latter returns the tag object, and `uses:` will
 never match it.
+
+## Why the Gradle cache is the basic one
+
+`gradle/actions/setup-gradle` defaults to `cache-provider: enhanced`, which its own `action.yml`
+describes as "the full-featured commercial caching service (gradle-actions-caching)" — closed
+source since v6, used under gradle.com's Terms of Use. It is free for public repositories, but it
+puts an MIT project on separate commercial terms by default and silently. All three `setup-gradle`
+steps therefore set `cache-provider: basic`, the open-source implementation over the ordinary GitHub
+Actions cache. Nothing here needs what `enhanced` adds; a build of this size is not where a cache
+provider decides the wall-clock time.
 
 ## What a Dependabot bump gets past every lane
 
@@ -102,6 +122,46 @@ answer (FIX-01).
 The executable bit is the same defect on the other axis, and the two together are why a wrapper bump
 is read rather than waved through: `backend/gradlew` did survive #23 as `100755`, but that was
 confirmed after the merge, not a property the merge could assume.
+
+WEB-04 found two more of the same shape, both in pull requests that were green on every lane:
+
+**A major bump can install a second major rather than replace the first.**
+[#27](https://github.com/bitoracle-ai/nodera/pull/27) raised `vite` to 8 while `vitest@3.2.7`
+depends on `vite "^5.0.0 || ^6.0.0 || ^7.0.0-0"`, so the tree ended up with Vite 8 at the top level
+and Vite 6 nested under `vitest`, `vite-node`, `@vitest/mocker` and `@vitejs/plugin-react`. Every
+lane passed, because each half was individually fine: the tests really did pass, under Vite 6, and
+the build really did succeed, under Vite 8. Nothing in CI compares the two. The check that finds it
+is one line — enumerate `*/vite/package.json` under a fresh `node_modules` and count — and it is in
+WEB-04's Verification because no lane runs it.
+
+**A tooling major can switch a gate off without failing anything — and this one actually happened
+here, in `main`'s own lane rather than in a pull request.** WEB-04 bumped `vitest` 3 → 4 because
+Vite 8 required it. Vitest 3 swept untested files into the coverage report via `coverage.all`,
+which defaulted to true; vitest 4 removed `all` and gates that sweep on `coverage.include`, which
+has **no default**. `frontend/vite.config.ts` had never set one, so for one commit the gate measured
+only files a test already imported: a wholly untested file under `src/` was absent from the report
+and `yarn test:coverage` exited 0. Every lane stayed green, because from CI's point of view nothing
+had gone wrong — the coverage numbers barely moved, since the files that vanished were the ones
+nobody had written tests for. The per-file threshold and the `all`→`include` change are independent
+settings, and only one of them is visible in a diff. What catches this shape is a paired negative
+that asserts the gate *fails*: drop an untested file in, require the error, take it out again.
+
+**Yarn 1 enforces `engines` and CI can be too new to notice.**
+[#28](https://github.com/bitoracle-ai/nodera/pull/28) raised `react-router` to 8, which declares
+`engines.node ">=22.22.0"`; `.nvmrc` said 22.20.0. Yarn 1 does not warn on that, it aborts —
+`error Found incompatible module.`, nothing linked — so every `make` target that installs would have
+failed for a contributor following the repository's own `.nvmrc`. CI passed because
+`node-version: "22"` resolved a newer 22.x on the runner. Both workflows now take
+`node-version-file: .nvmrc`, so the runner installs under the version this repository names rather
+than whatever the image happens to carry.
+
+Nothing forces a *contributor* onto that version, though, and it is worth being clear that this is
+one-sided. `.nvmrc` is a convention file: it works if someone runs `nvm use`, and does nothing
+otherwise. There is no `engine-strict` npmrc, no Volta or mise pin — the only real enforcement is
+yarn's own `engines` abort, which is the failure rather than the guard. So raising the floor is a
+change contributors have to be *told* about, which is why `CONTRIBUTING.md` and `README.md` name the
+version and point at `.nvmrc`, and why the Dockerfile pins `node:22.23-alpine` rather than the
+floating major.
 
 ## The image is verified separately
 

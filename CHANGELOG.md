@@ -51,7 +51,27 @@ evaluate is not a release.
 - Every `actions/checkout` sets `persist-credentials: false`, except the release step that pushes
   the tag.
 - Every JavaScript action pin moved to a node24 major, ahead of Node 20's removal from GitHub
-  runners on 2026-09-16. `sigstore/cosign-installer` is composite and stays on v3.
+  runners on 2026-09-16. `sigstore/cosign-installer` is composite, so no deadline reached it, but
+  it moved to v4 all the same, and v4 installs cosign 3.x — the new protobuf bundle format and
+  signatures as OCI Image 1.1 referring artifacts, both on by default.
+- All three `gradle/actions/setup-gradle` steps set `cache-provider: basic`. The default,
+  `enhanced`, is a commercial caching service under gradle.com's terms; `basic` is the
+  open-source one, and this is an MIT repository.
+- Frontend toolchain to Vite 8 with vitest 4, in one change because they cannot move apart:
+  vitest 3 depends on `vite "^5 || ^6 || ^7.0.0-0"`, so bumping Vite alone installs a second
+  major and runs the tests on one while building the product with the other. `resolutions.vite`
+  moved with it rather than being left contradicting the dependency.
+- `coverage.include` in `frontend/vite.config.ts`, without which the vitest 4 bump above silently
+  disables half the coverage gate. Vitest 3 swept untested files into the report via
+  `coverage.all`, which defaulted to true; vitest 4 removed `all` and gates the sweep on
+  `include`, which has no default. For one commit an untested file under `src/` was absent from
+  the report and `yarn test:coverage` exited 0.
+- Node floor raised to what the dependencies actually require: `.nvmrc` 22.23.2 and
+  `engines.node >=22.22.0`, with `react`/`react-dom` at `^19.2.7`. Both workflows now take the
+  version from `node-version-file: .nvmrc` instead of the major `"22"`, which had been resolving
+  above the floor by luck.
+- Frontend dependencies: `zod` 4, `react-router` 8, `react-hook-form` 7.86,
+  `@testing-library/user-event` 14.6.6.
 - One migration implementation instead of two. The Flyway *Gradle plugin* carried its own url,
   locations and placeholders beside the runtime's; `make migrate` and the CI database lane now run
   the same `migrate` entrypoint the image runs, and the migrations are packaged onto the classpath
