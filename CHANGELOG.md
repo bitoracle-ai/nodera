@@ -51,7 +51,12 @@ evaluate is not a release.
 - Every `actions/checkout` sets `persist-credentials: false`, except the release step that pushes
   the tag.
 - Every JavaScript action pin moved to a node24 major, ahead of Node 20's removal from GitHub
-  runners on 2026-09-16. `sigstore/cosign-installer` is composite and stays on v3.
+  runners on 2026-09-16. `sigstore/cosign-installer` is composite, so no deadline reached it, but
+  it moved to v4 all the same, and v4 installs cosign 3.x — the new protobuf bundle format and
+  signatures as OCI Image 1.1 referring artifacts, both on by default.
+- All three `gradle/actions/setup-gradle` steps set `cache-provider: basic`. The default,
+  `enhanced`, is a commercial caching service under gradle.com's terms; `basic` is the
+  open-source one, and this is an MIT repository.
 - One migration implementation instead of two. The Flyway *Gradle plugin* carried its own url,
   locations and placeholders beside the runtime's; `make migrate` and the CI database lane now run
   the same `migrate` entrypoint the image runs, and the migrations are packaged onto the classpath

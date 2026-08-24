@@ -6,7 +6,7 @@ status: open
 effort: ~0.5 d
 depends_on: []
 created: 2026-08-20
-updated: 2026-08-20
+updated: 2026-08-24
 note: Carries the one OPS-01 criterion that cannot be proved from inside this repository.
 ---
 
@@ -39,6 +39,21 @@ operator would use. `compose.prod.yml` ships with the release.
 What has actually been exercised: a single-architecture `amd64` image, built locally and checked by
 `scripts/verify_image.sh` (14 checks). Nothing else. In particular no image has ever been pushed, no
 attestation has ever been generated, and `cosign verify` has never run against a real signature.
+
+**The premise moved after this ticket was written.** OPS-01 held `sigstore/cosign-installer` at v3
+precisely so the release path would not meet a new cosign major untested, and `docs/ci.md` recorded
+that pin as a decision waiting for this ticket. [#21](https://github.com/bitoracle-ai/nodera/pull/21)
+merged the v4 bump anyway, and v4 defaults to `cosign-release: v3.0.6`. The first release will
+therefore sign with **cosign 3**: the new protobuf bundle format and container signatures stored as
+OCI Image 1.1 referring artifacts, both on by default. The sign and verify steps are unchanged and
+pass no format flags, and both run the same CLI on the same runner, so the in-workflow verification
+should hold. The operator half is the open question, and it is the half this ticket exists to prove.
+cosign gained the bundle format and referring-artifact storage in **2.6.0**, behind
+`--new-bundle-format`; cosign 3 only made them the default. So a verifier older than 2.6.0 cannot
+read the signature at all, a 2.6.x one reads it only when passed `--new-bundle-format=true`, and 3.x
+reads it unaided. There is no published `cosign verify` command anywhere in the tree yet — the
+release notes are generated from `CHANGELOG.md` — so this ticket writes the first one, and it has to
+carry a minimum version with it.
 
 Note also that the version this would release is a build chain and two health endpoints. There is no
 application yet. Cutting `0.1.0` is a decision about what a version number means here, not only a
@@ -74,6 +89,8 @@ test of the pipeline — see § "To decide before starting".
 - [ ] `scripts/verify_image.sh` passes against the **published** image pulled on arm64.
 - [ ] A tampered digest is **rejected** by the same `cosign verify` command — the paired negative,
       without which the acceptance above only proves the command runs.
+- [ ] The signature format the run actually produced is recorded here, and the `cosign verify`
+      command published to operators names the minimum cosign version that can read it.
 - [ ] `make check` green.
 - [ ] Independent review (phase 4, run in a sub-agent): 0 BLOCKING findings.
 

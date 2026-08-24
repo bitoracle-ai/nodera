@@ -15,6 +15,38 @@
 toolchain is migrated forward off the two majors that reddened the lane, and the application is
 still unwritten.**
 
+**The Dependabot backlog was assessed against the green `main`. Two of the four are cleared to
+merge; two are not.** All four were rebased onto `09f26f6` and re-ran there, so their green ticks are
+current rather than inherited from the red base. None of them was merged — the session that assessed
+them could not, so every merge below is still the owner's to make.
+
+- **Cleared:** [#29](https://github.com/bitoracle-ai/nodera/pull/29), the rebased replacement for the
+  conflicting #25 (`react-hook-form` 7.85→7.86, `@testing-library/user-event` 14.6.5→14.6.6), and
+  [#26](https://github.com/bitoracle-ai/nodera/pull/26) (zod 3→4). Neither touches anything that
+  runs: `react-hook-form` and `user-event` are declared but not imported anywhere under
+  `frontend/src`, and zod's generated schemas are declared but never parsed. Regenerating
+  `src/api/generated/` under zod 4 produces no diff, and every construct the generator emits was
+  exercised against zod 4.4.3 by hand. Reproducible check: build `frontend/` on `main` and on each
+  branch — all three `dist/` trees hash identically.
+- **Blocked:** [#28](https://github.com/bitoracle-ai/nodera/pull/28) (react-router 7→8) **must not
+  merge on its own.** `react-router@8.3.0` declares `engines.node ">=22.22.0"`; this repository's
+  `.nvmrc` says 22.20.0, and Yarn 1 *refuses* an engines mismatch rather than warning, so merging it
+  alone breaks `yarn install` — and with it `make check`, `make test` and `make frontend` — for
+  anyone following `.nvmrc`. It needs [WEB-04](open/WEB-04.md)'s floor bump first, or in the same
+  change.
+- **Parked:** [#27](https://github.com/bitoracle-ai/nodera/pull/27) (vite 6→8) is green and must not
+  be merged. It does not upgrade Vite, it adds a second one. [WEB-04](open/WEB-04.md) carries the
+  evidence.
+
+Review: one independent sub-agent round against the staged diff — **3 BLOCKING and 5 NON-BLOCKING,
+all fixed here.** Every BLOCKING finding was a false claim in prose that no gate can see, and two of
+the three were in this paragraph. Both factual ones were reproduced before being accepted: Yarn 1
+aborts on an `engines` mismatch rather than warning, and cosign 2.6.0 already reads the 3.x bundle
+format when passed `--new-bundle-format`. **The confirming second round was requested and did not
+return before the session ended**, so the fixes themselves carry one author's check, not two — three
+further errors were caught that way, including a wrong list of `make` targets introduced by one of
+the fixes.
+
 **[WEB-03](closed/WEB-03.md) is closed.** `main` had been red at `Frontend (React)` since two
 frontend majors were merged without the source changes they need: eslint 9→10 with
 eslint-plugin-react-hooks 5→7, and tailwindcss 3→4. Both are migrated forward rather than reverted.
@@ -83,7 +115,7 @@ their shape.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_16 open (P1 4 · P2 8 · P3 4 · P4 0) · 5 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_17 open (P1 4 · P2 9 · P3 4 · P4 0) · 5 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (4)
 
@@ -94,7 +126,7 @@ _16 open (P1 4 · P2 8 · P3 4 · P4 0) · 5 closed → [REVIEW_REPORT.md](../RE
 | [DB-01](open/DB-01.md) | Apply the baseline schema and prove row-level security with negative tests | ~2 d | — |
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
 
-### 🟠 P2 — High (8)
+### 🟠 P2 — High (9)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
@@ -106,6 +138,7 @@ _16 open (P1 4 · P2 8 · P3 4 · P4 0) · 5 closed → [REVIEW_REPORT.md](../RE
 | [OPS-02](open/OPS-02.md) | Prove the release package by cutting one | ~0.5 d | Carries the one OPS-01 criterion that cannot be proved from inside this repository. |
 | [WEB-01](open/WEB-01.md) | Frontend shell — routing, authentication, generated API client | ~2 d | API-01 |
 | [WEB-02](open/WEB-02.md) | Ticket list and detail views, mobile-first | ~3 d | WEB-01, CORE-04 |
+| [WEB-04](open/WEB-04.md) | Vite 8 needs a vitest migration, not a merge | ~1 d | Parks #27. Also carries the react-router 8 floor bump that #28 needs. |
 
 ### 🟡 P3 — Medium (4)
 

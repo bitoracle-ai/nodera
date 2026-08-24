@@ -82,13 +82,32 @@ The cost is that pins do not move on their own, so they move in a package that s
 were last moved wholesale for the Node runtime retirement — GitHub made Node 24 the runner
 default on 2026-06-16 and removes Node 20 on 2026-09-16, after which an action declaring
 `using: node20` stops running. Every JavaScript action here now declares node24.
-`sigstore/cosign-installer` is the exception: composite, so no deadline reaches it, and its next
-major installs a different cosign major under the signing steps — a decision for
-[OPS-02](../tickets/open/OPS-02.md), the package that first runs the release path.
+`sigstore/cosign-installer` is composite, so no deadline reached it, but it moved to v4 anyway in
+[#21](https://github.com/bitoracle-ai/nodera/pull/21). That was not only a pin move: v4 defaults to
+`cosign-release: v3.0.6`, and cosign 3 writes the new protobuf bundle format and stores container
+signatures as OCI Image 1.1 referring artifacts, both on by default. `release.yml` has never run, so
+this is correct by inspection only, and the operator-facing half is untested. Both halves of the
+workflow run the same CLI on the same runner, so its own verification step should hold; the reader
+is the open question. cosign gained this format in 2.6.0 behind `--new-bundle-format`, so a verifier
+older than 2.6.0 cannot read the signature at all, and a 2.6.x one reads it only when told to.
+Whatever `cosign verify` command OPS-02 publishes will therefore have to name a minimum cosign
+version — there is no such command anywhere in the tree yet.
+[OPS-02](../tickets/open/OPS-02.md) is the package that first runs the release path, and it now
+inherits that question.
 
 Resolve a pin with `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`, not with
 `git/ref/tags/<tag>`: for an annotated tag the latter returns the tag object, and `uses:` will
 never match it.
+
+## Why the Gradle cache is the basic one
+
+`gradle/actions/setup-gradle` defaults to `cache-provider: enhanced`, which its own `action.yml`
+describes as "the full-featured commercial caching service (gradle-actions-caching)" — closed
+source since v6, used under gradle.com's Terms of Use. It is free for public repositories, but it
+puts an MIT project on separate commercial terms by default and silently. All three `setup-gradle`
+steps therefore set `cache-provider: basic`, the open-source implementation over the ordinary GitHub
+Actions cache. Nothing here needs what `enhanced` adds; a build of this size is not where a cache
+provider decides the wall-clock time.
 
 ## What a Dependabot bump gets past every lane
 

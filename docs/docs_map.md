@@ -243,6 +243,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - Why the database lane runs the migrations twice
   - Why the frontend lane regenerates the API client
   - Why every action is pinned to a SHA, and when the pins move
+  - Why the Gradle cache is the basic one
   - What a Dependabot bump gets past every lane
   - The image is verified separately
   - What CI does not check

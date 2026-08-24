@@ -138,6 +138,8 @@ jobs:
           # wrapper executes arbitrary code with the job's token; this is the one
           # supply-chain check a Gradle build cannot skip.
           validate-wrappers: true
+          # Not the commercial default; see docs/ci.md § Why the Gradle cache is the basic one.
+          cache-provider: basic
 
       - name: Lint (ktlint)
         working-directory: backend
@@ -254,6 +256,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb  # v6.3.0
         with:
           validate-wrappers: true
+          # Not the commercial default; see docs/ci.md § Why the Gradle cache is the basic one.
+          cache-provider: basic
 
       - name: Apply migrations to an empty database
         working-directory: backend
