@@ -94,20 +94,22 @@ resolve react 19.2.8. **`engines` is not latent.** Yarn 1 refuses the install ou
 `engines.node` mismatch rather than warning:
 
 ```
-error react-router@8.3.0: The engine "node" is incompatible with this module.
-      Expected version ">=22.22.0". Got "20.20.0"
+error react-router@8.3.0: The engine "node" is incompatible with this module. Expected version ">=22.22.0". Got "20.20.0"
 error Found incompatible module.
 ```
 
-That is a real paste, from yarn 1.22.22 against the published package — but on Node 20.20.0, which
-is the Node the machine that ran it had, not `.nvmrc`'s. 22.20.0 fails the same `>=22.22.0` test, so
-only the trailing version differs; nobody has run it on 22.20.0 and this ticket does not claim
-otherwise. Yarn aborts before linking anything, and `yarn install --frozen-lockfile` is the first
-line of `make frontend` (Makefile:65), `make check-frontend` (:132) and `make test` (:138) — and
-`make check` depends on `check-frontend`. So once #28 lands, nobody following this repository's own
-`.nvmrc` can install the frontend, run its tests, or start its dev server. CI stays green only
-because `NODE_VERSION: "22"` resolves whatever 22.x the runner happens to carry, currently
-≥ 22.22.0 — which is luck, not a floor. **#28 must not merge before the floors below are raised.**
+That is a real paste, from yarn 1.22.22 against the published package — but on Node 20.20.0, the
+Node the machine that ran it had, not `.nvmrc`'s. Nobody has run it on 22.20.0 and this ticket does
+not claim otherwise; 22.20.0 fails the same `>=22.22.0` comparison, so only the version in the last
+field would differ.
+
+Yarn aborts before linking anything, and `yarn install --frozen-lockfile` runs from `make frontend`
+(Makefile:65), `make check-frontend` (:132) and `make test` (:138) — so it is also reached by
+`make dev`, whose last line is `$(MAKE) -j2 backend frontend` (:39), and by `make check`, which
+depends on `check-frontend`. That is every command a contributor starts with. Once #28 lands, nobody
+following this repository's own `.nvmrc` can install the frontend, run its tests, or start it. CI
+stays green only because `NODE_VERSION: "22"` resolves whatever 22.x the runner happens to carry,
+currently ≥ 22.22.0 — luck, not a floor. **#28 must not merge before the floors below are raised.**
 
 ## Approach
 

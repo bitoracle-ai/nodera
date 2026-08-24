@@ -25,9 +25,10 @@ them could not, so every merge below is still the owner's to make.
   [#26](https://github.com/bitoracle-ai/nodera/pull/26) (zod 3→4). Neither touches anything that
   runs: `react-hook-form` and `user-event` are declared but not imported anywhere under
   `frontend/src`, and zod's generated schemas are declared but never parsed. Regenerating
-  `src/api/generated/` under zod 4 produces no diff, and every construct the generator emits was
-  exercised against zod 4.4.3 by hand. Reproducible check: build `frontend/` on `main` and on each
-  branch — all three `dist/` trees hash identically.
+  `src/api/generated/` under zod 4 produces no diff — CI checks that on every run. The generated
+  file is sixteen lines and uses three constructs, `z.object`, `z.enum([…])` and `z.string()`; each
+  was run against zod 4.4.3 for parse, reject, unknown-key strip and missing-key. Reproducible
+  check: build `frontend/` on `main` and on each branch — all three `dist/` trees hash identically.
 - **Blocked:** [#28](https://github.com/bitoracle-ai/nodera/pull/28) (react-router 7→8) **must not
   merge on its own.** `react-router@8.3.0` declares `engines.node ">=22.22.0"`; this repository's
   `.nvmrc` says 22.20.0, and Yarn 1 *refuses* an engines mismatch rather than warning, so merging it
@@ -38,14 +39,14 @@ them could not, so every merge below is still the owner's to make.
   be merged. It does not upgrade Vite, it adds a second one. [WEB-04](open/WEB-04.md) carries the
   evidence.
 
-Review: one independent sub-agent round against the staged diff — **3 BLOCKING and 5 NON-BLOCKING,
-all fixed here.** Every BLOCKING finding was a false claim in prose that no gate can see, and two of
-the three were in this paragraph. Both factual ones were reproduced before being accepted: Yarn 1
-aborts on an `engines` mismatch rather than warning, and cosign 2.6.0 already reads the 3.x bundle
-format when passed `--new-bundle-format`. **The confirming second round was requested and did not
-return before the session ended**, so the fixes themselves carry one author's check, not two — three
-further errors were caught that way, including a wrong list of `make` targets introduced by one of
-the fixes.
+Review: two independent sub-agent rounds. Round one returned **CHANGES REQUIRED — 3 BLOCKING, 5
+NON-BLOCKING**; round two **APPROVED, 0 BLOCKING, 6 NON-BLOCKING**, all of which are fixed here too.
+Every BLOCKING finding was a false claim in prose that no gate can see: two sat in the cosign
+documentation, one in the #28 clearance above. Both factual ones were reproduced before being
+accepted — Yarn 1 aborts on an `engines` mismatch rather than warning, and cosign 2.6.0 already
+reads the 3.x bundle format when passed `--new-bundle-format`. Round two's findings were all of the
+same kind, including one false claim that a round-one *fix* introduced: worth knowing that
+correcting prose in this repository reliably produces more of it.
 
 **[WEB-03](closed/WEB-03.md) is closed.** `main` had been red at `Frontend (React)` since two
 frontend majors were merged without the source changes they need: eslint 9→10 with

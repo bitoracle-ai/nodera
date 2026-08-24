@@ -48,12 +48,22 @@ therefore sign with **cosign 3**: the new protobuf bundle format and container s
 OCI Image 1.1 referring artifacts, both on by default. The sign and verify steps are unchanged and
 pass no format flags, and both run the same CLI on the same runner, so the in-workflow verification
 should hold. The operator half is the open question, and it is the half this ticket exists to prove.
-cosign gained the bundle format and referring-artifact storage in **2.6.0**, behind
-`--new-bundle-format`; cosign 3 only made them the default. So a verifier older than 2.6.0 cannot
-read the signature at all, a 2.6.x one reads it only when passed `--new-bundle-format=true`, and 3.x
-reads it unaided. There is no published `cosign verify` command anywhere in the tree yet — the
-release notes are generated from `CHANGELOG.md` — so this ticket writes the first one, and it has to
-carry a minimum version with it.
+Neither the format nor the flag is new in 3. The bundle specification arrived in **2.5.0** for
+`cosign attest`, behind `--new-bundle-format`; **2.6.0** brought it to `cosign sign` together with
+referring-artifact storage. Cosign 3 only made them the default. For a *container signature*, which
+is what this workflow produces, 2.6.0 is therefore the floor: a 2.6.x verifier reads it when passed
+`--new-bundle-format=true`, and 3.x reads it unaided.
+
+**One inference to check rather than inherit:** that a verifier older than 2.6.0 cannot read it *at
+all* follows from the changelog rather than from any statement in it. What would falsify it is
+cosign 3 additionally writing a legacy `sha256-<digest>.sig` tag; no such claim was found, but
+absence of a claim is not a check. The inference errs safe — the cost of being wrong is publishing a
+higher minimum than necessary, never an operator trusting a signature they cannot actually verify —
+so the run this ticket performs should settle it by trying an old client rather than reasoning again.
+
+There is no published `cosign verify` command anywhere in the tree — the only one is the workflow's
+own self-check, and the release notes are generated from `CHANGELOG.md`. So this ticket writes the
+first one, and it has to carry a minimum version with it.
 
 Note also that the version this would release is a build chain and two health endpoints. There is no
 application yet. Cutting `0.1.0` is a decision about what a version number means here, not only a

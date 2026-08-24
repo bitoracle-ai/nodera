@@ -179,9 +179,10 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: cosign sign --yes "ghcr.io/${{ github.repository }}@${DIGEST}"
 
-      # Signing without verifying is ceremony. This proves the signature is checkable with the
-      # exact command the release notes hand to an operator, at the moment it is made — rather
-      # than leaving the first real check to whoever first doubts the image.
+      # Signing without verifying is ceremony. This checks the signature at the moment it is made,
+      # rather than leaving the first real check to whoever first doubts the image. It is not the
+      # published operator command — there is none yet; OPS-02 writes it, with a minimum cosign
+      # version, since cosign 3 signs in a format 2.6.x reads only when asked and older cannot.
       - name: Verify the signature the way an operator would
         env:
           DIGEST: ${{ steps.build.outputs.digest }}

@@ -91,7 +91,8 @@ workflow run the same CLI on the same runner, so its own verification step shoul
 is the open question. cosign gained this format in 2.6.0 behind `--new-bundle-format`, so a verifier
 older than 2.6.0 cannot read the signature at all, and a 2.6.x one reads it only when told to.
 Whatever `cosign verify` command OPS-02 publishes will therefore have to name a minimum cosign
-version — there is no such command anywhere in the tree yet.
+version. None is published yet: the only `cosign verify` in the tree is the workflow's own
+self-check, and the release notes are generated from `CHANGELOG.md`, which carries no such line.
 [OPS-02](../tickets/open/OPS-02.md) is the package that first runs the release path, and it now
 inherits that question.
 
