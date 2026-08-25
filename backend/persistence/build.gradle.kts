@@ -29,7 +29,10 @@ dependencies {
 // actually runs in production, and the copy that drifts is always the one CI does not exercise.
 // A single location also means "which migration ran" has exactly one answer, and that question only
 // ever gets asked during an incident.
-val migrationsDir = rootProject.layout.projectDirectory.dir("../db/migrations").asFile
+val migrationsDir =
+    rootProject.layout.projectDirectory
+        .dir("../db/migrations")
+        .asFile
 
 // Gradle treats a missing `from` directory as a no-op. Without this check, a build whose context
 // lacks db/migrations would produce an image whose `migrate` command applies nothing and reports

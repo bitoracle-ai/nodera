@@ -75,6 +75,7 @@ jobs:
       - name: Repository gates
         run: |
           python scripts/lint_executable_bits.py
+          python scripts/lint_line_endings.py
           python scripts/docs_list.py
           python scripts/generate_docs_map.py --check
           python scripts/check_tickets.py --check
@@ -82,6 +83,7 @@ jobs:
           python scripts/lint_docs_index.py
           python scripts/lint_language.py
           python scripts/lint_workflow_triggers.py
+          python scripts/lint_invariants.py --self-test
           python scripts/lint_invariants.py
           python scripts/lint_sql.py
 

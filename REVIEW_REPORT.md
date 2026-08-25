@@ -8,10 +8,11 @@ Generated from ticket frontmatter: `python scripts/tickets_index.py --write`.
 
 <!-- BEGIN GENERATED: closed tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_6 closed work packages, newest first._
+_7 closed work packages, newest first._
 
 | ID | Title | Closed |
 |---|---|---|
+| [CORE-01](tickets/closed/CORE-01.md) | Actor model and permission engine in the domain core | 2026-08-25 |
 | [WEB-04](tickets/closed/WEB-04.md) | Vite 8 needs a vitest migration, not a merge | 2026-08-24 |
 | [WEB-03](tickets/closed/WEB-03.md) | Frontend toolchain majors that need a migration, not a merge | 2026-08-24 |
 | [OPS-03](tickets/closed/OPS-03.md) | Operate the production surface: deploy runbook and a restore that has been walked | 2026-08-24 |

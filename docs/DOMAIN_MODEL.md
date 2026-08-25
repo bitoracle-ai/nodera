@@ -127,12 +127,20 @@ Two layers. Roles are the ergonomic surface; capabilities are what is actually c
 **`project_membership`** — `(project_id, actor_id)` unique, plus `role`, `granted_by_actor_id`,
 `expires_at`.
 
-| Role | Default capabilities |
+Every member holds `project.read` and `actor.read`: they are the floor a role stands on rather than
+something that distinguishes one role from another, and a member who can read a ticket but not reach
+the project it is in, or resolve a mention target, cannot use the verbs it does hold. The sets are
+strictly nested, `observer ⊂ contributor ⊂ maintainer ⊂ owner`.
+
+| Role | Default capabilities, on top of `project.read` and `actor.read` |
 |---|---|
 | `owner` | everything, including `project.admin` and `member.grant` |
-| `maintainer` | all ticket and comment verbs, `review.submit`, `ticket.close` |
-| `contributor` | `ticket.read/create/update`, `comment.create`, `ticket.transition` (not `close`) |
+| `maintainer` | contributor **+** `ticket.close`, `ticket.assign`, `comment.moderate`, `review.submit`, `audit.read` |
+| `contributor` | observer **+** `ticket.create`, `ticket.update`, `ticket.transition` (not `close`), `ticket.assign_self`, `comment.create` |
 | `observer` | `ticket.read`, `comment.read` |
+
+The authoritative list is `ProjectRole.defaultCapabilities()` in `:domain`, whose KDoc records why
+`ticket.assign_self` sits at contributor and `audit.read` at maintainer.
 
 **`capability_grant`** — `(project_id, actor_id, capability)` with `granted_by_actor_id` and an
 optional `expires_at`. Grants add or remove individual verbs on top of the role.

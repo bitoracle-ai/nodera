@@ -21,14 +21,15 @@ import org.slf4j.LoggerFactory
  * So the guarantee is asserted where it is actually decided: on the appender. Remove
  * `<target>System.err</target>` from `logback.xml` and this goes red.
  */
-class LoggingTargetTest : StringSpec({
+class LoggingTargetTest :
+    StringSpec({
 
-    "the console appender writes to stderr, leaving stdout to the MCP framing channel" {
-        val context = LoggerFactory.getILoggerFactory() as LoggerContext
-        val root = context.getLogger(Logger.ROOT_LOGGER_NAME)
-        val console = root.getAppender("console") as? ConsoleAppender<*>
+        "the console appender writes to stderr, leaving stdout to the MCP framing channel" {
+            val context = LoggerFactory.getILoggerFactory() as LoggerContext
+            val root = context.getLogger(Logger.ROOT_LOGGER_NAME)
+            val console = root.getAppender("console") as? ConsoleAppender<*>
 
-        console.shouldNotBeNull()
-        console.target shouldBe "System.err"
-    }
-})
+            console.shouldNotBeNull()
+            console.target shouldBe "System.err"
+        }
+    })

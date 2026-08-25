@@ -32,3 +32,4 @@ A plan that lists only files is a checklist. The justification is the part worth
 | Plan | Status |
 |---|---|
 | [`OPS-01.md`](OPS-01.md) — build chain and release package | `implemented` |
+| [`CORE-01.md`](CORE-01.md) — actor model and permission engine | `implemented` |

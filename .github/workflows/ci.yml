@@ -99,6 +99,13 @@ jobs:
 
       # Invariant #1 of skills/critical-invariants.md, as an executable sweep rather
       # than a hope: no code path may branch on actor kind to decide a permission.
+      #
+      # The self-test runs first and is not ceremony: a linter nobody has watched fire is
+      # an assertion. It sweeps fixtures that must be found and fixtures that must not, so
+      # a regex broken by a later edit fails here rather than going quietly permissive.
+      - name: Critical-invariant firewall fires (paired negative)
+        run: python scripts/lint_invariants.py --self-test
+
       - name: Critical-invariant firewall (actor kind never gates permission)
         run: python scripts/lint_invariants.py
 

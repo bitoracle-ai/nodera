@@ -87,6 +87,9 @@ check-repo: ## Executable bits, line endings, docs, tickets, adapters, language,
 	$(PY) scripts/lint_docs_index.py
 	$(PY) scripts/lint_language.py
 	$(PY) scripts/lint_workflow_triggers.py
+# The paired negative first: a sweep that has never been seen to fire is an assertion, not
+# a gate, and this one guards the invariant the whole product rests on.
+	$(PY) scripts/lint_invariants.py --self-test
 	$(PY) scripts/lint_invariants.py
 # The same grep the CI repo-checks lane runs (ci.yml "No TODO/FIXME comments") — keep the
 # pattern, includes and paths byte-identical to it, or the two drift. One deliberate delta:

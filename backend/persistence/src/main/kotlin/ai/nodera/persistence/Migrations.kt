@@ -47,22 +47,28 @@ private sealed interface PrivilegeCheck {
 
     data object Denied : PrivilegeCheck
 
-    data class Unavailable(val category: String) : PrivilegeCheck
+    data class Unavailable(
+        val category: String,
+    ) : PrivilegeCheck
 }
 
 /** Connection settings for one database. Held only as long as a command needs them. */
-data class DatabaseSettings(
+public data class DatabaseSettings(
     val url: String,
     val user: String,
     val password: String,
 )
 
 /** The result of applying migrations — a value, because the caller is a command, not a stack. */
-sealed interface MigrationOutcome {
-    data class Applied(val count: Int) : MigrationOutcome
+public sealed interface MigrationOutcome {
+    public data class Applied(
+        val count: Int,
+    ) : MigrationOutcome
 
     /** @param reason safe to print: the role password has been redacted out of it. */
-    data class Failed(val reason: String) : MigrationOutcome
+    public data class Failed(
+        val reason: String,
+    ) : MigrationOutcome
 }
 
 /**
@@ -72,15 +78,19 @@ sealed interface MigrationOutcome {
  * unauthenticated health endpoint, and a driver exception string routinely contains the host, the
  * port and the connecting user.
  */
-sealed interface SchemaState {
+public sealed interface SchemaState {
     /** Every migration in this build has been applied. */
-    data object UpToDate : SchemaState
+    public data object UpToDate : SchemaState
 
     /** The database is readable and [count] migrations from this build have not been applied. */
-    data class Pending(val count: Int) : SchemaState
+    public data class Pending(
+        val count: Int,
+    ) : SchemaState
 
     /** The database could not be read at all. Fail closed: this is never treated as up to date. */
-    data class Unreachable(val category: String) : SchemaState
+    public data class Unreachable(
+        val category: String,
+    ) : SchemaState
 }
 
 /**
@@ -95,7 +105,9 @@ sealed interface SchemaState {
  * here goes through [redactSecret] first — see that function for what redaction does and does not
  * buy, since Flyway Core does not quote the failing statement by default.
  */
-class Migrator(private val settings: DatabaseSettings) {
+public class Migrator(
+    private val settings: DatabaseSettings,
+) {
     /**
      * Applies every outstanding migration, after checking that this role is allowed to.
      *
@@ -108,7 +120,7 @@ class Migrator(private val settings: DatabaseSettings) {
      * @param appRolePassword substituted into `V4`'s `create role`. Required, because a role created
      *   with a guessable password is the failure mode the placeholder exists to prevent.
      */
-    fun apply(appRolePassword: String): MigrationOutcome =
+    public fun apply(appRolePassword: String): MigrationOutcome =
         when (val privilege = canCreateObjects()) {
             is PrivilegeCheck.Granted -> runMigrations(appRolePassword)
 
@@ -131,9 +143,14 @@ class Migrator(private val settings: DatabaseSettings) {
      * that cannot read the history table does not know the schema is current, and "unknown" must
      * never render as "ready".
      */
-    fun state(): SchemaState =
+    public fun state(): SchemaState =
         try {
-            val pending = flyway().load().info().pending().size
+            val pending =
+                flyway()
+                    .load()
+                    .info()
+                    .pending()
+                    .size
             if (pending == 0) SchemaState.UpToDate else SchemaState.Pending(pending)
         } catch (e: FlywayException) {
             SchemaState.Unreachable(category = e.javaClass.simpleName)

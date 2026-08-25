@@ -57,6 +57,11 @@ First parameter, every use case, no exceptions. Not a thread-local, not a corout
 not a request-scoped singleton. Making it a parameter is what makes "who is acting" impossible to
 forget and the permission check impossible to skip silently.
 
+**Use cases live in `application/src/main/kotlin/ai/nodera/application/<area>/usecase/`.** That path
+is the one `scripts/lint_invariants.py` scans for this rule, so it is a location convention with
+teeth: a use case placed elsewhere is unchecked rather than exempt. `PermissionService` and the ports
+are not use cases and sit beside those directories, not in them.
+
 **Context parameters are a deliberate no**, and this is recorded because someone will reasonably
 propose them. Kotlin 2.4 made them stable and they look purpose-built for exactly this. They are
 still refused: their whole value is that the dependency stops appearing at the **call site**, and the

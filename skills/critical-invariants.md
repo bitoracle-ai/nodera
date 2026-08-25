@@ -40,9 +40,13 @@ is why none of them actually deliver it. The moment the branch exists, agents ar
 and every other invariant here is decoration. If an agent genuinely must not close tickets *in a given
 project*, that is a capability grant, and it is expressed as one.
 
-Enforced by: `scripts/lint_invariants.py` (a **regex line scan** for `kind` comparisons outside
-display and audit modules — not an AST sweep) plus review. Two shapes the scan cannot see are
-therefore explicit reviewer duties: a `when (actor.kind) { AGENT -> … }` branch, and a comparison
+Enforced by: `scripts/lint_invariants.py` (a **regex line scan**, not an AST sweep) plus review. It
+covers three shapes outside display and audit modules — the `kind` comparison above, a
+`when (actor.kind) { AGENT -> … }` branch, and `is AgentActor` / `is HumanActor`, which is the same
+branch written through the sealed `Actor` hierarchy. `--self-test` proves the sweep still fires and
+runs in the same gate; a regex that stops matching is otherwise a silently permissive gate.
+
+**One shape remains an explicit reviewer duty**, because a line scan cannot follow it: a comparison
 through an aliased kind (`val k = actor.kind; if (k == …)`).
 
 ## 2. One permission engine

@@ -5,7 +5,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /** A configuration value is missing, ambiguous or unusable. Always fatal; never a warning. */
-class ConfigurationError(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+internal class ConfigurationError(
+    message: String,
+    cause: Throwable? = null,
+) : RuntimeException(message, cause)
 
 /**
  * Suffix for the file-backed form of any variable. Docker Secrets, Kubernetes Secrets and Vault all
@@ -29,7 +32,7 @@ private const val DEFAULT_STATIC_ROOT = "static"
  * environment or the real filesystem — a configuration loader that can only be exercised by
  * mutating the process environment is a loader nobody writes negative tests for.
  */
-class Environment(
+internal class Environment(
     private val variables: Map<String, String>,
     private val readFile: (String) -> String = { path -> Files.readString(Path.of(path)) },
 ) {
@@ -38,13 +41,13 @@ class Environment(
      *   deliberately no default: invariant #6 is that a missing required value refuses start-up,
      *   because a warning in a log nobody reads is how a system runs on a development signing key.
      */
-    fun required(name: String): String =
+    internal fun required(name: String): String =
         resolve(name) ?: throw ConfigurationError(
             "$name is not set. Set it, or set $name$FILE_SUFFIX to a file containing it. " +
                 "Nodera refuses to start rather than fall back to a guessable value.",
         )
 
-    fun optional(
+    internal fun optional(
         name: String,
         default: String,
     ): String = resolve(name) ?: default
@@ -88,16 +91,27 @@ class Environment(
 }
 
 /** Connection settings. Required by every command that talks to the database. */
-data class DatabaseConfig(val url: String, val user: String, val password: String)
+internal data class DatabaseConfig(
+    val url: String,
+    val user: String,
+    val password: String,
+)
 
 /**
  * @param appRolePassword substituted into `V4`'s `create role nodera_app`. Required for `migrate`
  *   and for nothing else, which is why it is not part of [ServeConfig]: the serving process must
  *   never hold a credential it has no use for.
  */
-data class MigrateConfig(val database: DatabaseConfig, val appRolePassword: String)
+internal data class MigrateConfig(
+    val database: DatabaseConfig,
+    val appRolePassword: String,
+)
 
-data class ServeConfig(val database: DatabaseConfig, val httpPort: Int, val staticRoot: String)
+internal data class ServeConfig(
+    val database: DatabaseConfig,
+    val httpPort: Int,
+    val staticRoot: String,
+)
 
 /**
  * Configuration is loaded **per command**, not once for the process.
@@ -107,21 +121,21 @@ data class ServeConfig(val database: DatabaseConfig, val httpPort: Int, val stat
  * demanding every secret, which trains operators to supply credentials to processes that do not use
  * them — the opposite of what the privilege split in `V4` is for.
  */
-object Configuration {
-    fun database(env: Environment): DatabaseConfig =
+internal object Configuration {
+    internal fun database(env: Environment): DatabaseConfig =
         DatabaseConfig(
             url = env.required("NODERA_DB_URL"),
             user = env.required("NODERA_DB_USER"),
             password = env.required("NODERA_DB_PASSWORD"),
         )
 
-    fun migrate(env: Environment): MigrateConfig =
+    internal fun migrate(env: Environment): MigrateConfig =
         MigrateConfig(
             database = database(env),
             appRolePassword = env.required("NODERA_APP_PASSWORD"),
         )
 
-    fun serve(env: Environment): ServeConfig {
+    internal fun serve(env: Environment): ServeConfig {
         val port = env.optional("NODERA_HTTP_PORT", DEFAULT_HTTP_PORT.toString())
         return ServeConfig(
             database = database(env),

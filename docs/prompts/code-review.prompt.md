@@ -61,9 +61,10 @@ ACCEPTANCE CRITERIA
 
 - Any conditional that mentions `actor.kind`. Is it describing something to a reader, or deciding
   what is permitted? The second is BLOCKING, always.
-- The two shapes `scripts/lint_invariants.py` cannot see (it is a regex line scan, not an AST
-  sweep): a `when (actor.kind) { … }` branch deciding behaviour, and a kind comparison through
-  an aliased variable. Catching these is the reviewer's duty, not the linter's.
+- The one shape `scripts/lint_invariants.py` cannot see (it is a regex line scan, not an AST
+  sweep): a kind comparison through an aliased variable (`val k = actor.kind; if (k == …)`).
+  Catching that is the reviewer's duty, not the linter's. The sweep does cover the direct
+  comparison, `when (actor.kind) { … }`, and `is HumanActor` / `is AgentActor`.
 - A permission check that exists on one surface and not the other.
 - An audit write outside the mutation's transaction, or a mutation with no audit write at all.
 - A safety claim with no paired-negative test — a test demonstrably red when the guard is disabled.

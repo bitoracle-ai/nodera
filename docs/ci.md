@@ -48,7 +48,8 @@ too, which is exactly the kind that tempts people to skip the heavy lanes.
 | Documentation discoverability | `scripts/lint_docs_index.py` | A document unreachable from the hub, a dead relative link |
 | Repository language | `scripts/lint_language.py` | Non-English prose outside an allowlisted, reasoned exception |
 | Release stays manual | `scripts/lint_workflow_triggers.py` | An event trigger added to `release.yml` |
-| Invariant firewall | `scripts/lint_invariants.py` | A permission decision branching on actor kind; SQL interpolation; a second `PermissionService` |
+| Invariant firewall fires | `scripts/lint_invariants.py --self-test` | The sweep below having stopped firing — fixtures that must be found and fixtures that must not, so a regex broken by a later edit fails here instead of going quietly permissive |
+| Invariant firewall | `scripts/lint_invariants.py` | A permission decision branching on actor kind, in any of its three shapes; SQL interpolation; a second `PermissionService`; a use case that does not take `ActorContext` first |
 | No TODO/FIXME | inline `grep` | A finding hidden in a comment |
 
 ## The database lane runs the same migrator the image runs

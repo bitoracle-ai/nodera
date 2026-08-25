@@ -15,8 +15,8 @@ import kotlinx.serialization.Serializable
  * question and `:app` supplies the answer, which is the same direction every other dependency in
  * this codebase points.
  */
-fun interface ReadinessProbe {
-    suspend fun check(): ReadinessReport
+public fun interface ReadinessProbe {
+    public suspend fun check(): ReadinessReport
 }
 
 /**
@@ -24,13 +24,23 @@ fun interface ReadinessProbe {
  *   unauthenticated endpoint, and exception strings routinely carry the host, the port and the
  *   connecting user.
  */
-data class ReadinessReport(val ready: Boolean, val detail: String)
+public data class ReadinessReport(
+    val ready: Boolean,
+    val detail: String,
+)
 
 @Serializable
-data class LivenessResponse(val status: String, val version: String)
+public data class LivenessResponse(
+    val status: String,
+    val version: String,
+)
 
 @Serializable
-data class ReadinessResponse(val status: String, val version: String, val detail: String)
+public data class ReadinessResponse(
+    val status: String,
+    val version: String,
+    val detail: String,
+)
 
 private const val ALIVE = "alive"
 private const val READY = "ready"
@@ -45,7 +55,7 @@ private const val NOT_READY = "not_ready"
  * loop. Readiness is the signal that removes an instance from rotation; liveness is the signal that
  * destroys it, and conflating them is the most common way a correct deployment fails under load.
  */
-fun Route.healthRoutes(
+public fun Route.healthRoutes(
     version: String,
     probe: ReadinessProbe,
 ) {

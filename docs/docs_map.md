@@ -277,6 +277,27 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - When something is wrong
   - What must never happen
 
+## `docs/plan/CORE-01.md`
+
+- Plan — CORE-01 · Actor model and permission engine in the domain core
+  - 1. What phase 1 found, and where it differs from the ticket
+  - 2. Ordering, because one criterion is about ordering
+  - 3. The domain types
+    - 3.1 `ai.nodera.domain.actor`
+    - 3.2 `ai.nodera.domain.permission`
+  - 4. The permission engine
+    - 4.1 The resolution rule
+    - 4.2 The one genuine design decision: what terminates the chain
+    - 4.3 Why there is one bound and not two
+    - 4.4 Actor status is part of attenuation, deliberately
+    - 4.5 `require` returns a value
+  - 5. `scripts/lint_invariants.py` — three changes
+  - 6. Test plan
+    - 6.1 The paired negatives
+  - 7. Deliberate non-goals
+  - 8. What implementation found that this plan did not predict
+  - 9. Open questions, each with a recommendation
+
 ## `docs/plan/OPS-01.md`
 
 - Plan — OPS-01 · Build chain and release package

@@ -27,7 +27,9 @@ Full reference: [`../skills/backend-kotlin.md`](../skills/backend-kotlin.md) ·
 
 1. **`ActorContext` is the first parameter of every use case.** Never ambient, never a
    thread-local, never a coroutine context element. Making it a parameter is what makes the
-   permission check impossible to skip silently.
+   permission check impossible to skip silently. **Use cases live in
+   `application/src/main/kotlin/ai/nodera/application/<area>/usecase/`** — that path is what
+   `scripts/lint_invariants.py` scans, so a use case outside it is unchecked rather than exempt.
 2. **Adapters translate, they do not decide.** No permission decision, no state transition, no
    audit write, no SQL in `:api-rest` or `:api-mcp`.
 3. **The transaction boundary is the use case**, in `:application`. The audit event is written

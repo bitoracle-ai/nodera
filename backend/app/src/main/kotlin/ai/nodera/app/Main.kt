@@ -21,7 +21,9 @@ internal val buildVersion: String = System.getProperty("nodera.version") ?: "unk
  * One image, three entrypoints (ADR-0006). The same artefact is the API container, the migration job
  * and the agent-spawned stdio server, which is what makes "one artefact" a fact rather than a claim.
  */
-internal enum class Command(val argument: String) {
+internal enum class Command(
+    val argument: String,
+) {
     SERVE("serve"),
     MIGRATE("migrate"),
     MCP_STDIO("mcp-stdio"),
@@ -36,7 +38,7 @@ private fun usage(): String =
       mcp-stdio   Model Context Protocol server over stdio, for an agent-spawned process
     """.trimIndent()
 
-fun main(args: Array<String>) {
+public fun main(args: Array<String>) {
     exitProcess(dispatch(args, Environment(System.getenv()), System.out, System.err))
 }
 

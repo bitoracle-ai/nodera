@@ -19,6 +19,14 @@ subprojects {
 
     extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {
         jvmToolchain(21)
+
+        // Explicit API mode, strict. With six modules and an enforced dependency direction,
+        // "what is public" is an architectural question, so it is made a compiler question:
+        // every public declaration states its visibility and its return type, and a module's
+        // surface can never widen by type inference. Test sources are exempt by design — the
+        // Kotlin plugin excludes them, and a test's API surface is nobody's contract.
+        explicitApi()
+
         compilerOptions {
             // Warnings are errors. A warning nobody fixes is a warning everybody stops
             // reading, and the one that mattered arrives in the same colour as the rest.
@@ -188,16 +196,42 @@ tasks.register("check") {
     dependsOn("checkModuleBoundaries")
 }
 
-ktlint {
-    version.set("1.5.0")
-    android.set(false)
-    outputToConsole.set(true)
-    filter { exclude("**/generated/**") }
-}
+// ---------------------------------------------------------------------------
+// Style gates — configured for EVERY project, not only this one
+// ---------------------------------------------------------------------------
+// `allprojects` rather than a bare `ktlint { }` / `detekt { }` here, and that is the whole
+// point of this block. A configuration block at the top level of the root build script
+// configures the ROOT project's extension only; the six modules apply the same plugins in
+// `subprojects` above and were therefore getting their own extensions, with defaults.
+//
+// Both settings below had never reached a single module (found in CORE-01, the first package
+// whose code sits between the configured values and the defaults):
+//
+//   * `backend/detekt.yml` — committed, documented, named in backend/CLAUDE.md — was not
+//     loaded. Detekt reported its own default thresholds while the file said something else.
+//   * The ktlint pin was not applied either: the modules ran ktlint **1.0.1**, the version
+//     ktlint-gradle defaults to, rather than the 1.5.0 named right here. Making the pin real
+//     is why this change reformats files it does not otherwise touch: the rule changes
+//     between 1.0.1 and 1.5.0 all arrive at once.
+//
+// Same dead-guard shape as the executable bit in CI-01 and the boundary check in OPS-01:
+// present, named, and doing nothing.
+//
+// It runs after `subprojects` deliberately: the plugins have to be applied before their
+// extensions can be configured, and the root's own `*.kts` files are covered by the same
+// pass rather than by a second copy of these values.
+allprojects {
+    extensions.configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+        version.set("1.5.0")
+        android.set(false)
+        outputToConsole.set(true)
+        filter { exclude("**/generated/**") }
+    }
 
-detekt {
-    buildUponDefaultConfig = true
-    allRules = false
-    config.setFrom(files("$rootDir/detekt.yml"))
-    parallel = true
+    extensions.configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
+        buildUponDefaultConfig = true
+        allRules = false
+        config.setFrom(files("$rootDir/detekt.yml"))
+        parallel = true
+    }
 }

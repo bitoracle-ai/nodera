@@ -11,9 +11,28 @@
 
 ## Status (hand-maintained)
 
-**2026-08-24 — the production surface has a runbook and a restore that was walked, the frontend
-toolchain is migrated forward off the two majors that reddened the lane, and the application is
-still unwritten.**
+**2026-08-25 — [CORE-01](closed/CORE-01.md) is closed, and it is the first application code in the
+repository.** `:domain` holds the actor model — one participant type, two subtypes, nothing branching
+on which — and `:application` holds `PermissionService`, the single engine both surfaces will call.
+64 backend tests, 0 failures. Full record in the ticket; the reasoning, including what was rejected,
+in [`docs/plan/CORE-01.md`](../docs/plan/CORE-01.md).
+
+**What still does not exist:** any persistence for it. `PermissionDirectory` is a port with no
+implementation, so nothing in this package has run against a database — that is DB-01's, and it is
+the next package.
+
+Two findings from that package are worth carrying, because both are the same shape as CI-01's and
+OPS-01's. **A permission engine's bounds are part of its semantics:** the first implementation walked
+the grantor chain under a shared work budget spent in row order, and phase-4 review proved that
+*breaking* a grantor could then free budget to reach another — so removing authority granted a
+capability. Rewritten as a least fixed point over the grantor closure; monotonicity is now a theorem
+with a committed regression test, and there is no budget to get wrong. **And `backend/detekt.yml` and
+the ktlint 1.5.0 pin had never applied to any module** — a configuration block at the top level of
+the root build script configures the root project only, so six modules were linted by ktlint 1.0.1 on
+detekt's defaults. Committed, documented, and inert. Fixing it reformats seven pre-existing files.
+
+**2026-08-24 — the production surface has a runbook and a restore that was walked, and the frontend
+toolchain is migrated forward off the two majors that reddened the lane.**
 
 **[WEB-04](closed/WEB-04.md) is closed, and the Dependabot backlog is empty of content.** All four
 open pull requests — [#26](https://github.com/bitoracle-ai/nodera/pull/26) zod 4,
@@ -126,11 +145,14 @@ their shape.
 
 ## Working order
 
-1. **[CORE-01](open/CORE-01.md)** — the actor model and the permission engine. Everything else
-   references it, so it goes first and it goes in carefully.
-2. **[DB-01](open/DB-01.md)** → **[CORE-02](open/CORE-02.md)** — schema applied and the audit
-   recorder wired, in that order: the audit invariant is unenforceable without the privilege
-   split the migration creates.
+[CORE-01](closed/CORE-01.md) is done, so the order now starts one step in.
+
+1. **[DB-01](open/DB-01.md)** — the schema applied and row-level security proved by negative tests.
+   It depends on nothing and everything else depends on it, including the `PermissionDirectory`
+   implementation CORE-01 left as a port.
+2. **[CORE-02](open/CORE-02.md)** and **[SEC-01](open/SEC-01.md)** — the audit recorder and
+   credentials, both after DB-01: the audit invariant is unenforceable without the privilege split
+   the migration creates.
 3. **[API-01](open/API-01.md)** and **[MCP-01](open/MCP-01.md)** — the two surfaces, built against
    the same use cases. MCP-01 depends on API-01 only for the shared error mapping, not for logic.
 4. Everything after that is ordered by the table below.
@@ -139,13 +161,12 @@ their shape.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_16 open (P1 4 · P2 8 · P3 4 · P4 0) · 6 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_15 open (P1 3 · P2 8 · P3 4 · P4 0) · 7 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
-### 🔴 P1 — Highest (4)
+### 🔴 P1 — Highest (3)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
-| [CORE-01](open/CORE-01.md) | Actor model and permission engine in the domain core | ~3 d | Everything references this — nothing else starts before it is reviewed. |
 | [CORE-02](open/CORE-02.md) | Audit recorder — one event per mutation, in the mutation's transaction | ~2 d | CORE-01, DB-01 |
 | [DB-01](open/DB-01.md) | Apply the baseline schema and prove row-level security with negative tests | ~2 d | — |
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |

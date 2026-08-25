@@ -7,6 +7,8 @@ applyTo: "backend/**"
 - Dependencies point inward only: `:domain` <- `:application` <- adapters. The `:domain` module is
   framework-free (no Ktor, no SQL, no JSON, no logging framework) and the build enforces it.
 - Every use case takes `ActorContext` as its FIRST parameter. Never ambient, never a thread-local.
+  Use cases live in `application/src/main/kotlin/ai/nodera/application/<area>/usecase/` — that path is
+  what `scripts/lint_invariants.py` scans, so one placed elsewhere is unchecked rather than exempt.
 - Adapters (`:api-rest`, `:api-mcp`) never decide permissions, never transition domain state, never
   write audit events and never issue SQL.
 - Never branch on `actor.kind` to decide what is permitted. It is for display and audit only.
