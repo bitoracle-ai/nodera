@@ -131,6 +131,9 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - 9. The closure protocol
   - 10. Plans
   - 11. Retrospectives
+  - 12. Committing
+    - Pushing is not part of it
+    - The subject line
 
 ## `docs/VISION.md`
 

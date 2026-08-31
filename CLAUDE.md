@@ -57,7 +57,16 @@ Load on demand — not permanently in context.
   reason, or ticket it per `docs/PROJECT_MANAGEMENT.md` § 8.
 - **English only** in everything committed. Speak German with me if you like; write English into the
   repository.
-- `git commit` only when I ask. **Never `git push`** unless I ask in that turn.
+- **Commit when the work is done, without being asked** — a finished package or task goes onto the
+  current branch once its gates are green, its review has passed and, for a ticketed package,
+  closure is complete. Never mid-task, never on a red gate, never on unreviewed work, never if I
+  said not to. Subjects you author start with **🤖**: `🤖 <type>(<area>): <ID> — <summary>`.
+  **Never `git push`** unless I ask in that turn — same for deploying, releasing and publishing.
+  `docs/PROJECT_MANAGEMENT.md` § 12.
+- **Comments minimal** — only at critical or genuinely complex spots, lean even there; rationale
+  goes in the ticket, the ADR or `docs/`. **Do not imitate the tree**: several migrations and Kotlin
+  files carry paragraph-length commentary written before this rule. They are not the standard.
+  `docs/AI_COLLABORATION.md` § 1.
 - Tool entry files (this one and the other adapters listed in `docs/INDEX.md`) change only inside an
   explicit work package, never in passing.
 
@@ -105,8 +114,8 @@ Windows gotcha: run the gate scripts with `py` (`py scripts/lint_adapters.py`) o
 
 | I say | You do |
 |---|---|
-| "done" | Closure per `docs/PROJECT_MANAGEMENT.md` § 9: criteria checked, gates green, review recorded, ticket moved, views regenerated. |
-| "commit" | Stage + commit the current branch, conventional message. Never push. |
+| "done" | Closure per `docs/PROJECT_MANAGEMENT.md` § 9: criteria checked, gates green, review recorded, ticket moved, views regenerated — **and committed**, § 12. |
+| "commit" | Stage + commit the current branch, `🤖` subject. Never push. (You do not need me to say it — see the rule above.) |
 | "review" | Phase-4 via the `reviewer` subagent (`/nodera-review`). |
 | "push" / "deploy" | Deliberately undefined — stop and ask; I act. |
 

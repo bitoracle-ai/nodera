@@ -215,8 +215,7 @@ All steps mandatory.
 6. **Regenerate views:** `python scripts/tickets_index.py --write`.
 7. **Update hand-written mentions** — if the INDEX head links the ticket as `open/<ID>.md`, repoint it.
 8. **`python scripts/check_tickets.py --check` green.**
-9. **Propose a commit message** (`feat(<area>): <ID> — <short description>`). Commit only when the user
-   asks; never push unasked.
+9. **Commit it** — § 12. Closure ends in a commit on the current branch, not in a proposal.
 
 ## 10. Plans
 
@@ -230,3 +229,38 @@ useful. Trivial packages keep the plan in chat, no ceremony.
 A P1 or P2 defect that took ≥ ~0.5 day to understand gets `docs/retro/<slug>.md` when it closes:
 symptom · cause with exact file paths · fix with the commit reference · a repeatable check · what to
 watch for.
+
+## 12. Committing
+
+**A finished work package is committed on the current branch without being asked.** So is any other
+finished task, including maintenance small enough to need no ticket. The conditions are the gates,
+not a request: its gates are green, its review has passed, and — for a ticketed package — closure
+(§ 9) is complete.
+
+Never mid-task. Never on a red gate. Never on work whose review is still outstanding. Never if the
+user said not to. Those four bound the **unasked** commit; a user who asks for a commit has given
+their own instruction, and it is still a commit and still never a push.
+
+The reason it is the default rather than a courtesy: uncommitted work is work nobody else can see,
+review or recover, and "I will commit when asked" reliably means a session ends with hours of it
+sitting in a working tree. A commit is also the cheapest possible undo.
+
+### Pushing is not part of it
+
+**Never `git push`** unless the user asks for it explicitly in that turn. The same holds for
+deploying, releasing and publishing. Committing is a local, reversible act; pushing is not, and the
+distinction is the whole point of making one of them automatic.
+
+### The subject line
+
+`<type>(<area>): <ID> — <short description>`, with the types `CONTRIBUTING.md` lists.
+
+**A subject an agent authors starts with `🤖`** — commit subjects and pull-request titles alike:
+
+```
+🤖 test(db): DB-01 — the schema proved by negative tests
+```
+
+This is a public repository, so the marker is not only an authoring rule. It is how anyone reading
+the history can tell agent-authored commits from human-authored ones without asking, which is the
+same accountability the product itself is built on.

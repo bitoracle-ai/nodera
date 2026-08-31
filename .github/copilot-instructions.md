@@ -24,6 +24,13 @@ React 19 / TypeScript / Vite / Tailwind · Model Context Protocol · GitHub Acti
 - No secrets in the tree. Tokens are stored only as Argon2id hashes.
 - No `TODO`/`FIXME` comments — the linter breaks the build.
 - English only in everything committed, including commit messages.
+- Comments minimal — only at critical or genuinely complex spots, lean even there; rationale goes in
+  the ticket, the ADR or `docs/`. Do not imitate the dense comments already in the tree; they predate
+  this rule and are not the standard.
+- Finished work is committed on the current branch without being asked, once the gates are green and
+  the review has passed — never mid-task, never on a red gate, never on unreviewed work, never if the
+  user said not to. Subjects an agent authors start with `🤖`. **Never `git push`** unless the
+  user asks in that turn. Full rule: `docs/PROJECT_MANAGEMENT.md` § 12.
 
 ## Scope fence
 

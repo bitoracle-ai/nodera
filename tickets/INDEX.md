@@ -11,7 +11,7 @@
 
 ## Status (hand-maintained)
 
-**2026-08-30 — [DB-01](closed/DB-01.md) is closed, and the schema has now been seen to refuse.**
+**2026-08-31 — [DB-01](closed/DB-01.md) is closed, and the schema has now been seen to refuse.**
 Everything `V1`–`V5` claimed to enforce was, until this package, a claim in a file: the migrations
 applied, and nothing they carried had ever been observed failing. There is now a Testcontainers
 harness in `:persistence` and 55 negative tests, every one asked as `nodera_app` rather than as the
@@ -189,7 +189,7 @@ steps in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_15 open (P1 2 · P2 9 · P3 4 · P4 0) · 8 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_15 open (P1 2 · P2 9 · P3 4 · P4 0) · 9 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (2)
 

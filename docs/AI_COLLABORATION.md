@@ -34,6 +34,11 @@ A tool in use must be able to:
 6. **Follow the five-phase workflow** ([`PROJECT_MANAGEMENT.md`](PROJECT_MANAGEMENT.md) § 3):
    overview → plan → implementation → independent review → findings.
 7. **Write English into the repository**, whatever language the conversation runs in.
+8. **Comment sparingly** — only at critical or genuinely complex spots, and lean even there.
+   Rationale belongs in the ticket, the ADR or `docs/`, where it is indexed and can be corrected;
+   a comment is none of those. **The existing tree is not the standard to imitate:** several
+   migrations and Kotlin files carry paragraph-length commentary written before this rule, and a
+   contributor who copies the surrounding style will be asked to trim it in review.
 
 **A tool without a shell or an independent review instance** may still take on research, planning,
 drafting and review preparation. It **may not mark work as finished** — the verifiable part is handed

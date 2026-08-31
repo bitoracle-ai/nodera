@@ -39,8 +39,16 @@ Work-package lifecycle and closure protocol: `docs/PROJECT_MANAGEMENT.md`.
 
 ## Boundaries (hard — a violation is a BLOCKING finding)
 
-- `git commit` is allowed when the user asks for it; never commit unasked mid-task. Never `git push`
-  unless the user asks explicitly in that turn.
+- **Commit when the work is done, without being asked** — a finished package or task goes onto the
+  current branch once its gates are green, its review has passed and, for a ticketed package,
+  closure is complete. Never mid-task, never on a red gate, never on unreviewed work, never if the
+  user said not to. Subjects an agent authors start with **🤖**:
+  `🤖 <type>(<area>): <ID> — <summary>`. **Never `git push`** unless the user asks explicitly in
+  that turn — same for deploying, releasing and publishing. `docs/PROJECT_MANAGEMENT.md` § 12.
+- **Comments minimal** — only at critical or genuinely complex spots, lean even there; rationale
+  goes in the ticket, the ADR or `docs/`. **Do not imitate the tree**: several migrations and Kotlin
+  files carry paragraph-length commentary written before this rule. They are not the standard.
+  `docs/AI_COLLABORATION.md` § 1.
 - **Never branch on an actor's kind to decide what is permitted.** No `is_bot`, no `if (actor.isHuman)`
   guarding a capability. `actor.kind` is for display and audit only. This is the premise of the whole
   product (invariant T2).
@@ -89,8 +97,8 @@ make help       # all targets
 
 | The user says | The assistant does |
 |---|---|
-| "done" | Closure per `docs/PROJECT_MANAGEMENT.md` § 9: criteria checked, gates green, review recorded, ticket moved, views regenerated. |
-| "commit" | Stage + commit the current branch, conventional message. Never push. |
+| "done" | Closure per `docs/PROJECT_MANAGEMENT.md` § 9: criteria checked, gates green, review recorded, ticket moved, views regenerated — **and committed**, § 12. |
+| "commit" | Stage + commit the current branch, `🤖` subject. Never push. (It does not need asking — see the rule above.) |
 | "review" | Independent phase-4 review in a sub-agent — canonical prompt `docs/prompts/code-review.prompt.md`. |
 | "push" / "deploy" | Deliberately undefined — stop and ask; the user acts. |
 
