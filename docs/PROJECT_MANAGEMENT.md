@@ -264,3 +264,26 @@ distinction is the whole point of making one of them automatic.
 This is a public repository, so the marker is not only an authoring rule. It is how anyone reading
 the history can tell agent-authored commits from human-authored ones without asking, which is the
 same accountability the product itself is built on.
+
+## 13. Redacting a closed ticket
+
+**A closed ticket is a record.** It is not edited because it later reads badly, because a decision
+in it turned out wrong, or because someone would tidy it. The record's value comes from being what
+it was.
+
+**It is redacted when it discloses internal detail about a system outside this repository** — how
+another system is hosted, scheduled, backed up or reached. That detail is not ours to publish, it is
+never load-bearing for a decision recorded here, and leaving it because of where it sits would make
+the rule about which file it is in rather than about what this repository discloses.
+
+A redaction:
+
+- is **marked in place**, so a reader sees that something was removed rather than meeting a record
+  that pretends it always read this way;
+- states **what class of detail** went and **why**, without restating the detail — describing it
+  precisely enough to reconstruct it is not a redaction;
+- **leaves the argument intact.** If the surrounding reasoning does not survive, the redaction is
+  wrong and the case goes to the maintainers instead.
+
+**It changes what this repository says today. It does not remove anything from published history**,
+and nothing about a redaction may be written as though it did.

@@ -29,7 +29,7 @@ React 19 / TypeScript / Vite / Tailwind · Model Context Protocol · GitHub Acti
   this rule and are not the standard.
 - Finished work is committed on the current branch without being asked, once the gates are green and
   the review has passed — never mid-task, never on a red gate, never on unreviewed work, never if the
-  user said not to. Subjects an agent authors start with `🤖`. **Never `git push`** unless the
+  user said not to. Commit subjects and pull-request titles an agent authors start with `🤖`. **Never `git push`** unless the
   user asks in that turn. Full rule: `docs/PROJECT_MANAGEMENT.md` § 12.
 
 ## Scope fence

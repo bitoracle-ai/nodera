@@ -189,7 +189,7 @@ steps in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_16 open (P1 2 · P2 10 · P3 4 · P4 0) · 10 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_15 open (P1 2 · P2 9 · P3 4 · P4 0) · 11 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (2)
 
@@ -198,14 +198,13 @@ _16 open (P1 2 · P2 10 · P3 4 · P4 0) · 10 closed → [REVIEW_REPORT.md](../
 | [CORE-02](open/CORE-02.md) | Audit recorder — one event per mutation, in the mutation's transaction | ~2 d | CORE-01, DB-01 |
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
 
-### 🟠 P2 — High (10)
+### 🟠 P2 — High (9)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
 | [API-01](open/API-01.md) | REST API skeleton with a contract-first OpenAPI document | ~3 d | CORE-01, SEC-01, CORE-03 |
 | [CORE-03](open/CORE-03.md) | Ticket lifecycle, key allocation and the closure gate | ~3 d | CORE-01, CORE-02 |
 | [CORE-04](open/CORE-04.md) | Comments, mentions and the review record | ~2 d | CORE-02, CORE-03 |
-| [DOC-04](open/DOC-04.md) | Decide how the closed-ticket record handles another system's infrastructure detail | ~0.25 d | Needs a maintainer's answer, not a contributor's edit — the question is how this project treats its own history. |
 | [FIX-02](open/FIX-02.md) | The invariant F1 paired negative times out under load | ~0.5 d | Found by DB-01, which must not fix it — frontend/ is a foreign subtree for a DB- package. |
 | [MCP-01](open/MCP-01.md) | MCP server with the orientation and read tools | ~3 d | CORE-01, SEC-01, CORE-03 · Depends on API-01 only for the shared error taxonomy, not for logic. |
 | [MCP-02](open/MCP-02.md) | MCP mutating tools with idempotency and structured gate errors | ~2 d | MCP-01, CORE-04 |

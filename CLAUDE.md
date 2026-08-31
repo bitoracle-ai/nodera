@@ -60,7 +60,8 @@ Load on demand — not permanently in context.
 - **Commit when the work is done, without being asked** — a finished package or task goes onto the
   current branch once its gates are green, its review has passed and, for a ticketed package,
   closure is complete. Never mid-task, never on a red gate, never on unreviewed work, never if I
-  said not to. Subjects you author start with **🤖**: `🤖 <type>(<area>): <ID> — <summary>`.
+  said not to. Commit subjects **and pull-request titles** you author start with **🤖**:
+  `🤖 <type>(<area>): <ID> — <summary>`.
   **Never `git push`** unless I ask in that turn — same for deploying, releasing and publishing.
   `docs/PROJECT_MANAGEMENT.md` § 12.
 - **Comments minimal** — only at critical or genuinely complex spots, lean even there; rationale

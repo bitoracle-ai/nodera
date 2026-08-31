@@ -42,8 +42,8 @@ Work-package lifecycle and closure protocol: `docs/PROJECT_MANAGEMENT.md`.
 - **Commit when the work is done, without being asked** — a finished package or task goes onto the
   current branch once its gates are green, its review has passed and, for a ticketed package,
   closure is complete. Never mid-task, never on a red gate, never on unreviewed work, never if the
-  user said not to. Subjects an agent authors start with **🤖**:
-  `🤖 <type>(<area>): <ID> — <summary>`. **Never `git push`** unless the user asks explicitly in
+  user said not to. Commit subjects **and pull-request titles** an agent authors start with
+  **🤖**: `🤖 <type>(<area>): <ID> — <summary>`. **Never `git push`** unless the user asks explicitly in
   that turn — same for deploying, releasing and publishing. `docs/PROJECT_MANAGEMENT.md` § 12.
 - **Comments minimal** — only at critical or genuinely complex spots, lean even there; rationale
   goes in the ticket, the ADR or `docs/`. **Do not imitate the tree**: several migrations and Kotlin

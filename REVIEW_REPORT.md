@@ -8,10 +8,11 @@ Generated from ticket frontmatter: `python scripts/tickets_index.py --write`.
 
 <!-- BEGIN GENERATED: closed tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_10 closed work packages, newest first._
+_11 closed work packages, newest first._
 
 | ID | Title | Closed |
 |---|---|---|
+| [DOC-04](tickets/closed/DOC-04.md) | Decide how the closed-ticket record handles another system's infrastructure detail | 2026-08-31 |
 | [DOC-03](tickets/closed/DOC-03.md) | Remove organisation-internal layout detail from the entry files | 2026-08-31 |
 | [DOC-02](tickets/closed/DOC-02.md) | Install the three org-wide conventions in the entry files | 2026-08-31 |
 | [DB-01](tickets/closed/DB-01.md) | Apply the baseline schema and prove row-level security with negative tests | 2026-08-31 |

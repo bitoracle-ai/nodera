@@ -61,10 +61,14 @@ and correcting whatever the run proves wrong.
 
 ## ⚠️ To decide before starting
 
-- **Scripts or prose?** Recommendation: prose with exact commands, no new shell scripts. oracleai
-  has `backup_db.sh`/`restore_db.sh` because it has a host, a timer and an off-box repository to
-  drive. Nodera has none of those yet and no scheduled backup to hang a script off. A script nobody
-  runs on a timer is a second thing to keep true. Revisit when OPS-02 puts an instance somewhere.
+- **Scripts or prose?** Recommendation: prose with exact commands, no new shell scripts.
+  **[Redacted 2026-08-31, DOC-04 —** a clause here named a system outside this repository and
+  described how its backups were arranged. Removed under
+  [`../../docs/PROJECT_MANAGEMENT.md`](../../docs/PROJECT_MANAGEMENT.md) § 13; the argument it
+  supported is unchanged and stated in full below. The text remains in this repository's published
+  history.**]** Nodera has no host, no scheduled timer and no off-box backup target, so there is
+  nothing to hang a script off. A script nobody runs on a timer is a second thing to keep true.
+  Revisit when OPS-02 puts an instance somewhere.
 - **Relationship to DOC-01.** Recommendation: this package owns the *operator* procedure for the
   topology that already exists; DOC-01 keeps the *self-hosting guide* — prerequisites, TLS, reverse
   proxy, the MCP transport — and links here for backup and restore rather than restating them.
