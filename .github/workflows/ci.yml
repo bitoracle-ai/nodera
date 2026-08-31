@@ -253,6 +253,10 @@ jobs:
         with:
           python-version: "3.11"
 
+      # The paired negative first: a convention gate nobody has seen fire is an assertion.
+      - name: SQL convention gate fires on its fixtures
+        run: python scripts/lint_sql.py --self-test
+
       - name: SQL conventions (lowercase identifiers, every FK indexed)
         run: python scripts/lint_sql.py
 

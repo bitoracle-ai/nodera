@@ -120,6 +120,13 @@ evaluate is not a release.
 - The coverage gate scanned `dist/`. Vitest replaces its default excludes when `coverage.exclude`
   is given, so `yarn test:coverage` passed on a clean tree and failed as soon as anyone had run
   `yarn build` first — an order-dependent gate.
+- A ticket could wear a label belonging to another project. `ticket_label` was the last two-ended
+  association without a same-project guard: the policy scopes `ticket_id` only, and referential
+  integrity checks bypass row-level security by design, so the `label_id` end was unguarded. What
+  this allowed was writing a cross-project association and confirming that a label id exists — not
+  reading another project's data: the label's own columns stayed invisible and the join returned
+  nothing. `V6` adds the trigger that `ticket_dependency`, which has the same shape, has carried
+  since `V2`. Found by DB-01's negative tests rather than by reading the migration (DB-01).
 
 ### Notes
 

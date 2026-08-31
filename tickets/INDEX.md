@@ -11,15 +11,45 @@
 
 ## Status (hand-maintained)
 
+**2026-08-30 — [DB-01](closed/DB-01.md) is closed, and the schema has now been seen to refuse.**
+Everything `V1`–`V5` claimed to enforce was, until this package, a claim in a file: the migrations
+applied, and nothing they carried had ever been observed failing. There is now a Testcontainers
+harness in `:persistence` and 55 negative tests, every one asked as `nodera_app` rather than as the
+owner — the owner is a superuser and bypasses row-level security, so a suite written against it
+passes with every policy deleted. 59 tests in `:persistence`, 118 across the backend, 0 failures.
+Full record in the ticket; the reasoning in [`docs/plan/DB-01.md`](../docs/plan/DB-01.md).
+
+**The ticket said "demonstrably red when the policy is dropped", and that turns out to be the one
+removal that cannot show a leak.** A table with row-level security enabled and no policy denies
+everything, so a dropped-policy probe reads the same zero the working guard reads — a paired negative
+that stays green with the guard gone, which is the exact shape this repository's honesty rule exists
+to catch. Each of the fourteen policies is instead removed two ways: row-level security off, which
+puts the mechanism on trial, and the predicate replaced with `true`, which puts the policy on trial.
+The deny-all behaviour is pinned by its own test rather than used as the negative.
+
+**And proving the boundary found a hole in it.** `ticket_label` was the last two-ended association
+without a same-project guard: `V4`'s policy scopes `ticket_id` and says nothing about `label_id`, and
+referential integrity checks bypass row-level security by design — they must, or a foreign key could
+be evaded by hiding the parent. A caller holding one project's context could attach **another
+project's label** to its own ticket. Not a cross-project read: the label's columns stayed invisible
+and the join returned nothing. A cross-project write, and a weak existence oracle. `ticket_dependency`
+has the identical shape and has carried its trigger since `V2`, which is what makes this an omission
+rather than a decision. Corrected by a **new** migration, `V6`, never by editing `V2` — and `V6`
+refuses to install over pre-existing straddling rows rather than deleting them.
+
+`scripts/lint_sql.py` gains `--self-test`, the shape CORE-01 established for `lint_invariants.py`: a
+gate that has never been seen to fire is an assertion, and the identifier rule it guards is the one
+with no runtime symptom — a quoted mixed-case identifier works until something addresses it unquoted.
+
 **2026-08-25 — [CORE-01](closed/CORE-01.md) is closed, and it is the first application code in the
 repository.** `:domain` holds the actor model — one participant type, two subtypes, nothing branching
 on which — and `:application` holds `PermissionService`, the single engine both surfaces will call.
 64 backend tests, 0 failures. Full record in the ticket; the reasoning, including what was rejected,
 in [`docs/plan/CORE-01.md`](../docs/plan/CORE-01.md).
 
-**What still does not exist:** any persistence for it. `PermissionDirectory` is a port with no
-implementation, so nothing in this package has run against a database — that is DB-01's, and it is
-the next package.
+**What still does not exist:** `PermissionDirectory` is still a port with no implementation. DB-01
+proved the schema; it wrote no production Kotlin and no repository. That is CORE-02's and SEC-01's,
+and they are the next packages.
 
 Two findings from that package are worth carrying, because both are the same shape as CI-01's and
 OPS-01's. **A permission engine's bounds are part of its semantics:** the first implementation walked
@@ -145,39 +175,37 @@ their shape.
 
 ## Working order
 
-[CORE-01](closed/CORE-01.md) is done, so the order now starts one step in.
+[CORE-01](closed/CORE-01.md) and [DB-01](closed/DB-01.md) are done, so the order now starts two
+steps in.
 
-1. **[DB-01](open/DB-01.md)** — the schema applied and row-level security proved by negative tests.
-   It depends on nothing and everything else depends on it, including the `PermissionDirectory`
-   implementation CORE-01 left as a port.
-2. **[CORE-02](open/CORE-02.md)** and **[SEC-01](open/SEC-01.md)** — the audit recorder and
-   credentials, both after DB-01: the audit invariant is unenforceable without the privilege split
-   the migration creates.
-3. **[API-01](open/API-01.md)** and **[MCP-01](open/MCP-01.md)** — the two surfaces, built against
+1. **[CORE-02](open/CORE-02.md)** and **[SEC-01](open/SEC-01.md)** — the audit recorder and
+   credentials. Both were waiting on DB-01: the audit invariant is unenforceable without the
+   privilege split the migration creates, and that split is now proved rather than assumed.
+2. **[API-01](open/API-01.md)** and **[MCP-01](open/MCP-01.md)** — the two surfaces, built against
    the same use cases. MCP-01 depends on API-01 only for the shared error mapping, not for logic.
-4. Everything after that is ordered by the table below.
+3. Everything after that is ordered by the table below.
 
 ## Open tickets
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_15 open (P1 3 · P2 8 · P3 4 · P4 0) · 7 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_15 open (P1 2 · P2 9 · P3 4 · P4 0) · 8 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
-### 🔴 P1 — Highest (3)
+### 🔴 P1 — Highest (2)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
 | [CORE-02](open/CORE-02.md) | Audit recorder — one event per mutation, in the mutation's transaction | ~2 d | CORE-01, DB-01 |
-| [DB-01](open/DB-01.md) | Apply the baseline schema and prove row-level security with negative tests | ~2 d | — |
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
 
-### 🟠 P2 — High (8)
+### 🟠 P2 — High (9)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
 | [API-01](open/API-01.md) | REST API skeleton with a contract-first OpenAPI document | ~3 d | CORE-01, SEC-01, CORE-03 |
 | [CORE-03](open/CORE-03.md) | Ticket lifecycle, key allocation and the closure gate | ~3 d | CORE-01, CORE-02 |
 | [CORE-04](open/CORE-04.md) | Comments, mentions and the review record | ~2 d | CORE-02, CORE-03 |
+| [FIX-02](open/FIX-02.md) | The invariant F1 paired negative times out under load | ~0.5 d | Found by DB-01, which must not fix it — frontend/ is a foreign subtree for a DB- package. |
 | [MCP-01](open/MCP-01.md) | MCP server with the orientation and read tools | ~3 d | CORE-01, SEC-01, CORE-03 · Depends on API-01 only for the shared error taxonomy, not for logic. |
 | [MCP-02](open/MCP-02.md) | MCP mutating tools with idempotency and structured gate errors | ~2 d | MCP-01, CORE-04 |
 | [OPS-02](open/OPS-02.md) | Prove the release package by cutting one | ~0.5 d | Carries the one OPS-01 criterion that cannot be proved from inside this repository. |

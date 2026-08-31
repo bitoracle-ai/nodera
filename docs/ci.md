@@ -24,7 +24,7 @@ succeed makes the gate red.
 | **Repository checks** | Executable bits, line endings, docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME ban | `make check-repo` |
 | **Backend** | ktlint, detekt, module boundaries, tests, build | `make check-backend` |
 | **Frontend** | Generated client fresh, lint, types, coverage, build | `make check-frontend` |
-| **Database** | SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make verify-db` |
+| **Database** | SQL convention gate fires on its fixtures, SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make verify-db` |
 | **CI Gate** | Every lane above succeeded | — (aggregation only) |
 
 `make check` runs all of it **except the secret scan**: gitleaks is a separate binary that
@@ -51,6 +51,14 @@ too, which is exactly the kind that tempts people to skip the heavy lanes.
 | Invariant firewall fires | `scripts/lint_invariants.py --self-test` | The sweep below having stopped firing — fixtures that must be found and fixtures that must not, so a regex broken by a later edit fails here instead of going quietly permissive |
 | Invariant firewall | `scripts/lint_invariants.py` | A permission decision branching on actor kind, in any of its three shapes; SQL interpolation; a second `PermissionService`; a use case that does not take `ActorContext` first |
 | No TODO/FIXME | inline `grep` | A finding hidden in a comment |
+
+## The database lane proves its own gate before it trusts it
+
+`scripts/lint_sql.py --self-test` runs first, for the same reason `lint_invariants.py --self-test`
+runs before the sweep it guards: fixtures that must produce a finding and fixtures that must not, so
+an edit that neuters the identifier rule or the comment stripping fails here instead of leaving a
+gate that reports OK on everything. The rule it protects is the one with no runtime symptom — a
+quoted mixed-case identifier works until something addresses it unquoted (DB-01).
 
 ## The database lane runs the same migrator the image runs
 

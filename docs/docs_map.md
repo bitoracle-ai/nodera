@@ -239,6 +239,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
 - CI — jobs and their local equivalents
   - Job-to-local mapping
   - Repository checks, step by step
+  - The database lane proves its own gate before it trusts it
   - The database lane runs the same migrator the image runs
   - Why the database lane runs the migrations twice
   - Why the frontend lane regenerates the API client
@@ -297,6 +298,25 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - 7. Deliberate non-goals
   - 8. What implementation found that this plan did not predict
   - 9. Open questions, each with a recommendation
+
+## `docs/plan/DB-01.md`
+
+- Plan — DB-01 · Apply the baseline schema and prove row-level security with negative tests
+  - 1. What phase 1 found
+  - 2. The one thing that decides whether any of this is worth running
+  - 3. Files
+    - The container
+  - 4. The tests
+    - 4.1 One negative per enforced rule
+    - 4.2 RLS: what "the guard removed" has to mean
+    - 4.3 `audit_event`: two layers, proved separately
+    - 4.4 Reviewer independence, as it is actually written
+    - 4.5 What the 16-hop bound actually binds
+  - 5. `lint_sql.py --self-test`
+  - 6. The defect: `ticket_label` binds across projects
+  - 7. Non-goals
+  - 8. Open questions, each with a recommendation
+  - 9. Acceptance criteria — how each is met
 
 ## `docs/plan/OPS-01.md`
 
