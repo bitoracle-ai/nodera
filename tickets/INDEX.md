@@ -189,7 +189,7 @@ steps in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_15 open (P1 2 · P2 9 · P3 4 · P4 0) · 11 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_15 open (P1 2 · P2 9 · P3 4 · P4 0) · 12 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (2)
 

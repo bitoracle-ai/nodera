@@ -265,7 +265,7 @@ This is a public repository, so the marker is not only an authoring rule. It is 
 the history can tell agent-authored commits from human-authored ones without asking, which is the
 same accountability the product itself is built on.
 
-## 13. Redacting a closed ticket
+## 13. Redacting a disclosure from the ticket record
 
 **A closed ticket is a record.** It is not edited because it later reads badly, because a decision
 in it turned out wrong, or because someone would tidy it. The record's value comes from being what
@@ -284,6 +284,10 @@ A redaction:
   precisely enough to reconstruct it is not a redaction;
 - **leaves the argument intact.** If the surrounding reasoning does not survive, the redaction is
   wrong and the case goes to the maintainers instead.
+
+**The same restraint binds the package doing the removing:** a ticket that records a disclosure being
+taken out does not quote it, but names the class and cites the commit — the diff is the complete
+record, and reproducing the string relocates the disclosure instead of ending it.
 
 **It changes what this repository says today. It does not remove anything from published history**,
 and nothing about a redaction may be written as though it did.

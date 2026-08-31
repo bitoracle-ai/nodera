@@ -41,10 +41,16 @@ than guess at it.
 
 ## Current state (honest)
 
-`CLAUDE.md:12-13` and `AGENTS.md:13-14`, identical text in both:
+`CLAUDE.md:12-13` and `AGENTS.md:13-14` opened with a single "Local layout" paragraph, identical in
+both. It described a directory layout outside this repository, named other repositories, and told the
+reader that paths resolved into a parent checkout.
 
-> Local layout: this clone sits inside the `bitoracle-ai/hq` umbrella checkout — the hq management
-> repo resolves via `../`, sibling project repos via `../oracleai`, `../webadmin`, `../studio`.
+**[Redacted 2026-08-31, DOC-05 —** this section quoted that paragraph in full, as evidence of what
+was being removed. Quoting it kept the disclosure current, one file away from where it had just been
+taken out. Removed under
+[`../../docs/PROJECT_MANAGEMENT.md`](../../docs/PROJECT_MANAGEMENT.md) § 13. The exact before-and-after
+text is in commit `aab816c`, which is the complete record and does not need reproducing here. The text
+remains in this repository's published history.**]**
 
 **It is already published.** This is a correction of what the repository currently says, not a
 containment measure: the text is in the published history, and removing it from the working tree

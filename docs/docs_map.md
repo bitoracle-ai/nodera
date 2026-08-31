@@ -134,7 +134,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - 12. Committing
     - Pushing is not part of it
     - The subject line
-  - 13. Redacting a closed ticket
+  - 13. Redacting a disclosure from the ticket record
 
 ## `docs/VISION.md`
 
