@@ -9,8 +9,8 @@ first-class Model Context Protocol server beside the REST API.
 
 Read the scope fence before proposing anything: `docs/VISION.md` § 3.
 
-Local layout: this clone sits inside the `bitoracle-ai/hq` umbrella checkout — the hq management
-repo resolves via `../`, sibling project repos via `../oracleai`, `../webadmin`, `../studio`.
+Layout: this repository stands alone. Every path in its documentation is relative to the repository
+root, and nothing it references resolves outside it.
 
 ## Start here, every session
 

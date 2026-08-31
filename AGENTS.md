@@ -10,8 +10,8 @@ design, with a first-class Model Context Protocol server beside the REST API.
 Scope fence — what is deliberately **not** built: `docs/VISION.md` § 3. A change that crosses it is
 refused in review, however well built.
 
-Local layout: this clone sits inside the `bitoracle-ai/hq` umbrella checkout — the hq management
-repo resolves via `../`, sibling project repos via `../oracleai`, `../webadmin`, `../studio`.
+Layout: this repository stands alone. Every path in its documentation is relative to the repository
+root, and nothing it references resolves outside it.
 
 ## Language
 
