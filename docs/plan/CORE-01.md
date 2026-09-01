@@ -314,8 +314,8 @@ Instead the test source set carries `UnattenuatedReference`, a deliberately naiv
 defaults plus grants, no grantor chain — and the test asserts that the two **disagree exactly on the
 revoked capability**. Delete the attenuation code from the engine and the two agree, and the test goes
 red. The negative is committed and runs on every test run, in the same shape as invariant F1's
-(`frontend/src/invariants.test.ts`), rather than being a manual step a reader has to trust somebody
-performed.
+(`frontend/eslint.selftest.mjs`, moved out of vitest by FIX-02), rather than being a manual step a
+reader has to trust somebody performed.
 
 Four guards were confirmed red rather than assumed, each by disabling exactly one thing:
 

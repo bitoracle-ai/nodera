@@ -23,7 +23,7 @@ succeed makes the gate red.
 | **Secret scan** | No credential in the history | `gitleaks detect --config .gitleaks.toml` |
 | **Repository checks** | Executable bits, line endings, docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME ban | `make check-repo` |
 | **Backend** | ktlint, detekt, module boundaries, tests, build | `make check-backend` |
-| **Frontend** | Generated client fresh, lint, types, coverage, build | `make check-frontend` |
+| **Frontend** | Generated client fresh, the F1 lint rule proved on fixtures, lint, types, coverage, build | `make check-frontend` |
 | **Database** | SQL convention gate fires on its fixtures, SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make verify-db` |
 | **CI Gate** | Every lane above succeeded | — (aggregation only) |
 
@@ -80,6 +80,25 @@ an upgrade, which is the worst possible moment.
 diff means the contract moved and the client did not. That drift is exactly what generation exists
 to prevent, so it fails here rather than as a runtime type error nobody traces back to a schema
 change three weeks earlier.
+
+## The frontend lane proves its lint gate before it trusts it
+
+Invariant F1 — a component never calls `fetch` directly — is enforced by a lint rule, and a lint rule
+that stops firing does so silently: `eslint .` stays green either way. `frontend/eslint.selftest.mjs`
+puts it on trial before the lane trusts it, in the same shape as `lint_invariants.py --self-test`: a
+fixture that must be reported (`src/probe-f1.tsx`) and one that must not (`src/api/probe-f1.tsx`).
+`yarn lint` runs it first, so a rule that stopped firing fails the lane instead of passing it.
+
+It was a vitest test until FIX-02, and it was this lane's one random red. Loading the flat config and
+its plugins costs about 1.2 s warm and over 20 s on a loaded machine, against vitest's 5 s
+`testTimeout` — a required check failing on machine speed rather than on code. Every remedy inside
+vitest is another clock: warming in `beforeAll` only moves the cost under the 10 s `hookTimeout`, and
+when a heavier load exceeds that one, both cases are reported **skipped** rather than failed. The lint
+step carries no per-test clock: the only budget left is the job's own `timeout-minutes: 20`, against a
+worst recorded run of 55.7 s, so the proof takes as long as the machine needs.
+
+The trade is that F1 is no longer proved by `yarn test`, `yarn test:run` or `make test` — only by
+`yarn lint`. Both paths that gate a merge run it, so nothing was lost where it counts.
 
 ## Why every action is pinned to a SHA, and when the pins move
 

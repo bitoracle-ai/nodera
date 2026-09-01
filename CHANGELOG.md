@@ -127,6 +127,11 @@ evaluate is not a release.
   reading another project's data: the label's own columns stayed invisible and the join returned
   nothing. `V6` adds the trigger that `ticket_dependency`, which has the same shape, has carried
   since `V2`. Found by DB-01's negative tests rather than by reading the migration (DB-01).
+- Invariant F1's paired negative failed on machine speed rather than on code. It ran ESLint inside
+  vitest, where loading the flat config and its plugins costs about 1.2 s warm and over 20 s on a
+  loaded machine, against a 5 s `testTimeout` — so `CI Gate`, a required check, could go red on a
+  change with nothing wrong with it, which is how a real red gets waved through. The proof now runs
+  in `yarn lint`, which carries no per-test clock (FIX-02).
 
 ### Notes
 

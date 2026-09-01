@@ -11,6 +11,26 @@
 
 ## Status (hand-maintained)
 
+**2026-09-01 — [FIX-02](closed/FIX-02.md) is closed, and invariant F1's proof no longer runs against
+a clock.** It was a vitest test running ESLint programmatically, and it failed on machine speed
+rather than on code: 7037 ms against a 5 s `testTimeout` under artificial load, 22 763 ms on a cold,
+busy machine. The cost is ESLint loading the flat configuration and its plugin graph once per
+process — about 1.2 s warm — and no clock vitest offers fits it. Sharing one instance saves the
+10 ms of construction, and warming in `beforeAll` only moves the cost under `hookTimeout`, where a
+heavier load makes vitest report both cases **skipped** rather than failed: a paired negative that
+stops running without going red, which is worse than the flake. The proof now runs inside
+`yarn lint` as `frontend/eslint.selftest.mjs`, in the shape `lint_invariants.py --self-test`
+established, and it is still red in both directions when the rule or its `src/api/**` exemption is
+removed.
+
+**Worth carrying, because it is bigger than that ticket: the backend lane was unrunnable on the
+development machine for want of a `JAVA_HOME`, not for want of a JDK.** `make check` exited 2 at
+`check-backend` until `JAVA_HOME` was pointed at a JDK 21 that was already installed; with it set,
+all four lanes pass and the backend suite runs 118 tests, 0 failures. No toolchain resolver is
+configured, so Gradle cannot provision a JDK itself — on a machine without one the lane stops rather
+than self-heals, and every backend package is unverifiable until it is fixed. `CONTRIBUTING.md` and
+`README.md` already name JDK 21 as a prerequisite; nothing in the repository was wrong.
+
 **2026-08-31 — [DB-01](closed/DB-01.md) is closed, and the schema has now been seen to refuse.**
 Everything `V1`–`V5` claimed to enforce was, until this package, a claim in a file: the migrations
 applied, and nothing they carried had ever been observed failing. There is now a Testcontainers
@@ -126,7 +146,7 @@ eslint-plugin-react-hooks 5→7, and tailwindcss 3→4. Both are migrated forwar
 The eslint half was one line; the tailwind half moved the `xs` breakpoint into `@theme`, deleted
 `tailwind.config.js`, and had to re-declare the `content` globs as `@source` — v4's automatic
 detection had started compiling class names out of this repository's own prose. Invariant F1's
-paired negative is now a committed test rather than something a reviewer reproduces by hand.
+paired negative is now a committed gate rather than something a reviewer reproduces by hand.
 
 **[OPS-03](closed/OPS-03.md) is closed.** `compose.prod.yml` shipped a production topology with no
 procedure for running it and no way to get the data back; the only mentions of backup or restore in
@@ -189,7 +209,7 @@ steps in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_15 open (P1 2 · P2 9 · P3 4 · P4 0) · 12 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_14 open (P1 2 · P2 8 · P3 4 · P4 0) · 13 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (2)
 
@@ -198,14 +218,13 @@ _15 open (P1 2 · P2 9 · P3 4 · P4 0) · 12 closed → [REVIEW_REPORT.md](../R
 | [CORE-02](open/CORE-02.md) | Audit recorder — one event per mutation, in the mutation's transaction | ~2 d | CORE-01, DB-01 |
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
 
-### 🟠 P2 — High (9)
+### 🟠 P2 — High (8)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
 | [API-01](open/API-01.md) | REST API skeleton with a contract-first OpenAPI document | ~3 d | CORE-01, SEC-01, CORE-03 |
 | [CORE-03](open/CORE-03.md) | Ticket lifecycle, key allocation and the closure gate | ~3 d | CORE-01, CORE-02 |
 | [CORE-04](open/CORE-04.md) | Comments, mentions and the review record | ~2 d | CORE-02, CORE-03 |
-| [FIX-02](open/FIX-02.md) | The invariant F1 paired negative times out under load | ~0.5 d | Found by DB-01, which must not fix it — frontend/ is a foreign subtree for a DB- package. |
 | [MCP-01](open/MCP-01.md) | MCP server with the orientation and read tools | ~3 d | CORE-01, SEC-01, CORE-03 · Depends on API-01 only for the shared error taxonomy, not for logic. |
 | [MCP-02](open/MCP-02.md) | MCP mutating tools with idempotency and structured gate errors | ~2 d | MCP-01, CORE-04 |
 | [OPS-02](open/OPS-02.md) | Prove the release package by cutting one | ~0.5 d | Carries the one OPS-01 criterion that cannot be proved from inside this repository. |
