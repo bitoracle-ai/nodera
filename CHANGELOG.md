@@ -44,6 +44,15 @@ evaluate is not a release.
   application role.
 - Release images are built for `linux/amd64` and `linux/arm64` and signed with keyless cosign,
   alongside the provenance and SBOM that were already produced.
+- **The audit trail has a writer, and a mechanism that will not let a mutation skip it** (CORE-02).
+  `AuditRecorder` appends exactly one `audit_event` row on the transaction the use case already
+  opened; the sink refuses to write when there is none, so a mutation and its audit row can never
+  commit or roll back independently. Denials are recorded with `outcome = 'denied'`, and the
+  delegation chain comes from the authenticated context rather than from a caller's argument.
+  Completeness is enforced rather than reviewed: a JDBC listener in the test harness reads the
+  statements that actually executed and refuses to commit a transaction whose mutations carry no
+  audit event, so bypassing the recorder, hand-writing the SQL and forgetting are all caught the
+  same way.
 
 ### Changed
 

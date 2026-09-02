@@ -23,8 +23,4 @@ class ActorIdentityTest :
             shouldThrow<IllegalArgumentException> { Handle(" ") }
             shouldThrow<IllegalArgumentException> { Email("") }
         }
-
-        "a request id must not be blank, so an audit event always correlates" {
-            shouldThrow<IllegalArgumentException> { RequestId("  ") }
-        }
     })

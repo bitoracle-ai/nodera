@@ -50,7 +50,7 @@ The toolchain criterion cannot be shown by a diff, so it is executed and recorde
 | `Actor` | sealed interface | `id`, `kind`, `handle`, `displayName`, `status`. |
 | `HumanActor`, `AgentActor` | data classes | The two subtype tables, field for field. |
 | `Surface` | `enum { WEB, REST, MCP, SYSTEM }` | The audit dimension of `ActorContext`. |
-| `RequestId` | `value class(String)` | Correlates every event of one request. |
+| `RequestId` | `value class(String)` | Correlates every event of one request. **Superseded:** carries a `Uuid` since CORE-02, because the column is `uuid not null` — [`CORE-02.md`](CORE-02.md) § 1. |
 | `ActorContext` | data class | `actorId`, `kind`, `surface`, `onBehalfOf`, `requestId` — exactly `docs/ARCHITECTURE.md` § 5. |
 
 **The sealed hierarchy is a hazard this plan creates and therefore has to close.** `Actor` being

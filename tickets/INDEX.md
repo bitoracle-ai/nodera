@@ -11,6 +11,35 @@
 
 ## Status (hand-maintained)
 
+**2026-09-02 — [CORE-02](closed/CORE-02.md) is closed, and the audit trail has a writer that cannot
+be forgotten.** `AuditRecorder` appends one row on the transaction the use case already opened, and
+`AuditEventRepository` refuses to write when there is none — a sink that opened its own would let a
+mutation and its audit row commit independently, which is the defect this package exists to prevent.
+150 backend tests, 0 failures.
+
+**The part worth carrying is the enforcement, not the writer.** "Every mutation writes exactly one
+event" was going to be a review duty, and review is worst at noticing an absence. It is now a JDBC
+listener in the `:persistence` harness: it reads the statements that actually executed and refuses to
+commit a transaction whose mutations carry any audit-event count but one. A use case that bypasses
+the recorder, hand-writes its SQL or simply forgets is caught identically, because none of that
+changes what reaches the database. Opting out is mechanical too — `scripts/lint_invariants.py`
+refuses a `JdbcUnitOfWork` built outside the composition root and the harness file, so no future test
+can quietly open an unwatched transaction.
+
+**Both blocking findings across five review rounds were defects in that check itself**, which is the
+argument for reviewing the guard harder than the code it guards. The first version was anchored at
+`^` and could not see a mutation inside a common table expression or behind a comment — the shapes
+CORE-03's key allocation actually writes. The second was a `CallableStatement` interception that no
+test had ever executed: deleting the branch left the suite green. Seven committed refusals now cover
+one door each, and the harness was watched going red twice — once with its check neutered, once
+against a throwaway un-audited `insert` of a shape no committed test uses.
+
+**One CORE-01 type changed shape.** `RequestId` carried a non-blank `String` while
+`audit_event.request_id` is `uuid not null`, so a string that was not a UUID type-checked and would
+have failed on the last statement of the mutation's own transaction. It carries a `Uuid` now.
+`docs/API_CONTRACT.md` states the shape that forces; what a surface does with a client-supplied
+header that is not one is left to API-01.
+
 **2026-09-01 — [FIX-02](closed/FIX-02.md) is closed, and invariant F1's proof no longer runs against
 a clock.** It was a vitest test running ESLint programmatically, and it failed on machine speed
 rather than on code: 7037 ms against a 5 s `testTimeout` under artificial load, 22 763 ms on a cold,
@@ -195,12 +224,12 @@ their shape.
 
 ## Working order
 
-[CORE-01](closed/CORE-01.md) and [DB-01](closed/DB-01.md) are done, so the order now starts two
-steps in.
+[CORE-01](closed/CORE-01.md), [DB-01](closed/DB-01.md) and [CORE-02](closed/CORE-02.md) are done,
+so the order now starts three steps in.
 
-1. **[CORE-02](open/CORE-02.md)** and **[SEC-01](open/SEC-01.md)** — the audit recorder and
-   credentials. Both were waiting on DB-01: the audit invariant is unenforceable without the
-   privilege split the migration creates, and that split is now proved rather than assumed.
+1. **[SEC-01](open/SEC-01.md)** — credentials. It was waiting on DB-01 alongside
+   [CORE-02](closed/CORE-02.md), which is now closed: the audit invariant was unenforceable without
+   the privilege split the migration creates, and that split is proved rather than assumed.
 2. **[API-01](open/API-01.md)** and **[MCP-01](open/MCP-01.md)** — the two surfaces, built against
    the same use cases. MCP-01 depends on API-01 only for the shared error mapping, not for logic.
 3. Everything after that is ordered by the table below.
@@ -209,13 +238,12 @@ steps in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_14 open (P1 2 · P2 8 · P3 4 · P4 0) · 13 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_13 open (P1 1 · P2 8 · P3 4 · P4 0) · 14 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
-### 🔴 P1 — Highest (2)
+### 🔴 P1 — Highest (1)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
-| [CORE-02](open/CORE-02.md) | Audit recorder — one event per mutation, in the mutation's transaction | ~2 d | CORE-01, DB-01 |
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
 
 ### 🟠 P2 — High (8)

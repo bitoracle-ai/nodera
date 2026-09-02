@@ -77,6 +77,18 @@ internal object SchemaFixture {
         }
     }
 
+    /**
+     * An application-role connection the **caller** owns, closes, and drives the transaction on.
+     *
+     * The audit harness needs the connection to outlive a block, because the transaction it watches
+     * is opened and committed by `JdbcUnitOfWork` rather than here. The project context is set at
+     * session level, so it survives the harness's own commits and rollbacks.
+     */
+    fun openApp(projectIds: List<UUID>): Connection =
+        DriverManager
+            .getConnection(container.jdbcUrl, "nodera_app", APP_PASSWORD)
+            .also { it.setProjectContext(projectIds, SET_CONTEXT_SESSION) }
+
     /** Seeding and inspection. Superuser, so RLS does not apply — never used to prove a guard. */
     fun <T> asOwner(block: (Connection) -> T): T =
         DriverManager.getConnection(container.jdbcUrl, OWNER_ROLE, OWNER_PASSWORD).use(block)

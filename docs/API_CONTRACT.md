@@ -27,7 +27,7 @@ generated output is stale. Nothing in the client is hand-written twice.
 | Timestamps | RFC 3339, always UTC (`2026-08-20T14:07:00Z`) |
 | Identifiers | UUID v4 as strings; tickets are additionally addressable by `{projectKey}/{ticketKey}` |
 | Authentication | `Authorization: Bearer <token>` — an access JWT or a personal access token |
-| Correlation | `X-Request-Id` echoed on every response; it is the `request_id` in the audit trail |
+| Correlation | `X-Request-Id`, a UUID, echoed on every response; it is the `request_id` in the audit trail, whose column is `uuid not null` |
 
 **Versioning:** the path carries the major version. A breaking change means `/api/v2`, not a
 silent reshape. Adding an optional field is not breaking; changing the meaning of an existing one

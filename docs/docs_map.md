@@ -304,6 +304,20 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - 8. What implementation found that this plan did not predict
   - 9. Open questions, each with a recommendation
 
+## `docs/plan/CORE-02.md`
+
+- Plan — CORE-02 · Audit recorder, one event per mutation, in the mutation's transaction
+  - 1. What phase 1 found
+  - 2. The shape
+    - 2.1 Why the transaction rides in the coroutine context
+    - 2.2 The types
+    - 2.3 What "records failures" can and cannot mean
+  - 3. Enforcing completeness
+  - 4. Files
+  - 5. Test plan
+  - 6. Deliberate non-goals
+  - 7. Open questions
+
 ## `docs/plan/DB-01.md`
 
 - Plan — DB-01 · Apply the baseline schema and prove row-level security with negative tests

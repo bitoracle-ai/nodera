@@ -143,5 +143,5 @@ internal fun context(
         kind = kind,
         surface = Surface.MCP,
         onBehalfOf = null,
-        requestId = RequestId("test-request"),
+        requestId = RequestId(Uuid.parse("55555555-5555-4555-8555-555555555555")),
     )
