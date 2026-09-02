@@ -318,6 +318,25 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - 6. Deliberate non-goals
   - 7. Open questions
 
+## `docs/plan/CORE-03.md`
+
+- Plan — CORE-03 · Ticket lifecycle, key allocation and the closure gate
+  - 1. What phase 1 found
+  - 2. The three properties that carry the package
+  - 3. The shape
+    - 3.1 The state machine, and the reading of the diagram it commits to
+    - 3.2 The closure gate returns a structure, and can never return an empty one
+    - 3.3 Key allocation
+    - 3.4 Dependency readiness
+  - 4. Decisions taken here
+    - 4.1 Permission checks ship with the first mutating use case
+    - 4.2 A denial and a gate refusal are both recorded, and both commit
+    - 4.3 The project context: this package establishes nothing, and says so where it matters
+  - 5. Files
+  - 6. Test plan
+  - 7. Deliberate non-goals
+  - 8. Open questions
+
 ## `docs/plan/DB-01.md`
 
 - Plan — DB-01 · Apply the baseline schema and prove row-level security with negative tests

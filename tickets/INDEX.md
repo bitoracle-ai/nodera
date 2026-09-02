@@ -11,6 +11,35 @@
 
 ## Status (hand-maintained)
 
+**2026-09-02 — [CORE-03](closed/CORE-03.md) is closed, and a ticket now has a lifecycle it cannot be
+talked out of.** The status machine is a pure transition function over nine specified edges, key
+allocation locks its `ticket_sequence` row, and the closure gate returns
+`UnmetClosureRequirements` — never a boolean, and never an empty one: the type refuses to be
+constructed with nothing unmet, because a refusal that names nothing is the boolean it exists to
+replace. Three use cases, the first mutating ones in the repository, so CORE-02's completeness
+harness finally has real transactions to watch. 252 backend tests, 0 failures.
+
+**The thing worth carrying is where the defects were: in the guards, not in the code they guard.**
+Three review rounds, eighteen findings, none blocking — and the three that mattered were all a guard
+weaker than its prose. The race that proves key allocation passed with `for update` deleted, because
+the contender was blocking on the sequence table's unique index before it ever reached the lock; the
+allocator's "refuse rather than restart the sequence" had never executed, because row-level security
+refuses the insert one statement earlier; and the audit entity id added to three refusal paths was
+pinned on one of them, so dropping it from the other two left the suite green. Each is now either
+fixed, tested, or described as what it actually is.
+
+**One real defect, and it was found by reading rather than by running.** Two concurrent transitions
+of one ticket could lose an update: the read took no lock and the write was unconditional, so two
+callers that both read `in_review` were both permitted and the later write won — landing a status
+the machine never allows from the status the row actually had, with an audit row describing a
+`before` that had already gone. The write is a compare-and-set now, and the loser is told to retry.
+
+**And one thing the specification does not carry, raised rather than invented:** `open → closed` has
+no path, so a ticket recognised as a duplicate the moment it is filed must be walked through
+`in_progress` and `in_review` to be closed. `docs/DOMAIN_MODEL.md` § 5.1 does not draw that edge;
+[`docs/plan/CORE-03.md`](../docs/plan/CORE-03.md) § 8 proposes it. It is a product decision and it
+is open.
+
 **2026-09-02 — [CORE-02](closed/CORE-02.md) is closed, and the audit trail has a writer that cannot
 be forgotten.** `AuditRecorder` appends one row on the transaction the use case already opened, and
 `AuditEventRepository` refuses to write when there is none — a sink that opened its own would let a
@@ -238,7 +267,7 @@ so the order now starts three steps in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_13 open (P1 1 · P2 8 · P3 4 · P4 0) · 14 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_12 open (P1 1 · P2 7 · P3 4 · P4 0) · 15 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (1)
 
@@ -246,12 +275,11 @@ _13 open (P1 1 · P2 8 · P3 4 · P4 0) · 14 closed → [REVIEW_REPORT.md](../R
 |---|---|---|---|
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
 
-### 🟠 P2 — High (8)
+### 🟠 P2 — High (7)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
 | [API-01](open/API-01.md) | REST API skeleton with a contract-first OpenAPI document | ~3 d | CORE-01, SEC-01, CORE-03 |
-| [CORE-03](open/CORE-03.md) | Ticket lifecycle, key allocation and the closure gate | ~3 d | CORE-01, CORE-02 |
 | [CORE-04](open/CORE-04.md) | Comments, mentions and the review record | ~2 d | CORE-02, CORE-03 |
 | [MCP-01](open/MCP-01.md) | MCP server with the orientation and read tools | ~3 d | CORE-01, SEC-01, CORE-03 · Depends on API-01 only for the shared error taxonomy, not for logic. |
 | [MCP-02](open/MCP-02.md) | MCP mutating tools with idempotency and structured gate errors | ~2 d | MCP-01, CORE-04 |

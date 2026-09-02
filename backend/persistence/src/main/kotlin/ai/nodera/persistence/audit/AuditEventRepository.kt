@@ -2,13 +2,11 @@ package ai.nodera.persistence.audit
 
 import ai.nodera.application.audit.AuditEventSink
 import ai.nodera.domain.audit.AuditEvent
+import ai.nodera.persistence.Binding
 import ai.nodera.persistence.currentConnection
+import ai.nodera.persistence.label
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import java.sql.PreparedStatement
-import java.sql.Types
-import kotlin.uuid.Uuid
-import kotlin.uuid.toJavaUuid
 
 private const val APPEND_EVENT =
     "insert into audit_event (" +
@@ -54,29 +52,6 @@ public class AuditEventRepository : AuditEventSink {
         }
     }
 }
-
-/** Binds in declaration order, so the thirteen placeholders never have to be counted by hand. */
-private class Binding(
-    private val statement: PreparedStatement,
-) {
-    private var index = 0
-
-    fun uuid(value: Uuid?) {
-        index += 1
-        if (value == null) {
-            statement.setNull(index, Types.OTHER)
-        } else {
-            statement.setObject(index, value.toJavaUuid())
-        }
-    }
-
-    fun text(value: String?) {
-        index += 1
-        statement.setString(index, value)
-    }
-}
-
-private val Enum<*>.label: String get() = name.lowercase()
 
 /** An empty map is `null`, not `{}` — "nothing recorded" and "recorded as empty" must not look alike. */
 private fun Map<String, String?>.asJson(): String? =

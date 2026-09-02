@@ -8,10 +8,11 @@ Generated from ticket frontmatter: `python scripts/tickets_index.py --write`.
 
 <!-- BEGIN GENERATED: closed tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_14 closed work packages, newest first._
+_15 closed work packages, newest first._
 
 | ID | Title | Closed |
 |---|---|---|
+| [CORE-03](tickets/closed/CORE-03.md) | Ticket lifecycle, key allocation and the closure gate | 2026-09-02 |
 | [CORE-02](tickets/closed/CORE-02.md) | Audit recorder — one event per mutation, in the mutation's transaction | 2026-09-02 |
 | [FIX-02](tickets/closed/FIX-02.md) | The invariant F1 paired negative times out under load | 2026-09-01 |
 | [DOC-05](tickets/closed/DOC-05.md) | Redact the disclosure DOC-03 quoted into its own record | 2026-08-31 |

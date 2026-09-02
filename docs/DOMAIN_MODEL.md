@@ -202,6 +202,24 @@ Fixed state set. Per-project configurable workflows are outside the scope fence.
 
 `closed` carries a `resolution`: `done` | `wont_do` | `duplicate` | `superseded`.
 
+The diagram is the shape; this table is the edge set, because ASCII cannot say which way an
+undirected line runs and CORE-03 had to commit to a reading. It is the transition function in
+`ai.nodera.domain.ticket`, exhaustively tested over all twenty-five ordered pairs.
+
+| From | To | Resolution |
+|---|---|---|
+| `open` | `in_progress` | none |
+| `in_progress` | `in_review` \| `open` \| `blocked` | none |
+| `in_review` | `closed` | any; `done` runs the gate below |
+| `in_review` | `open` \| `blocked` | none |
+| `blocked` | `open` | none |
+| `blocked` | `closed` | `wont_do` only |
+
+Everything else is refused, `open → closed` included: a ticket recognised as a duplicate the moment
+it is filed currently has to be walked through `in_progress` and `in_review` to be closed. That is a
+gap in the specified machine rather than in its implementation, and it is open —
+[`plan/CORE-03.md`](plan/CORE-03.md) § 8 carries the proposal.
+
 **Invariant T4 — closure is gated, not clicked.** A transition to `closed` with resolution `done` is
 refused while any acceptance criterion is unmet, any review finding of severity `blocking` is
 unresolved, or no review exists. The gate lives in the domain service and returns the specific
