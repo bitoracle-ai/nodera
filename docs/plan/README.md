@@ -36,3 +36,4 @@ A plan that lists only files is a checklist. The justification is the part worth
 | [`DB-01.md`](DB-01.md) — the schema proved by negative tests | `implemented` |
 | [`CORE-02.md`](CORE-02.md) — the audit recorder and the completeness harness | `implemented` |
 | [`CORE-03.md`](CORE-03.md) — ticket lifecycle, key allocation and the closure gate | `implemented` |
+| [`CORE-04.md`](CORE-04.md) — comments, mentions and the review record | `implemented` |

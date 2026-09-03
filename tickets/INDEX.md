@@ -11,6 +11,39 @@
 
 ## Status (hand-maintained)
 
+**2026-09-03 — [CORE-04](closed/CORE-04.md) is closed, and the closure gate finally has something
+that feeds it.** Comments with server-side mention extraction, edits that preserve authorship,
+deletion as a tombstone, review rounds that are appended and never collapsed, and finding resolution
+— seven use cases, three adapters, 561 backend tests, 0 failures. An unresolved blocking finding
+from round 1 now refuses a closure through the domain rather than through seeded fixtures, and a
+round-2 verdict contradicting round 1 leaves both readable.
+
+**The part worth carrying is that nine of the nine blocking findings were in one function.** Five
+review rounds, and every blocking one was the Markdown sanitiser calling prose *code*, so a
+`<script>` reached the `comment.body` column — each round with a shape the previous round's fix had
+not considered. Round 3 named the reason and it generalises: **refusing to treat a marker as an
+opener is not conservative**, because the refused marker's CommonMark partner is still there for a
+later marker to pair with, so declining to recognise a construct can create a mis-classification.
+Round 4 then showed the same mechanism on fenced blocks, from three-line bodies. The answer was to
+delete the exemption rather than repair it a fifth time: every `<` is escaped now, with nothing to
+classify and so nothing to classify wrongly. The price is `&lt;` in code samples, asserted by its
+own test and raised for the maintainers — the sanitising renderer `skills/secure-coding.md` assumes
+is where this belongs, and it does not exist yet.
+
+**Two findings were about a guard rather than the code it guards, which is now four packages
+running.** The project-scope clause on the key-addressed reads had no paired negative at all —
+every fixture project derived its ticket prefix from its own id, so no test could put one key in two
+projects and the clause was deletable from four statements with the suite green. And the harness
+that watched the twenty guards go red reported success twice while being wrong: once because it
+could not find the build script and answered a missing results directory with "no failures", once
+because its result parser filed each failure under the preceding, passing case's name.
+
+**One thing this package was expected to carry and does not: `criterion_set`.** It is the third
+input the closure gate reads, [`../docs/plan/CORE-03.md`](../docs/plan/CORE-03.md) § 7 had assigned
+it here, and it is in neither CORE-04's approach nor its acceptance criteria. Acceptance criteria
+are still written only by tests. [`../docs/plan/CORE-04.md`](../docs/plan/CORE-04.md) § 8 proposes a
+small follow-up package; CORE-05 needs it.
+
 **2026-09-02 — [CORE-03](closed/CORE-03.md) is closed, and a ticket now has a lifecycle it cannot be
 talked out of.** The status machine is a pure transition function over nine specified edges, key
 allocation locks its `ticket_sequence` row, and the closure gate returns
@@ -267,7 +300,7 @@ so the order now starts three steps in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_12 open (P1 1 · P2 7 · P3 4 · P4 0) · 15 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_11 open (P1 1 · P2 6 · P3 4 · P4 0) · 16 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (1)
 
@@ -275,12 +308,11 @@ _12 open (P1 1 · P2 7 · P3 4 · P4 0) · 15 closed → [REVIEW_REPORT.md](../R
 |---|---|---|---|
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
 
-### 🟠 P2 — High (7)
+### 🟠 P2 — High (6)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
 | [API-01](open/API-01.md) | REST API skeleton with a contract-first OpenAPI document | ~3 d | CORE-01, SEC-01, CORE-03 |
-| [CORE-04](open/CORE-04.md) | Comments, mentions and the review record | ~2 d | CORE-02, CORE-03 |
 | [MCP-01](open/MCP-01.md) | MCP server with the orientation and read tools | ~3 d | CORE-01, SEC-01, CORE-03 · Depends on API-01 only for the shared error taxonomy, not for logic. |
 | [MCP-02](open/MCP-02.md) | MCP mutating tools with idempotency and structured gate errors | ~2 d | MCP-01, CORE-04 |
 | [OPS-02](open/OPS-02.md) | Prove the release package by cutting one | ~0.5 d | Carries the one OPS-01 criterion that cannot be proved from inside this repository. |

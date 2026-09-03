@@ -337,6 +337,26 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - 7. Deliberate non-goals
   - 8. Open questions
 
+## `docs/plan/CORE-04.md`
+
+- Plan — CORE-04 · Comments, mentions and the review record
+  - 1. What phase 1 found
+  - 2. The four properties that carry the package
+  - 3. The shape
+  - 4. Decisions taken here
+    - 4.1 Sanitising is an escape, not a strip, and it makes no exception for code
+    - 4.2 Mentions are extracted from the text that is actually stored
+    - 4.3 Round allocation locks the ticket row
+    - 4.4 The gate's reads take the same lock, and this package is why
+    - 4.5 Every read-then-write is a compare-and-set, and every reader answers "not visible" distinctly
+    - 4.6 Reviewer independence is restated in the domain, not delegated to the trigger
+    - 4.7 Which capability each verb checks
+  - 5. Files
+  - 6. Test plan
+  - 6.1 Every guard watched going red
+  - 7. Deliberate non-goals
+  - 8. Open questions
+
 ## `docs/plan/DB-01.md`
 
 - Plan — DB-01 · Apply the baseline schema and prove row-level security with negative tests

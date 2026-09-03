@@ -29,6 +29,12 @@ internal class Binding(
         index += 1
         statement.setInt(index, value)
     }
+
+    /** A `text[]` parameter. Cast to the column's own type in the statement, never here. */
+    fun textArray(values: List<String>) {
+        index += 1
+        statement.setArray(index, statement.connection.createArrayOf("text", values.toTypedArray()))
+    }
 }
 
 /** Every enum this schema stores is the lowercased Kotlin name; tests insert every value to prove it. */

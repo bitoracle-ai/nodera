@@ -3,6 +3,7 @@ package ai.nodera.persistence.ticket
 import ai.nodera.application.ticket.CreateTicketResult
 import ai.nodera.application.ticket.NextTicketResult
 import ai.nodera.application.ticket.TransitionResult
+import ai.nodera.domain.collaboration.ReviewVerdict
 import ai.nodera.domain.permission.Capability
 import ai.nodera.domain.permission.ProjectRole
 import ai.nodera.domain.ticket.FindingSeverity
@@ -40,6 +41,8 @@ private val ENUM_TYPES =
         // The gate parses this one too, and a label it does not know aborts a closure rather than
         // refusing it.
         "finding_severity" to FindingSeverity.entries.map { it.label },
+        // CORE-04 writes this one, casting the label straight into the column.
+        "review_verdict" to ReviewVerdict.entries.map { it.label },
     )
 
 private const val CONTENDERS = 4
