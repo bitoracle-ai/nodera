@@ -94,6 +94,15 @@ evaluate is not a release.
   is relative and no CORS plugin is installed in a normal deployment.
 - Invariant F1 is now a lint rule — a component calling `fetch` directly fails `yarn lint` instead
   of waiting for a reviewer to notice.
+- `make verify-db` runs in a Postgres of its own (`compose.verify.yml`, its own project name, volume
+  and port) and removes it again, on the failing path too. It used to depend on `up`, so it started
+  the developer's Postgres if it was stopped, left it running, and left the cluster-level
+  `nodera_app` role behind in that cluster.
+- `scripts/verify_image.sh` removes its containers with `-v`, so a run no longer leaves the
+  anonymous volume the Postgres image declares. It also runs on Windows under Git Bash, which
+  rewrote `--tmpfs /tmp` into a host path so the `serve` container never started. Its SIGTERM
+  check now requires the container to have been running: a stop of an absent or already-exited one
+  returns inside the grace period, so the check passed for a JVM that was never signalled.
 
 ### Fixed
 

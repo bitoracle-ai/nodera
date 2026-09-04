@@ -1,10 +1,11 @@
 # Nodera — one entry point for every routine task.
 #
-# `make check` runs everything CI runs. If it is green here it is green there, with two
-# exceptions worth knowing: the backend tests need a running Docker daemon (Testcontainers),
-# and skipping them locally is the most common cause of a surprise red build; and the secret
-# scan (gitleaks) stays CI-only — `make check` does not invoke the gitleaks binary. Run
-# `gitleaks detect --config .gitleaks.toml` yourself if you have it installed (docs/ci.md).
+# `make check` runs the CI lanes locally, with three exceptions worth knowing: the backend
+# tests need a running Docker daemon (Testcontainers), and skipping them locally is the most
+# common cause of a surprise red build; the secret scan (gitleaks) stays CI-only — `make check`
+# does not invoke the gitleaks binary, so run `gitleaks detect --config .gitleaks.toml` yourself
+# if you have it installed; and the migrations are not applied here at all — that is
+# `make verify-db`, a target of its own (docs/ci.md).
 
 .DEFAULT_GOAL := help
 SHELL := /bin/sh
@@ -73,7 +74,7 @@ ticket: ## Scaffold a ticket: make ticket ID=CORE-06 T="Title" [P=P2] [E="~1 d"]
 # Gates — the local equivalents of the CI lanes (docs/ci.md)
 # ---------------------------------------------------------------------------
 
-check: check-repo check-db check-backend check-frontend ## Everything CI runs (except the CI-only gitleaks scan)
+check: check-repo check-db check-backend check-frontend ## Everything CI runs, except the CI-only gitleaks scan and verify-db
 	@echo ""
 	@echo "All gates green."
 
@@ -113,23 +114,37 @@ check-db: ## SQL conventions (no database needed)
 	$(PY) scripts/lint_sql.py --self-test
 	$(PY) scripts/lint_sql.py
 
-# Runs against a THROWAWAY database, not the development one. The CI lane always starts from an
-# empty Postgres; a contributor's dev database usually is not empty, and pointing this at it would
-# either fail confusingly (Flyway refuses a non-empty schema with no history table) or migrate over
-# data somebody was using. Created and dropped here, so running it costs nothing and destroys
-# nothing.
-VERIFY_DB  = nodera_verify
-VERIFY_ENV = NODERA_DB_URL=jdbc:postgresql://localhost:5432/$(VERIFY_DB) NODERA_DB_USER=nodera              NODERA_DB_PASSWORD=nodera-local-dev-only NODERA_APP_PASSWORD=nodera-local-dev-only
+# Runs in a Postgres of its own — compose.verify.yml, created here and removed on the way out, the
+# failing path included. It never starts, reads, writes or leaves behind the development stack, and
+# the `nodera_app` role the migrations create dies with the cluster that held it. The migration
+# sequence is applied twice on purpose: one that applies once but not twice fails on the next
+# deployment, which is the worst moment to find out.
+#
+# `-p` is load-bearing, not decoration: a `COMPOSE_PROJECT_NAME` in the environment outranks the
+# file's own `name:`, and under `COMPOSE_PROJECT_NAME=nodera` the `down -v` below would resolve to
+# the development project and delete the volume behind `make up`. The published port is ephemeral
+# and read back after start-up, so a busy machine cannot collide with it; set NODERA_VERIFY_PORT to
+# pin one. The recipe is a single shell so that the trap covers every line of it, and the signal
+# trap exits rather than returning — a handler that returns would tear the environment down and
+# then carry on running the rest of the recipe against it.
+VERIFY_DB      = nodera_verify
+VERIFY_USER    = nodera_owner
+VERIFY_PW      = nodera-local-dev-only
+VERIFY_COMPOSE = $(COMPOSE) -p nodera-verify -f compose.verify.yml
+VERIFY_ENV     = NODERA_DB_URL=jdbc:postgresql://127.0.0.1:$$port/$(VERIFY_DB) NODERA_DB_USER=$(VERIFY_USER) NODERA_DB_PASSWORD=$(VERIFY_PW) NODERA_APP_PASSWORD=$(VERIFY_PW)
 
-verify-db: up ## What the CI database lane does: apply twice on an empty database, then the checks
-	@$(COMPOSE) exec -T postgres psql -U nodera -d postgres -q -c 'drop database if exists $(VERIFY_DB)'
-	@$(COMPOSE) exec -T postgres psql -U nodera -d postgres -q -c 'create database $(VERIFY_DB)'
-	cd backend && $(VERIFY_ENV) ./gradlew :app:run --args=migrate --no-daemon
-# Twice on purpose. A migration that applies once but not twice fails on the next deployment, and
-# that is the worst possible moment to find out.
-	cd backend && $(VERIFY_ENV) ./gradlew :app:run --args=migrate --no-daemon
-	@$(COMPOSE) exec -T postgres psql -U nodera -d $(VERIFY_DB) -v ON_ERROR_STOP=1 -q < db/checks/schema_integrity.sql
-	@$(COMPOSE) exec -T postgres psql -U nodera -d postgres -q -c 'drop database $(VERIFY_DB)'
+verify-db: ## What the CI database lane does: apply twice on an empty database, then the checks
+	@set -e; \
+	export NODERA_VERIFY_DB=$(VERIFY_DB) NODERA_VERIFY_USER=$(VERIFY_USER) NODERA_VERIFY_PASSWORD=$(VERIFY_PW); \
+	trap '$(VERIFY_COMPOSE) down -v --remove-orphans' EXIT; \
+	trap 'exit 130' INT TERM; \
+	$(VERIFY_COMPOSE) down -v --remove-orphans; \
+	$(VERIFY_COMPOSE) up -d --wait --wait-timeout 120; \
+	port=$$($(VERIFY_COMPOSE) port postgres 5432 | sed 's/.*://'); \
+	test -n "$$port"; \
+	( cd backend && $(VERIFY_ENV) ./gradlew :app:run --args=migrate --no-daemon ); \
+	( cd backend && $(VERIFY_ENV) ./gradlew :app:run --args=migrate --no-daemon ); \
+	$(VERIFY_COMPOSE) exec -T postgres psql -U $(VERIFY_USER) -d $(VERIFY_DB) -v ON_ERROR_STOP=1 -q < db/checks/schema_integrity.sql
 
 check-backend: ## ktlint, detekt, module boundaries, tests, build (needs Docker)
 	cd backend && ./gradlew ktlintCheck detekt checkModuleBoundaries test build --no-daemon

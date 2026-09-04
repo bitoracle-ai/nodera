@@ -34,12 +34,14 @@ run the command above yourself, and `check-db` covers only the SQL conventions â
 applied by `make verify-db`, which is its own target. Every other lane has a `make` equivalent
 (the backend and database lanes additionally need a running Docker daemon).
 
-What those two lanes leave behind differs, and the difference is worth knowing before a report
-claims otherwise. The backend lane's Testcontainers removes what it labelled. The database lane is
-ephemeral **in CI**, where the job gets its own `services: postgres` container; locally
-`make verify-db` depends on `up`, so it isolates a database rather than an environment â€” it drops
-`nodera_verify` and leaves the developer's Postgres running. The rule this serves, and that one
-exception, are in [`../skills/testing.md`](../skills/testing.md).
+Neither of those two lanes leaves anything behind, by two mechanics rather than one. The backend
+lane's Testcontainers removes what it labelled. The database lane is ephemeral on both sides: in CI
+the job gets its own `services: postgres` container, which the runner discards with the job, and
+locally `make verify-db` stands up its own from `compose.verify.yml` under a project name of its
+own, removed with `down -v` whether the run passed or failed. Both mechanics share one limit,
+and a report names it rather than claiming more: the base image stays in the local image cache,
+which is what makes the next run fast. The rule both serve is in
+[`../skills/testing.md`](../skills/testing.md).
 
 ## Repository checks, step by step
 

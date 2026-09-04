@@ -43,17 +43,17 @@ Two of the mechanics for it exist already:
   for exactly that reason — and it runs `compose.prod.yml`, which is the half that makes it work:
   `docker-compose.yml` pins `container_name: nodera-postgres`, and a pinned name is
   project-independent, so `-p` alone still collides with a running `make up`. A second project on
-  the development file needs its own fragment, or the pin gone.
+  the development file therefore needs its own fragment; `compose.verify.yml` is one, and it is
+  what `make verify-db` runs.
 
-**`make verify-db` is the exception, and it is stated rather than glossed.** It is the CI database
-lane locally, and it isolates the *data*: it creates `nodera_verify`, applies the sequence twice,
-runs the schema checks and drops that database again, so it never touches the development database.
-It is not a throwaway environment. `verify-db` depends on `up`, so it runs inside the developer's
-Postgres — starting that container if it was stopped, leaving it running afterwards, and leaving
-behind the cluster-level `nodera_app` role the migrations create. In CI the same lane gets an
-ephemeral `services: postgres` container per job and none of this applies. A run that uses it says
-so in the record instead of claiming the run left nothing;
-[CI-02](../tickets/open/CI-02.md) is the package that gives the target an environment of its own.
+**`make verify-db` runs in an environment of its own.** It is the CI database lane locally, and it
+stands up its own Postgres — `compose.verify.yml`, its own project name, its own volume and its own
+port — applies the sequence twice, runs the schema checks, and removes the container, the volume and
+the network on the way out, on the failing path as well as the passing one. It never starts, reads
+or writes the developer's stack, and the cluster-level `nodera_app` role the migrations create dies
+with the cluster that held it. In CI the same lane gets an ephemeral `services: postgres` container
+per job — the same property by a different mechanic. As with Testcontainers, the base image stays in
+the local image cache, which is what makes the next run fast.
 
 **`make up` and the volume behind it are the developer's, not a test environment.** They hold work
 in progress between sessions; `make down` stops the stack and removes the containers, and the volume

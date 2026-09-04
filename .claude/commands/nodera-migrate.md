@@ -23,12 +23,11 @@ Then:
 make verify-db && python scripts/lint_sql.py
 ```
 
-`verify-db` applies the sequence twice on a database it creates and drops. It runs inside the
-developer's Postgres, though — starting that container if it was stopped and leaving it up — so
-report that rather than "nothing left behind" (`db/migrations/AGENTS.md`). **Never verify by
-migrating the development database**: `make migrate` targets it, and a forward-only migration
-cannot be taken back out of it. Say what actually happened; reading a migration is not verifying
-it.
+`verify-db` applies the sequence twice in a Postgres it creates and removes again — its own compose
+project, torn down with its volume and network whether the run passed or failed, so it never touches
+the developer's stack (`db/migrations/AGENTS.md`). **Never verify by migrating the development
+database**: `make migrate` targets it, and a forward-only migration cannot be taken back out of it.
+Say what actually happened; reading a migration is not verifying it.
 
 If it adds an RLS policy or a trigger, write the **negative test** too — run it once with the
 guard removed to confirm it goes red, and report both outcomes.

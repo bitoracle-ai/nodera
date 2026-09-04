@@ -12,10 +12,14 @@
 #   docker build --build-arg VERSION=0.0.0-local -t nodera:local .
 #   sh scripts/verify_image.sh nodera:local
 #
-# Needs a Docker daemon and nothing else. Its trap removes the containers and the network; the
-# anonymous volume the Postgres image declares survives, because the removal omits -v (CI-02).
+# Needs a Docker daemon and nothing else, and leaves nothing behind: its trap removes the
+# containers together with their volumes, and the network.
 
 set -u
+
+# Git Bash rewrites POSIX path arguments before docker sees them, so `--tmpfs /tmp` arrives as a
+# Windows path and the container refuses to start. Inert on every other shell.
+export MSYS_NO_PATHCONV=1
 
 IMAGE=${1:-nodera:local}
 NET=nodera-verify
@@ -30,7 +34,7 @@ ok()  { PASS=$((PASS + 1)); printf 'PASS  %s\n' "$1"; }
 bad() { FAIL=$((FAIL + 1)); printf 'FAIL  %s\n      %s\n' "$1" "$2"; }
 
 cleanup() {
-    docker rm -f "$SERVE" "$PG" >/dev/null 2>&1
+    docker rm -f -v "$SERVE" "$PG" >/dev/null 2>&1
     docker network rm "$NET" >/dev/null 2>&1
 }
 trap cleanup EXIT
@@ -110,7 +114,7 @@ if [ $lrc -eq 0 ] && echo "$live" | grep -q '"alive"'; then
 else
     bad "liveness while readiness refuses" "rc=$lrc body=$live"
 fi
-docker rm -f "$SERVE" >/dev/null 2>&1
+docker rm -f -v "$SERVE" >/dev/null 2>&1
 
 # ---------------------------------------------------------------------------
 # migrate: applies as the owner, idempotent, and refuses the application role
@@ -179,14 +183,17 @@ fi
 # ---------------------------------------------------------------------------
 # SIGTERM drains rather than being killed
 # ---------------------------------------------------------------------------
+running=$(docker inspect -f '{{.State.Running}}' "$SERVE" 2>/dev/null)
 start=$(date +%s)
-docker stop -t 25 "$SERVE" >/dev/null
+docker stop -t 25 "$SERVE" >/dev/null; stopped=$?
 elapsed=$(($(date +%s) - start))
 code=$(docker inspect -f '{{.State.ExitCode}}' "$SERVE" 2>/dev/null)
-if [ "$elapsed" -lt 20 ]; then
+# Without the first three conditions this passes for a container that was never signalled: a stop
+# of an absent or already-exited container returns in under a second, which is inside the budget.
+if [ "$running" = true ] && [ $stopped -eq 0 ] && [ -n "$code" ] && [ "$elapsed" -lt 20 ]; then
     ok "SIGTERM shuts the server down in ${elapsed}s (exit $code), inside the grace period"
 else
-    bad "SIGTERM handling" "took ${elapsed}s, exit $code — the JVM was probably killed"
+    bad "SIGTERM handling" "running=${running:-none}, stop rc=$stopped, took ${elapsed}s, exit ${code:-none} — the JVM was killed, or the container was not running"
 fi
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

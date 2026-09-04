@@ -1,0 +1,36 @@
+# Throwaway Postgres for `make verify-db` — the CI database lane locally, in an environment of its
+# own rather than in the developer's.
+#
+# The Makefile runs this under an explicit `-p nodera-verify`, which is what keeps `pgdata` away
+# from the volume behind `make up`: the `name:` below loses to a `COMPOSE_PROJECT_NAME` in the
+# environment, and `-p` beats both. No `container_name` either — a pinned name is
+# project-independent and would collide with a running development stack — and the published port
+# is ephemeral by default, because a fixed one collides with whatever else the machine is running.
+# `make verify-db` removes all of it with `down -v`, on the failing path too.
+#
+# The database name, owner and password come from the Makefile rather than being repeated here.
+# They are declared `:?`, the shape compose.prod.yml uses, so running this file by hand refuses
+# with the variable's name instead of starting a Postgres the target cannot address.
+
+name: nodera-verify
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${NODERA_VERIFY_DB:?set by make verify-db}
+      POSTGRES_USER: ${NODERA_VERIFY_USER:?set by make verify-db}
+      POSTGRES_PASSWORD: ${NODERA_VERIFY_PASSWORD:?set by make verify-db}
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    ports:
+      - "127.0.0.1:${NODERA_VERIFY_PORT:-0}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  pgdata:

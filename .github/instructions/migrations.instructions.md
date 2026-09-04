@@ -9,6 +9,6 @@ applyTo: "db/migrations/**"
 - Every project-scoped table gets an RLS policy in the same migration that creates it.
 - Every foreign key gets an index.
 - No string interpolation into SQL, anywhere.
-- Verify by applying to a scratch database, not by reading — `make verify-db` is that, and it never
-  touches the development database. Never verify with `make migrate`, which does. An RLS policy is
-  proved by a negative test that is demonstrably red when the policy is dropped.
+- Verify by applying, not by reading — `make verify-db` is that, in a Postgres of its own that it
+  removes again. Never verify with `make migrate`, which targets the development database. An RLS
+  policy is proved by a negative test that is demonstrably red when the policy is dropped.

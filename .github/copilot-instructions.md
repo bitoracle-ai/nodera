@@ -30,9 +30,8 @@ React 19 / TypeScript / Vite / Tailwind · Model Context Protocol · GitHub Acti
 - No `TODO`/`FIXME` comments — the linter breaks the build.
 - A test that needs a database, a service or the stack runs in an environment created for that run
   — Testcontainers, or a compose project under its own `-p <name>` — never the developer's `make up`
-  stack or the volume behind it. What it created is removed afterwards. `make verify-db` is the one
-  documented exception: its own database, inside the developer's Postgres, which it leaves running.
-  `skills/testing.md`.
+  stack or the volume behind it. What it created is removed afterwards. `make verify-db` included:
+  it stands up its own Postgres from `compose.verify.yml` and removes it again. `skills/testing.md`.
 - Never report a cached lane as a test run: on an unchanged tree Gradle serves the backend lane from
   its build cache or skips it as up to date, and `make check` is green without a test executing.
   `docs/ci.md`.

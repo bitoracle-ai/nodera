@@ -11,6 +11,41 @@
 
 ## Status (hand-maintained)
 
+**2026-09-05 — [CI-02](closed/CI-02.md) is closed, and the rule DOC-06 wrote down is now true of
+the two runs that did not meet it.** `make verify-db` no longer depends on `up`: it stands up its own
+Postgres from `compose.verify.yml` under `-p nodera-verify` and removes the container, the volume and
+the network on the way out, on the failing path as well as the passing one. It never starts the
+developer's stack, never writes into the volume behind it, and the cluster-level `nodera_app` role
+the migrations create dies with the cluster that held it. `scripts/verify_image.sh` removes its
+containers with `-v`, so a run no longer leaves one dangling anonymous volume behind.
+`skills/testing.md` states both as fact now instead of naming them as gaps.
+
+**The blocking review finding was the isolation itself, and it would have destroyed the thing the
+package was written to protect.** The first implementation gave the compose fragment a
+`name: nodera-verify` key and passed no `-p`. Compose resolves a project name `-p` >
+`COMPOSE_PROJECT_NAME` > the file's `name:` — so for a developer with `COMPOSE_PROJECT_NAME=nodera`
+exported, the recipe's **first** command, `down -v --remove-orphans`, would have resolved to the
+development project and deleted `nodera_pgdata`. **A compose file's own `name:` is not an isolation
+guard**; it is the weakest of the three inputs, and the environment silently outranks it.
+[`../docs/ops/backup-restore.md`](../docs/ops/backup-restore.md) § The drill already knew this and
+overrides `compose.prod.yml`'s `name:` with `-p nodera-drill`; the first draft here did not carry
+the lesson across.
+
+**Round 2 then found the teardown was right and the abort was not.** `trap … EXIT INT TERM` installs
+a handler that *returns*: a `SIGTERM` ran the teardown and the recipe **carried on**, finishing its
+remaining steps against an environment that no longer existed and exiting **0**. A false green, from
+the guard written to prevent a mess. It is `trap … EXIT` plus `trap 'exit 130' INT TERM` now, and
+both halves were watched.
+
+**And the same distillate arithmetic held.** Nine files carried the retired claim; between them the
+two review rounds found two copies the package had missed, including this ticket's own `note:`
+frontmatter — which generates a table row and would have carried the false sentence into the closed
+index. Proving the fix also found two defects in `scripts/verify_image.sh` that had nothing to do
+with leftovers: Git Bash rewrote `--tmpfs /tmp` into a host path, so the `serve` container never
+started on Windows and the script reported 10 passed / 4 failed — and one of those four passes was a
+SIGTERM check reporting success for a container that did not exist. Both fixed here rather than
+filed; it now reports 14 / 0.
+
 **2026-09-04 — [DOC-06](closed/DOC-06.md) is closed, and two rules the maintainers had decided are
 now written where a contributor meets them.** A check, test or simulation that needs more than this
 repository's toolchain — a database, a service, the running stack — runs in an environment created
@@ -29,11 +64,11 @@ three root entry files, `.github/instructions/` and the three scoped pairs, and 
 stated once reaches nine files by hand, and the hand is what fails.
 
 **The first round found the package's own first draft was wrong about the repository.**
-`make verify-db` had been named as a mechanic satisfying the new rule; it is not one. `verify-db: up`
-runs inside the developer's Postgres, starts that container if it was stopped, leaves it running and
-leaves the cluster-level `nodera_app` role behind — it isolates the data, not the environment. The
-rule stands and the target has not caught up with it, which is [CI-02](open/CI-02.md); until then
-`skills/testing.md` names the gap in place rather than claiming a guarantee.
+`make verify-db` had been named as a mechanic satisfying the new rule; it was not one. `verify-db: up`
+ran inside the developer's Postgres, started that container if it was stopped, left it running and
+left the cluster-level `nodera_app` role behind — it isolated the data, not the environment. The rule
+stood and the target had not caught up with it, so `skills/testing.md` named the gap in place rather
+than claiming a guarantee, and [CI-02](closed/CI-02.md) closed it the next day.
 
 **And what CORE-06's closure taught is now written where the gate is described.** On a tree Gradle
 considers unchanged, `make check` reports the backend lane green without a test executing — this
@@ -343,7 +378,7 @@ so the order now starts three steps in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_12 open (P1 1 · P2 6 · P3 5 · P4 0) · 18 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_11 open (P1 1 · P2 6 · P3 4 · P4 0) · 19 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (1)
 
@@ -362,11 +397,10 @@ _12 open (P1 1 · P2 6 · P3 5 · P4 0) · 18 closed → [REVIEW_REPORT.md](../R
 | [WEB-01](open/WEB-01.md) | Frontend shell — routing, authentication, generated API client | ~2 d | API-01 |
 | [WEB-02](open/WEB-02.md) | Ticket list and detail views, mobile-first | ~3 d | WEB-01, CORE-04 |
 
-### 🟡 P3 — Medium (5)
+### 🟡 P3 — Medium (4)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
-| [CI-02](open/CI-02.md) | Make the repository's own runs leave nothing behind | ~0.5 d | The two runs skills/testing.md and verify_image.sh name as not yet meeting the rule — verify-db runs inside the developer's Postgres, and the image check leaves a volume. |
 | [CORE-05](open/CORE-05.md) | Markdown ticket import and export with round-trip fidelity | ~2 d | CORE-04 |
 | [DOC-01](open/DOC-01.md) | Deployment guide and the self-hosting path | ~1 d | API-01, WEB-01 |
 | [GH-01](open/GH-01.md) | Link branches, commits and pull requests onto tickets automatically | ~2 d | CORE-01, CORE-03, DB-01 · Shape settled in ADR-0010 — the fence runs through the payload, so it is enforced in the schema. |

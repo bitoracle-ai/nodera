@@ -75,11 +75,10 @@ tickets. The database, the migrations and every gate do work today.
 beyond the toolchain above — a database, a service, the stack — runs in an environment created for
 that run: Testcontainers for the persistence tests, or a compose project under its own
 `-p <name>`, torn down with `down -v`. Not your `make up` Postgres and not the volume behind it;
-those are yours and they hold work between sessions. `make verify-db` is the documented exception —
-it isolates its own database but runs inside your Postgres and leaves it running, which is why a
-report says so rather than claiming the run left nothing. Everything a run created is removed again
-— containers, volumes, networks — and nothing it started stays running. Full rule and the exception:
-[`skills/testing.md`](skills/testing.md).
+those are yours and they hold work between sessions. `make verify-db` is one of these rather than an
+exception to them: it stands up its own Postgres from `compose.verify.yml` and removes it again,
+failing run included. Everything a run created is removed — containers, volumes, networks — and
+nothing it started stays running. Full rule: [`skills/testing.md`](skills/testing.md).
 
 ## The rules that will get a pull request declined
 

@@ -79,8 +79,8 @@ Load on demand — not permanently in context.
   `-p <name>` torn down with `down -v`. Never the host's own installs, never my `make up` stack or
   the volume behind it. What the run created is removed afterwards — containers, volumes, networks
   — and the closure record says what was created and removed, what was left running, or that there
-  was none. `make verify-db` is the one named exception: it isolates its own database but runs
-  inside my Postgres and leaves it up. `skills/testing.md`.
+  was none. `make verify-db` included: it stands up its own Postgres from `compose.verify.yml` and
+  removes it again, on the failing path too. `skills/testing.md`.
 - **Do not report a cache as a test run.** On an unchanged tree Gradle serves the backend lane from
   its build cache or skips it as up to date, and `make check` is green without a test executing.
   Say which lanes executed; `--no-build-cache --rerun-tasks` covers both. `docs/ci.md`.
@@ -92,8 +92,7 @@ Load on demand — not permanently in context.
 ```
 make dev        # postgres + migrations + backend + frontend
 make check      # every CI lane locally, except the CI-only gitleaks scan and verify-db
-make verify-db  # the CI database lane: migrations twice on a throwaway database + schema checks
-                # (a throwaway database inside the dev Postgres — the exception noted above)
+make verify-db  # the CI database lane: migrations twice + schema checks, in a Postgres of its own
 make help       # all targets
 ```
 

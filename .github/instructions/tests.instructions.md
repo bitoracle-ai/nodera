@@ -10,7 +10,7 @@ applyTo: "**/test/**"
 - Anything a test needs beyond the repository's toolchain — a database, a service, the stack — runs in
   an environment created for that run: Testcontainers, or a compose project under its own `-p <name>`.
   Never the developer's `make up` stack or the volume behind it, and what the run created is removed
-  afterwards. `make verify-db` is the documented exception (`skills/testing.md`).
+  afterwards — `make verify-db` included, which runs `compose.verify.yml` (`skills/testing.md`).
 - Anything enforced on both surfaces gets a parity test that drives the same denial through REST and
   through MCP.
 - Test names are English sentences describing the behaviour, not the method under test.
