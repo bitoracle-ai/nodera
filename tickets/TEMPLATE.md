@@ -39,6 +39,7 @@ intended. This section is the one most often found to be wrong in review.>
 ## ⚠️ To decide before starting
 
 - <Open question + your recommendation. Delete this section if there is none.>
+- <If this package starts out of the priority order, say so here and why — PROJECT_MANAGEMENT § 14.>
 
 ## Acceptance criteria
 
@@ -53,4 +54,6 @@ intended. This section is the one most often found to be wrong in review.>
 ## Verification
 
 <Which command, which test, what a reader should look at. "No code" is a valid answer;
-"tested manually" without saying what was done is not.>
+"tested manually" without saying what was done is not. Say which lanes EXECUTED rather than being
+served from a cache or skipped as up to date, and name any test environment the run created and
+removed — or say it needed none (docs/PROJECT_MANAGEMENT.md § 9).>

@@ -4,6 +4,12 @@ Contributions are welcome — from people and from AI agents. Both follow the sa
 both are reviewed the same way. That is not a slogan; it is the product's premise applied to its
 own development.
 
+Nodera is maintained by **bitoracle.ai**: direction, priorities and the standards enforced here are
+set by the maintainers' management process. Your contribution is measured against what is written
+in this repository and nothing else — the phases, the review, the gates, the closure protocol. You
+never need access to anything outside this checkout to make a change or to know whether it will be
+accepted ([`docs/PROJECT_MANAGEMENT.md`](docs/PROJECT_MANAGEMENT.md) § 14).
+
 ---
 
 ## Before you write anything
@@ -55,14 +61,25 @@ cp .env.example .env && make up && make migrate && make seed
 make check
 ```
 
-`make check` runs everything CI runs. If it is green locally it will be green in CI, with two
-exceptions worth knowing: the backend tests need a running Docker daemon for Testcontainers, and
-skipping them locally is the most common cause of a surprise red build; and the secret scan
-(gitleaks) runs only in CI — `gitleaks detect --config .gitleaks.toml` reproduces it locally if
-you have gitleaks installed.
+`make check` runs almost everything CI runs, with three exceptions worth knowing. The backend
+tests need a running Docker daemon for Testcontainers, and skipping them locally is the most common
+cause of a surprise red build. The secret scan (gitleaks) runs only in CI —
+`gitleaks detect --config .gitleaks.toml` reproduces it locally if you have gitleaks installed. And
+`make check` does not apply the migrations: that is `make verify-db`, a target of its own, so a
+migration change is not covered by a green `make check` (`docs/ci.md`).
 
 **`make dev` also starts the backend and frontend, and those do not run yet** — they are the open
 tickets. The database, the migrations and every gate do work today.
+
+**A test gets its own environment, and it is gone afterwards.** Anything a check or a test needs
+beyond the toolchain above — a database, a service, the stack — runs in an environment created for
+that run: Testcontainers for the persistence tests, or a compose project under its own
+`-p <name>`, torn down with `down -v`. Not your `make up` Postgres and not the volume behind it;
+those are yours and they hold work between sessions. `make verify-db` is the documented exception —
+it isolates its own database but runs inside your Postgres and leaves it running, which is why a
+report says so rather than claiming the run left nothing. Everything a run created is removed again
+— containers, volumes, networks — and nothing it started stays running. Full rule and the exception:
+[`skills/testing.md`](skills/testing.md).
 
 ## The rules that will get a pull request declined
 

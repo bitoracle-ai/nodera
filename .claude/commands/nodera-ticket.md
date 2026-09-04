@@ -7,7 +7,8 @@ Register a new work package for: $ARGUMENTS
 
 Follow `docs/PROJECT_MANAGEMENT.md` § 7 exactly:
 
-1. **Determine the priority** from the table in § 5. State which criterion carried it.
+1. **Determine the priority** from the table in § 5. State which criterion carried it. If the
+   package is starting out of that order, say so in the ticket and why (§ 14).
 2. **Pick the ID** — the next free number in the right prefix range (§ 6).
 3. Scaffold it:
    `python scripts/ticket_new.py <ID> "<title>" --priority <P> --effort "<estimate>"`

@@ -13,6 +13,11 @@ refused in review, however well built.
 Layout: this repository stands alone. Every path in its documentation is relative to the repository
 root, and nothing it references resolves outside it.
 
+Maintained by **bitoracle.ai**: direction, priorities and the standards enforced here are set by the
+maintainers' management process, and its decisions bind this repository. Work runs through this
+repository's own process — the five phases, the independent review, the gates, closure — and nothing
+outside this checkout is a precondition for a change (`docs/PROJECT_MANAGEMENT.md` § 14).
+
 ## Language
 
 - **English is the only language in this repository** — docs, tickets, skills, plans, ADRs, code,
@@ -49,6 +54,17 @@ Work-package lifecycle and closure protocol: `docs/PROJECT_MANAGEMENT.md`.
   goes in the ticket, the ADR or `docs/`. **Do not imitate the tree**: several migrations and Kotlin
   files carry paragraph-length commentary written before this rule. They are not the standard.
   `docs/AI_COLLABORATION.md` § 1.
+- **Test environments are throwaway Docker, and they are torn down.** Anything a check, test or
+  simulation needs beyond this repository's toolchain — a database, a service, the running stack —
+  runs in an environment created for that run: Testcontainers, or a compose project under its own
+  `-p <name>` torn down with `down -v`. Never the host's own installs, never the developer's
+  `make up` stack or the volume behind it. What the run created is removed afterwards — containers,
+  volumes, networks — and the closure record says what was created and removed, what was left
+  running, or that there was none. `make verify-db` is the one named exception: it isolates its own
+  database but runs inside the developer's Postgres and leaves it up. `skills/testing.md`.
+- **Do not report a cache as a test run.** On an unchanged tree Gradle serves the backend lane from
+  its build cache or skips it as up to date, and `make check` is green without a test executing.
+  Say which lanes executed; `--no-build-cache --rerun-tasks` covers both. `docs/ci.md`.
 - **Never branch on an actor's kind to decide what is permitted.** No `is_bot`, no `if (actor.isHuman)`
   guarding a capability. `actor.kind` is for display and audit only. This is the premise of the whole
   product (invariant T2).
@@ -75,8 +91,9 @@ Work-package lifecycle and closure protocol: `docs/PROJECT_MANAGEMENT.md`.
 
 ```
 make dev        # postgres + migrations + backend + frontend
-make check      # every CI lane locally, except the CI-only gitleaks scan
+make check      # every CI lane locally, except the CI-only gitleaks scan and verify-db
 make verify-db  # the CI database lane: migrations twice on a throwaway database + schema checks
+                # (a throwaway database inside the dev Postgres — the exception noted above)
 make help       # all targets
 ```
 

@@ -27,7 +27,7 @@ Skills describe *how to do the work correctly*. Process rules live in
 | [`database-design.md`](database-design.md) | Any migration | Forward-only, identifier casing, RLS, indexing, where an invariant belongs. |
 | [`mcp-integration.md`](mcp-integration.md) | Any change under `backend/api-mcp/` | Tool definition, capability declaration, idempotency, parity testing. |
 | [`secure-coding.md`](secure-coding.md) | Auth, tokens, input, anything on the network | Fail closed, credential handling, permission placement, paired-negative tests. |
-| [`testing.md`](testing.md) | Writing or reviewing tests | What proves something, and which tests are worse than none. |
+| [`testing.md`](testing.md) | Writing or reviewing tests | What proves something, which tests are worse than none, and the environment a test may create. |
 | [`code-review.md`](code-review.md) | Every phase-4 review | The rubric, classification, evidence standard, scope governor. |
 
 ## Adding a skill

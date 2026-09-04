@@ -11,6 +11,36 @@
 
 ## Status (hand-maintained)
 
+**2026-09-04 — [DOC-06](closed/DOC-06.md) is closed, and two rules the maintainers had decided are
+now written where a contributor meets them.** A check, test or simulation that needs more than this
+repository's toolchain — a database, a service, the running stack — runs in an environment created
+for that run and torn down afterwards, never the developer's `make up` stack or the volume behind
+it ([`../skills/testing.md`](../skills/testing.md)). And the identity paragraph of every entry file
+now says who sets direction: this repository is maintained by bitoracle.ai, and a contribution is
+measured against what is written here and nothing else
+([`../docs/PROJECT_MANAGEMENT.md`](../docs/PROJECT_MANAGEMENT.md) § 14).
+
+**The package is also an argument about hand-kept distillates, and the argument is the round count.**
+Seven independent review rounds; the first six each found exactly one more copy of a claim the
+package had corrected in layer 2 — the `db/migrations/` guide, a slash command, `docs/ci.md`'s own
+later section, a shell script's header, six places saying `make check` runs what CI runs, and
+`README.md`. Every one of them sat in a file no linter reads: `scripts/lint_adapters.py` covers the
+three root entry files, `.github/instructions/` and the three scoped pairs, and says so. A rule
+stated once reaches nine files by hand, and the hand is what fails.
+
+**The first round found the package's own first draft was wrong about the repository.**
+`make verify-db` had been named as a mechanic satisfying the new rule; it is not one. `verify-db: up`
+runs inside the developer's Postgres, starts that container if it was stopped, leaves it running and
+leaves the cluster-level `nodera_app` role behind — it isolates the data, not the environment. The
+rule stands and the target has not caught up with it, which is [CI-02](open/CI-02.md); until then
+`skills/testing.md` names the gap in place rather than claiming a guarantee.
+
+**And what CORE-06's closure taught is now written where the gate is described.** On a tree Gradle
+considers unchanged, `make check` reports the backend lane green without a test executing — this
+package's own closure run is exactly that, `74 actionable tasks: 1 executed, 73 up-to-date`, stated
+as such rather than reported as passing tests. `docs/PROJECT_MANAGEMENT.md` § 9 now requires the
+closure record to say which lanes executed and what the run created and removed.
+
 **2026-09-04 — [CORE-06](closed/CORE-06.md) is closed: the three questions CORE-03 and CORE-04
 raised for the maintainers are answered, and the one that is code is implemented.** The status machine has its
 `open → closed` edge, for `wont_do`, `duplicate` and `superseded` only: a ticket recognised as a
@@ -313,7 +343,7 @@ so the order now starts three steps in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_11 open (P1 1 · P2 6 · P3 4 · P4 0) · 17 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_12 open (P1 1 · P2 6 · P3 5 · P4 0) · 18 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (1)
 
@@ -332,10 +362,11 @@ _11 open (P1 1 · P2 6 · P3 4 · P4 0) · 17 closed → [REVIEW_REPORT.md](../R
 | [WEB-01](open/WEB-01.md) | Frontend shell — routing, authentication, generated API client | ~2 d | API-01 |
 | [WEB-02](open/WEB-02.md) | Ticket list and detail views, mobile-first | ~3 d | WEB-01, CORE-04 |
 
-### 🟡 P3 — Medium (4)
+### 🟡 P3 — Medium (5)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
+| [CI-02](open/CI-02.md) | Make the repository's own runs leave nothing behind | ~0.5 d | The two runs skills/testing.md and verify_image.sh name as not yet meeting the rule — verify-db runs inside the developer's Postgres, and the image check leaves a volume. |
 | [CORE-05](open/CORE-05.md) | Markdown ticket import and export with round-trip fidelity | ~2 d | CORE-04 |
 | [DOC-01](open/DOC-01.md) | Deployment guide and the self-hosting path | ~1 d | API-01, WEB-01 |
 | [GH-01](open/GH-01.md) | Link branches, commits and pull requests onto tickets automatically | ~2 d | CORE-01, CORE-03, DB-01 · Shape settled in ADR-0010 — the fence runs through the payload, so it is enforced in the schema. |

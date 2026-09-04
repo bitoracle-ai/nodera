@@ -49,7 +49,7 @@ Mechanical check: `python scripts/lint_adapters.py`.
 
 | Document | Governs |
 |---|---|
-| [`PROJECT_MANAGEMENT.md`](PROJECT_MANAGEMENT.md) | Work-package lifecycle, priorities, closure protocol, repository language. **Mandatory before creating or closing a ticket.** |
+| [`PROJECT_MANAGEMENT.md`](PROJECT_MANAGEMENT.md) | Work-package lifecycle, priorities, closure protocol, repository language, and who sets direction (§ 14). **Mandatory before creating or closing a ticket.** |
 | [`AI_COLLABORATION.md`](AI_COLLABORATION.md) | The working contract for humans and AI assistants: minimum capabilities, role routes, handoff. |
 | [`ci.md`](ci.md) | Every CI job and its local equivalent. |
 | [`adr/README.md`](adr/README.md) | Architecture decision records — structural choices and what was rejected. |

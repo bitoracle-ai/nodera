@@ -2,6 +2,7 @@
 summary: Every CI job, what it enforces, and the exact local command that reproduces it — so a red pipeline is always reproducible on a laptop and never requires a guess-and-push cycle.
 read_when:
   - When a CI job fails and you want to reproduce it locally.
+  - Before resting a claim on a green lane, or reporting one.
   - Before adding, removing or renaming a job or a gate.
   - When wondering why the branch ruleset names only one required check.
 ---
@@ -27,10 +28,18 @@ succeed makes the gate red.
 | **Database** | SQL convention gate fires on its fixtures, SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make verify-db` |
 | **CI Gate** | Every lane above succeeded | — (aggregation only) |
 
-`make check` runs all of it **except the secret scan**: gitleaks is a separate binary that
-`make check` does not invoke, so that lane stays CI-only unless you install gitleaks and run the
-command above yourself. Every other lane has a `make` equivalent (the backend and database lanes
-additionally need a running Docker daemon).
+`make check` runs all of it **except the secret scan and `verify-db`**: gitleaks is a separate
+binary that `make check` does not invoke, so that lane stays CI-only unless you install gitleaks and
+run the command above yourself, and `check-db` covers only the SQL conventions — the migrations are
+applied by `make verify-db`, which is its own target. Every other lane has a `make` equivalent
+(the backend and database lanes additionally need a running Docker daemon).
+
+What those two lanes leave behind differs, and the difference is worth knowing before a report
+claims otherwise. The backend lane's Testcontainers removes what it labelled. The database lane is
+ephemeral **in CI**, where the job gets its own `services: postgres` container; locally
+`make verify-db` depends on `up`, so it isolates a database rather than an environment — it drops
+`nodera_verify` and leaves the developer's Postgres running. The rule this serves, and that one
+exception, are in [`../skills/testing.md`](../skills/testing.md).
 
 ## Repository checks, step by step
 
@@ -128,6 +137,27 @@ Resolve a pin with `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`, not wi
 `git/ref/tags/<tag>`: for an annotated tag the latter returns the tag object, and `uses:` will
 never match it.
 
+## A green backend lane does not always mean a test ran
+
+Gradle skips `test` as up to date when nothing it depends on changed, and serves it from the build
+cache when the inputs match an earlier run elsewhere. The lane reports the same success either way,
+and `74 actionable tasks: 1 executed, 73 up-to-date` is what that looks like. On a docs-only or
+ticket-only tree that is correct behaviour and nothing to work around. It does mean **`make check`
+alone is not evidence that a guard was exercised** — and a report that says "gates green" without
+saying which is where that gets lost.
+
+Anything resting on the tests having executed runs them so they have to:
+
+```
+./gradlew test --no-build-cache --rerun-tasks
+```
+
+CORE-06 is the record. On its first watch of a restored guard `:domain` re-executed and
+`:persistence` was served from cache; the second watch ran with the cache off and re-executed both
+specs, and it took a **second review round** to notice that the ticket had been resting on the
+weaker of the two. The obligation that follows sits in
+[`PROJECT_MANAGEMENT.md`](PROJECT_MANAGEMENT.md) § 9: the closure record says whether the tests ran.
+
 ## Why the Gradle cache is the basic one
 
 `gradle/actions/setup-gradle` defaults to `cache-provider: enhanced`, which its own `action.yml`
@@ -193,7 +223,8 @@ floating major.
 
 ## The image is verified separately
 
-`make check` proves the code compiles, lints and passes its tests. It cannot prove the *image*
+`make check` covers the code: it compiles, it lints, and its test lanes pass — executing them
+where they are not skipped as up to date, per the section above. It cannot prove the *image*
 behaves — that migrations apply as the owner and refuse the application role, that readiness fails
 while the schema is behind, that the root filesystem can be read-only, that `SIGTERM` drains. Those
 are properties of an artefact:

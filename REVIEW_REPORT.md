@@ -8,10 +8,11 @@ Generated from ticket frontmatter: `python scripts/tickets_index.py --write`.
 
 <!-- BEGIN GENERATED: closed tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_17 closed work packages, newest first._
+_18 closed work packages, newest first._
 
 | ID | Title | Closed |
 |---|---|---|
+| [DOC-06](tickets/closed/DOC-06.md) | Entry files — throwaway test environments, and who sets direction | 2026-09-04 |
 | [CORE-06](tickets/closed/CORE-06.md) | Direct closure from open for non-done resolutions, and two decisions recorded | 2026-09-04 |
 | [CORE-04](tickets/closed/CORE-04.md) | Comments, mentions and the review record | 2026-09-03 |
 | [CORE-03](tickets/closed/CORE-03.md) | Ticket lifecycle, key allocation and the closure gate | 2026-09-02 |

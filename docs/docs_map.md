@@ -114,7 +114,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
 
 ## `docs/PROJECT_MANAGEMENT.md`
 
-> How work is organised in this repository — the ticket system, the session protocol, priorities, the closure protocol, ticket hygiene and the repository language rule.
+> How work is organised in this repository — the ticket system, the session protocol, priorities, the closure protocol, ticket hygiene, the repository language rule, and who sets direction.
 
 - Project management — Nodera
   - 1. The ticket system, and why it is Markdown
@@ -129,12 +129,14 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
     - The primary rule: scope the relief to the reasoning
     - The ticket test, for what is left over
   - 9. The closure protocol
+    - What the closure record says about the run
   - 10. Plans
   - 11. Retrospectives
   - 12. Committing
     - Pushing is not part of it
     - The subject line
   - 13. Redacting a disclosure from the ticket record
+  - 14. Who sets direction
 
 ## `docs/VISION.md`
 
@@ -249,6 +251,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - Why the frontend lane regenerates the API client
   - The frontend lane proves its lint gate before it trusts it
   - Why every action is pinned to a SHA, and when the pins move
+  - A green backend lane does not always mean a test ran
   - Why the Gradle cache is the basic one
   - What a Dependabot bump gets past every lane
   - The image is verified separately
@@ -557,11 +560,12 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
 
 ## `skills/testing.md`
 
-> What to test and how — the paired-negative rule, real Postgres for anything involving RLS, surface parity tests, per-file coverage, and the tests that are worse than no test.
+> What to test and how — the paired-negative rule, real Postgres for anything involving RLS, throwaway test environments that are torn down, surface parity tests, per-file coverage, and the tests that are worse than no test.
 
 - Testing — Nodera
   - The paired-negative rule
   - Real Postgres for anything the database enforces
+  - Test environments are throwaway, and they are torn down
   - Surface parity
   - Coverage
   - Tests that are worse than no test

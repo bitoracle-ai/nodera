@@ -18,13 +18,17 @@
 
 <!-- Which you ran, and which you did not. "Did not run X, because Y" is honest and
      useful; claiming a green gate you did not run is the most damaging thing you can
-     write here. -->
+     write here. Say which lanes EXECUTED: on an unchanged tree Gradle reports the backend
+     lane green without running a test (docs/ci.md). And name any environment the run
+     created and removed, or say it needed none (skills/testing.md). -->
 
-| Gate | Result |
-|---|---|
-| `make check` | |
-| Backend tests | |
-| Frontend tests | |
+| Gate | Result | Executed, or served from cache / up to date? |
+|---|---|---|
+| `make check` | | |
+| Backend tests | | |
+| Frontend tests | | |
+
+**Test environments created and removed:** <!-- or "none needed" -->
 
 ## Invariant check
 

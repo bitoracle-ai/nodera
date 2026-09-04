@@ -204,8 +204,8 @@ curl -s http://127.0.0.1:8080/health/ready
 `version` here is compiled into the binary from the build-time `VERSION` argument, so it is the
 authoritative answer to *which build is actually running*. It is not the tag you asked for, and it
 is not recoverable from image metadata: **the image carries no OCI labels at all**
-(`docker inspect --format '{{json .Config.Labels}}'` returns `null`), so unlike other services in
-this portfolio there is no `org.opencontainers.image.version` to fall back on. Ask the endpoint.
+(`docker inspect --format '{{json .Config.Labels}}'` returns `null`), so there is no
+`org.opencontainers.image.version` to fall back on. Ask the endpoint.
 
 `/health/live` answers `{"status":"alive",…}` and deliberately says nothing about the schema —
 readiness is the probe that fails while migrations are outstanding.

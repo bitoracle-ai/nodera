@@ -51,4 +51,13 @@ and an exception taxonomy forces every caller to reconstruct it.
 Testcontainers needs a running Docker daemon. Skipping the backend tests locally is the most
 common cause of a surprise red build.
 
+It starts its containers per run and its reaper removes what it labelled — containers, networks,
+volumes — so a test never touches the `make up` database and a killed run cleans up after itself.
+The base image it pulled stays in the local image cache. That is the rule every check needing a
+service follows ([`../skills/testing.md`](../skills/testing.md)).
+
+`test` is skipped as up to date when nothing it depends on changed, or served from the build cache,
+and the lane reports the same green either way. When something rests on the tests having executed,
+make them: `./gradlew test --no-build-cache --rerun-tasks`.
+
 Warnings are compile errors here. A warning nobody fixes is a warning everybody stops reading.
