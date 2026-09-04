@@ -6,7 +6,7 @@
 # ---- Frontend build -------------------------------------------------------
 # Pinned to the minor, not the major: frontend/package.json declares engines.node >=22.22.0 and
 # yarn 1 aborts rather than warns, so a cached node:22-alpine older than that fails the build.
-FROM node:22.23-alpine AS frontend
+FROM node:26.8-alpine AS frontend
 WORKDIR /build
 COPY frontend/package.json frontend/yarn.lock ./
 RUN yarn install --frozen-lockfile
