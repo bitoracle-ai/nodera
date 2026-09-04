@@ -10,6 +10,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 private val SPECIFIED_EDGES =
     setOf(
         TicketStatus.OPEN to TicketStatus.IN_PROGRESS,
+        TicketStatus.OPEN to TicketStatus.CLOSED,
         TicketStatus.IN_PROGRESS to TicketStatus.IN_REVIEW,
         TicketStatus.IN_PROGRESS to TicketStatus.OPEN,
         TicketStatus.IN_PROGRESS to TicketStatus.BLOCKED,
@@ -76,6 +77,25 @@ class TicketStatusTest :
             }
         }
 
+        // The direct edge and its one refused resolution: docs/DOMAIN_MODEL.md § 5.1.
+        TicketResolution.entries.forEach { resolution ->
+            val permitted = resolution != TicketResolution.DONE
+            val verb = if (permitted) "is permitted" else "is refused"
+
+            "closing an open ticket directly as $resolution $verb" {
+                val outcome = transition(TicketStatus.OPEN, TicketStatus.CLOSED, resolution)
+
+                if (permitted) {
+                    outcome shouldBe TransitionOutcome.Permitted
+                } else {
+                    outcome shouldBe
+                        TransitionOutcome.Refused(
+                            TransitionRefusal.ResolutionNotPermittedFrom(TicketStatus.OPEN, resolution),
+                        )
+                }
+            }
+        }
+
         "a state carries a resolution exactly when it is closed" {
             TicketState(TicketStatus.CLOSED, TicketResolution.DONE).resolution shouldBe TicketResolution.DONE
             TicketState(TicketStatus.OPEN).resolution shouldBe null
@@ -86,12 +106,12 @@ class TicketStatusTest :
 
         // The refusal has to say which edge was asked for, or a surface can only answer "no".
         "a refusal names the edge it refused" {
-            val outcome = transition(TicketStatus.OPEN, TicketStatus.CLOSED, TicketResolution.DONE)
+            val outcome = transition(TicketStatus.OPEN, TicketStatus.IN_REVIEW, null)
 
             outcome
                 .shouldBeInstanceOf<TransitionOutcome.Refused>()
                 .refusal
                 .shouldBeInstanceOf<TransitionRefusal.UnknownEdge>()
-                .to shouldBe TicketStatus.CLOSED
+                .to shouldBe TicketStatus.IN_REVIEW
         }
     })

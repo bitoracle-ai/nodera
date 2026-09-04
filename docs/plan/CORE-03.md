@@ -80,6 +80,9 @@ product decision rather than an implementation one: `open → closed`, and `in_r
 The first is a real gap and is raised in § 8 with a recommendation; the second has a path through
 `open`.
 
+*2026-09-03:* the first is no longer absent — § 8 records the decision and CORE-06 implemented it.
+The table above is the machine as this package shipped it; `docs/DOMAIN_MODEL.md` § 5.1 is current.
+
 The resolution rules are the schema's, restated in the domain so it refuses what the database would
 refuse rather than one statement later: `closed` carries a resolution, nothing else may, and
 `blocked → closed` is `wont_do` only.
@@ -311,3 +314,8 @@ diagram in `docs/DOMAIN_MODEL.md` § 5.1 does not draw the edge, so this package
 **Recommendation:** allow `open → closed` for `wont_do`, `duplicate` and `superseded` — never for
 `done`, which would route around the gate entirely. That is a change to the documented state machine
 and belongs to the maintainers, so it is raised here rather than taken.
+
+**Decided 2026-09-03 — as recommended.** `open → closed` exists for `wont_do`, `duplicate` and
+`superseded` and refuses `done`, reusing the refusal `blocked → closed` already had rather than
+adding a case. Implemented with a paired negative for each half in CORE-06
+(`tickets/closed/CORE-06.md`); `docs/DOMAIN_MODEL.md` § 5.1 is the current edge set.

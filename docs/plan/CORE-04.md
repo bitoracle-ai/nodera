@@ -404,8 +404,15 @@ any other, inline and in a fence alike (§ 4.1).
 **Recommendation:** when WEB-01/WEB-02 lands a renderer, put both halves there — scheme filtering
 and code-aware escaping — and reduce this to what a write-side rule can be right about. That is a
 decision about what a comment *is* and belongs in a ticket rather than in this diff.
+**Decided 2026-09-03.** Sanitising stays on construction until a renderer exists, and `&lt;` in code
+samples is an accepted interim cost. The renderer is WEB-02's, and that ticket names it as the home
+of both halves — code-aware escaping and link-destination filtering, `javascript:` included.
+CORE-05's round-trip criterion is restated so that no importer path skips the sanitiser (CORE-06).
 
 **3. Editing has no capability verb of its own.** § 4.7 uses `comment.create` plus an author check,
 because inventing `comment.update` changes `docs/MCP.md`'s normative tool table and the role
 defaults. **Recommendation:** leave it. The author check is the real rule, and a verb that only ever
 appears alongside `comment.create` would add a row to two documents and decide nothing.
+**Decided 2026-09-03 — as recommended.** `comment.update` is not introduced; editing stays
+`comment.create` plus the author check. Recorded beside the tool table in `docs/MCP.md` § 3.4 so the
+question is answered once (CORE-06).

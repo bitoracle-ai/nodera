@@ -53,6 +53,11 @@ evaluate is not a release.
   statements that actually executed and refuses to commit a transaction whose mutations carry no
   audit event, so bypassing the recorder, hand-writing the SQL and forgetting are all caught the
   same way.
+- **A direct `open → closed` edge in the ticket status machine** for `wont_do`, `duplicate` and
+  `superseded`, so a ticket recognised as a duplicate the moment it is filed closes in one
+  transition instead of being walked through `in_progress` and `in_review`. `done` is refused on
+  that edge before the closure gate is consulted — a direct `done` would route around the review
+  the gate reads. Both halves carry a test that is red with the guard removed (CORE-06).
 
 ### Changed
 

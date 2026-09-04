@@ -20,6 +20,7 @@ import ai.nodera.persistence.runSql
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.Dispatchers
@@ -150,8 +151,8 @@ class TicketLifecycleTest :
                         context(project.actorId, request),
                         project.id,
                         ticket.key,
-                        TicketStatus.CLOSED,
-                        TicketResolution.DUPLICATE,
+                        TicketStatus.IN_REVIEW,
+                        null,
                     ).shouldBeInstanceOf<TransitionResult.Refused>()
 
             refused.refusal.shouldBeInstanceOf<TransitionRefusal.UnknownEdge>()
@@ -159,6 +160,72 @@ class TicketLifecycleTest :
             SchemaFixture.asOwner { it.auditOutcomes(request) } shouldContainExactly listOf("failed")
             // V4 indexes the trail by (entity_type, entity_id): a refusal about a ticket that was
             // read has to be reachable from that ticket, or its history hides the refused attempts.
+            SchemaFixture.asOwner { it.auditEntities(request) } shouldContainExactly
+                listOf(ticket.id.value.toJavaUuid())
+        }
+
+        // The direct edge: a duplicate recognised the moment it is filed closes in one transition, and
+        // the trail reads exactly like any other closure — before, after, resolution, the ticket's id.
+        "an open ticket closes directly as a duplicate, and the closure is audited like any other" {
+            val project = seedTicketProject()
+            val useCases = TicketUseCases(project.scope, project.actor)
+            val request = UUID.randomUUID()
+            val ticket =
+                useCases.create
+                    .create(context(project.actorId, UUID.randomUUID()), project.id, draft(project.prefix))
+                    .shouldBeInstanceOf<CreateTicketResult.Created>()
+                    .ticket
+
+            val closed =
+                useCases.transition
+                    .transition(
+                        context(project.actorId, request),
+                        project.id,
+                        ticket.key,
+                        TicketStatus.CLOSED,
+                        TicketResolution.DUPLICATE,
+                    ).shouldBeInstanceOf<TransitionResult.Transitioned>()
+
+            closed.ticket.state shouldBe TicketState(TicketStatus.CLOSED, TicketResolution.DUPLICATE)
+            SchemaFixture.asOwner { it.statusOf(ticket) } shouldBe "closed"
+            SchemaFixture.asOwner { it.closedAt(ticket) }.shouldNotBeNull()
+            SchemaFixture.asOwner { it.auditOutcomes(request) } shouldContainExactly listOf("success")
+            SchemaFixture.asOwner { it.auditEntities(request) } shouldContainExactly
+                listOf(ticket.id.value.toJavaUuid())
+            SchemaFixture.asOwner { it.auditTransitions(request) } shouldContainExactly
+                listOf(Triple("open", "closed", "duplicate"))
+        }
+
+        // A review exists and the one criterion is met, so a machine that ran the gate here would close
+        // the ticket. The refusal is the machine's own, before the gate is consulted.
+        "an open ticket cannot close directly as done, even when the closure gate would be satisfied" {
+            val project = seedTicketProject()
+            val useCases = TicketUseCases(project.scope, project.actor)
+            val request = UUID.randomUUID()
+            val ticket =
+                useCases.create
+                    .create(context(project.actorId, UUID.randomUUID()), project.id, draft(project.prefix))
+                    .shouldBeInstanceOf<CreateTicketResult.Created>()
+                    .ticket
+            SchemaFixture.asOwner {
+                it.seedReview(ticket.id.value.toJavaUuid(), project.reviewerId)
+                it.seedCriterion(ticket.id.value.toJavaUuid(), 1, "met", met = true, metBy = project.actorId)
+            }
+
+            val refused =
+                useCases.transition
+                    .transition(
+                        context(project.actorId, request),
+                        project.id,
+                        ticket.key,
+                        TicketStatus.CLOSED,
+                        TicketResolution.DONE,
+                    ).shouldBeInstanceOf<TransitionResult.Refused>()
+
+            refused.refusal shouldBe
+                TransitionRefusal.ResolutionNotPermittedFrom(TicketStatus.OPEN, TicketResolution.DONE)
+            SchemaFixture.asOwner { it.statusOf(ticket) } shouldBe "open"
+            SchemaFixture.asOwner { it.auditOutcomes(request) } shouldContainExactly listOf("failed")
             SchemaFixture.asOwner { it.auditEntities(request) } shouldContainExactly
                 listOf(ticket.id.value.toJavaUuid())
         }

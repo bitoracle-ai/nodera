@@ -193,6 +193,8 @@ references (commits, chat, other tickets) must not silently retarget.
 Fixed state set. Per-project configurable workflows are outside the scope fence.
 
 ```
+   ┌── only wont_do | duplicate | superseded ─┐
+   │                                          ▼
    open ──► in_progress ──► in_review ──► closed
      ▲           │              │            ▲
      └───────────┴──── blocked ─┘            │
@@ -209,16 +211,19 @@ undirected line runs and CORE-03 had to commit to a reading. It is the transitio
 | From | To | Resolution |
 |---|---|---|
 | `open` | `in_progress` | none |
+| `open` | `closed` | `wont_do` \| `duplicate` \| `superseded` — never `done` |
 | `in_progress` | `in_review` \| `open` \| `blocked` | none |
 | `in_review` | `closed` | any; `done` runs the gate below |
 | `in_review` | `open` \| `blocked` | none |
 | `blocked` | `open` | none |
 | `blocked` | `closed` | `wont_do` only |
 
-Everything else is refused, `open → closed` included: a ticket recognised as a duplicate the moment
-it is filed currently has to be walked through `in_progress` and `in_review` to be closed. That is a
-gap in the specified machine rather than in its implementation, and it is open —
-[`plan/CORE-03.md`](plan/CORE-03.md) § 8 carries the proposal.
+Everything else is refused. The `open → closed` edge is the one added after the machine first
+shipped (maintainer decision, 2026-09-03): a ticket recognised as a duplicate, abandoned or
+superseded the moment it is filed closes in one transition instead of being walked through
+`in_progress` and `in_review` for the record to carry that ceremony forever. `done` is refused on it
+before the gate is consulted — a direct `done` would route around the review the gate reads.
+[`plan/CORE-03.md`](plan/CORE-03.md) § 8 carries the proposal and its resolution.
 
 **Invariant T4 — closure is gated, not clicked.** A transition to `closed` with resolution `done` is
 refused while any acceptance criterion is unmet, any review finding of severity `blocking` is

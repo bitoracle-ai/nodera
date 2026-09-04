@@ -6,7 +6,7 @@ status: open
 effort: ~2 d
 depends_on: [API-01]
 created: 2026-08-20
-updated: 2026-08-24
+updated: 2026-09-03
 ---
 
 # WEB-01 · Frontend shell — routing, authentication, generated API client
@@ -30,6 +30,11 @@ routing, no auth, no API layer.
 2. The `src/api/` layer: one client, token refresh, error mapping. Nothing else calls `fetch`.
 3. Sign-in flow, route guard, project switcher.
 4. The `ActorBadge` component — one place that renders `actor.kind`, used everywhere an actor appears.
+
+**Not in this package: Markdown rendering.** The renderer — and with it both halves of Markdown
+safety, code-aware escaping and link-destination filtering (`javascript:`) — is WEB-02's (maintainer
+decision, 2026-09-03). The shell ships no Markdown component, so no later view inherits an
+unfiltered one.
 
 ## Acceptance criteria
 

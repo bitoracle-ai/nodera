@@ -11,6 +11,17 @@
 
 ## Status (hand-maintained)
 
+**2026-09-04 — [CORE-06](closed/CORE-06.md) is closed: the three questions CORE-03 and CORE-04
+raised for the maintainers are answered, and the one that is code is implemented.** The status machine has its
+`open → closed` edge, for `wont_do`, `duplicate` and `superseded` only: a ticket recognised as a
+duplicate the moment it is filed closes in one transition, and `done` is refused on that edge before
+the gate is consulted, because a direct `done` would route around the review the gate reads. Both
+halves were watched red with their guard removed. Markdown safety stays on construction until a
+renderer exists, `&lt;` in code samples and all; the renderer is WEB-02's and is named there as the
+home of both halves, link-destination filtering included, and CORE-05's round-trip criterion now
+runs through the sanitiser rather than around it. And `comment.update` is not a verb: editing stays
+`comment.create` plus the author check, recorded once in `docs/MCP.md` § 3.4.
+
 **2026-09-03 — [CORE-04](closed/CORE-04.md) is closed, and the closure gate finally has something
 that feeds it.** Comments with server-side mention extraction, edits that preserve authorship,
 deletion as a tombstone, review rounds that are appended and never collapsed, and finding resolution
@@ -28,7 +39,9 @@ Round 4 then showed the same mechanism on fenced blocks, from three-line bodies.
 delete the exemption rather than repair it a fifth time: every `<` is escaped now, with nothing to
 classify and so nothing to classify wrongly. The price is `&lt;` in code samples, asserted by its
 own test and raised for the maintainers — the sanitising renderer `skills/secure-coding.md` assumes
-is where this belongs, and it does not exist yet.
+is where this belongs, and it does not exist yet. Decided on 2026-09-03 in
+[CORE-06](closed/CORE-06.md): it stays on construction until that renderer lands, and the renderer
+is WEB-02's.
 
 **Two findings were about a guard rather than the code it guards, which is now four packages
 running.** The project-scope clause on the key-addressed reads had no paired negative at all —
@@ -70,8 +83,8 @@ the machine never allows from the status the row actually had, with an audit row
 **And one thing the specification does not carry, raised rather than invented:** `open → closed` has
 no path, so a ticket recognised as a duplicate the moment it is filed must be walked through
 `in_progress` and `in_review` to be closed. `docs/DOMAIN_MODEL.md` § 5.1 does not draw that edge;
-[`docs/plan/CORE-03.md`](../docs/plan/CORE-03.md) § 8 proposes it. It is a product decision and it
-is open.
+[`docs/plan/CORE-03.md`](../docs/plan/CORE-03.md) § 8 proposes it. It is a product decision, and it
+was open until [CORE-06](closed/CORE-06.md) took it on 2026-09-03.
 
 **2026-09-02 — [CORE-02](closed/CORE-02.md) is closed, and the audit trail has a writer that cannot
 be forgotten.** `AuditRecorder` appends one row on the transaction the use case already opened, and
@@ -300,7 +313,7 @@ so the order now starts three steps in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_11 open (P1 1 · P2 6 · P3 4 · P4 0) · 16 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_11 open (P1 1 · P2 6 · P3 4 · P4 0) · 17 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (1)
 

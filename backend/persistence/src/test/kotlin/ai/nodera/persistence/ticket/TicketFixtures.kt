@@ -196,6 +196,20 @@ internal fun Connection.auditOutcomes(requestId: UUID): List<String> =
         }
     }
 
+/** What the trail says moved: before status, after status, after resolution — one triple per row. */
+internal fun Connection.auditTransitions(requestId: UUID): List<Triple<String?, String?, String?>> =
+    prepareStatement(
+        "select before->>'status', after->>'status', after->>'resolution' from audit_event " +
+            "where request_id = ? order by id",
+    ).use {
+        it.setObject(1, requestId)
+        it.executeQuery().use { rows ->
+            buildList {
+                while (rows.next()) add(Triple(rows.getString(1), rows.getString(2), rows.getString(3)))
+            }
+        }
+    }
+
 internal fun Connection.seedReview(
     ticketId: UUID,
     reviewerId: UUID,

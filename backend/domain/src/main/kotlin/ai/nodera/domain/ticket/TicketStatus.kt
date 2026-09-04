@@ -71,15 +71,23 @@ public sealed interface TransitionOutcome {
     ) : TransitionOutcome
 }
 
-// docs/DOMAIN_MODEL.md § 5.1. `open -> closed` and `in_review -> in_progress` are absent because the
-// specified machine does not carry them; docs/plan/CORE-03.md § 8 raises the first as a question.
+// docs/DOMAIN_MODEL.md § 5.1. `in_review -> in_progress` is absent because the specified machine does
+// not carry it; the path runs through `open`.
 private val EDGES: Map<TicketStatus, Set<TicketStatus>> =
     mapOf(
-        TicketStatus.OPEN to setOf(TicketStatus.IN_PROGRESS),
+        TicketStatus.OPEN to setOf(TicketStatus.IN_PROGRESS, TicketStatus.CLOSED),
         TicketStatus.IN_PROGRESS to setOf(TicketStatus.IN_REVIEW, TicketStatus.OPEN, TicketStatus.BLOCKED),
         TicketStatus.IN_REVIEW to setOf(TicketStatus.CLOSED, TicketStatus.OPEN, TicketStatus.BLOCKED),
         TicketStatus.BLOCKED to setOf(TicketStatus.OPEN, TicketStatus.CLOSED),
         TicketStatus.CLOSED to emptySet(),
+    )
+
+// Which resolutions each closing edge accepts (docs/DOMAIN_MODEL.md § 5.1). No row: no resolution.
+private val CLOSING_RESOLUTIONS: Map<TicketStatus, Set<TicketResolution>> =
+    mapOf(
+        TicketStatus.IN_REVIEW to TicketResolution.entries.toSet(),
+        TicketStatus.BLOCKED to setOf(TicketResolution.WONT_DO),
+        TicketStatus.OPEN to TicketResolution.entries.toSet() - TicketResolution.DONE,
     )
 
 /** The pure transition function. It decides nothing about permissions and reads no actor. */
@@ -99,14 +107,11 @@ private fun closing(
     from: TicketStatus,
     resolution: TicketResolution?,
 ): TransitionOutcome =
-    if (resolution == null) {
-        TransitionOutcome.Refused(TransitionRefusal.ResolutionRequired)
-    } else {
-        when {
-            from == TicketStatus.BLOCKED && resolution != TicketResolution.WONT_DO ->
-                TransitionOutcome.Refused(TransitionRefusal.ResolutionNotPermittedFrom(from, resolution))
+    when {
+        resolution == null -> TransitionOutcome.Refused(TransitionRefusal.ResolutionRequired)
+        resolution !in CLOSING_RESOLUTIONS[from].orEmpty() ->
+            TransitionOutcome.Refused(TransitionRefusal.ResolutionNotPermittedFrom(from, resolution))
 
-            resolution == TicketResolution.DONE -> TransitionOutcome.PermittedIfClosureGatePasses
-            else -> TransitionOutcome.Permitted
-        }
+        resolution == TicketResolution.DONE -> TransitionOutcome.PermittedIfClosureGatePasses
+        else -> TransitionOutcome.Permitted
     }
