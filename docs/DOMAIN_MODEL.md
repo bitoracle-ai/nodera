@@ -193,6 +193,8 @@ references (commits, chat, other tickets) must not silently retarget.
 Fixed state set. Per-project configurable workflows are outside the scope fence.
 
 ```
+   ┌── only wont_do | duplicate | superseded ─┐
+   │                                          ▼
    open ──► in_progress ──► in_review ──► closed
      ▲           │              │            ▲
      └───────────┴──── blocked ─┘            │
@@ -201,6 +203,27 @@ Fixed state set. Per-project configurable workflows are outside the scope fence.
 ```
 
 `closed` carries a `resolution`: `done` | `wont_do` | `duplicate` | `superseded`.
+
+The diagram is the shape; this table is the edge set, because ASCII cannot say which way an
+undirected line runs and CORE-03 had to commit to a reading. It is the transition function in
+`ai.nodera.domain.ticket`, exhaustively tested over all twenty-five ordered pairs.
+
+| From | To | Resolution |
+|---|---|---|
+| `open` | `in_progress` | none |
+| `open` | `closed` | `wont_do` \| `duplicate` \| `superseded` — never `done` |
+| `in_progress` | `in_review` \| `open` \| `blocked` | none |
+| `in_review` | `closed` | any; `done` runs the gate below |
+| `in_review` | `open` \| `blocked` | none |
+| `blocked` | `open` | none |
+| `blocked` | `closed` | `wont_do` only |
+
+Everything else is refused. The `open → closed` edge is the one added after the machine first
+shipped (maintainer decision, 2026-09-03): a ticket recognised as a duplicate, abandoned or
+superseded the moment it is filed closes in one transition instead of being walked through
+`in_progress` and `in_review` for the record to carry that ceremony forever. `done` is refused on it
+before the gate is consulted — a direct `done` would route around the review the gate reads.
+[`plan/CORE-03.md`](plan/CORE-03.md) § 8 carries the proposal and its resolution.
 
 **Invariant T4 — closure is gated, not clicked.** A transition to `closed` with resolution `done` is
 refused while any acceptance criterion is unmet, any review finding of severity `blocking` is

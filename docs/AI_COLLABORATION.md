@@ -34,6 +34,17 @@ A tool in use must be able to:
 6. **Follow the five-phase workflow** ([`PROJECT_MANAGEMENT.md`](PROJECT_MANAGEMENT.md) § 3):
    overview → plan → implementation → independent review → findings.
 7. **Write English into the repository**, whatever language the conversation runs in.
+8. **Comment sparingly** — only at critical or genuinely complex spots, and lean even there.
+   Rationale belongs in the ticket, the ADR or `docs/`, where it is indexed and can be corrected;
+   a comment is none of those. **The existing tree is not the standard to imitate:** several
+   migrations and Kotlin files carry paragraph-length commentary written before this rule, and a
+   contributor who copies the surrounding style will be asked to trim it in review.
+9. **Run whatever needs a service in an environment created for that run, and remove it.** A
+   check, test or simulation that needs a database, a service or the running stack does not use the
+   developer's `make up` stack or the volume behind it. What the run created, what was removed and
+   anything left running goes into the handoff (§ 5) and into the closure record — including the
+   one named mechanic that does not meet the rule yet
+   ([`../skills/testing.md`](../skills/testing.md)).
 
 **A tool without a shell or an independent review instance** may still take on research, planning,
 drafting and review preparation. It **may not mark work as finished** — the verifiable part is handed
@@ -97,7 +108,8 @@ Every handoff answers, compactly:
 - Which problem and which acceptance criteria are authoritative?
 - Which canonical sources and local guides were read?
 - What was created or decided, with which deliberate non-goals?
-- Which gates were run, with what result?
+- Which gates were run, with what result — and which of them executed rather than came from a cache?
+- What did the run create, and is it gone?
 - What is **not** verified, why, and who takes over that verification?
 - Which independent reviewer confirmed 0 BLOCKING?
 

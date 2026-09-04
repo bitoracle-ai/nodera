@@ -114,7 +114,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
 
 ## `docs/PROJECT_MANAGEMENT.md`
 
-> How work is organised in this repository — the ticket system, the session protocol, priorities, the closure protocol, ticket hygiene and the repository language rule.
+> How work is organised in this repository — the ticket system, the session protocol, priorities, the closure protocol, ticket hygiene, the repository language rule, and who sets direction.
 
 - Project management — Nodera
   - 1. The ticket system, and why it is Markdown
@@ -129,8 +129,14 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
     - The primary rule: scope the relief to the reasoning
     - The ticket test, for what is left over
   - 9. The closure protocol
+    - What the closure record says about the run
   - 10. Plans
   - 11. Retrospectives
+  - 12. Committing
+    - Pushing is not part of it
+    - The subject line
+  - 13. Redacting a disclosure from the ticket record
+  - 14. Who sets direction
 
 ## `docs/VISION.md`
 
@@ -239,10 +245,13 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
 - CI — jobs and their local equivalents
   - Job-to-local mapping
   - Repository checks, step by step
+  - The database lane proves its own gate before it trusts it
   - The database lane runs the same migrator the image runs
   - Why the database lane runs the migrations twice
   - Why the frontend lane regenerates the API client
+  - The frontend lane proves its lint gate before it trusts it
   - Why every action is pinned to a SHA, and when the pins move
+  - A green backend lane does not always mean a test ran
   - Why the Gradle cache is the basic one
   - What a Dependabot bump gets past every lane
   - The image is verified separately
@@ -297,6 +306,78 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - 7. Deliberate non-goals
   - 8. What implementation found that this plan did not predict
   - 9. Open questions, each with a recommendation
+
+## `docs/plan/CORE-02.md`
+
+- Plan — CORE-02 · Audit recorder, one event per mutation, in the mutation's transaction
+  - 1. What phase 1 found
+  - 2. The shape
+    - 2.1 Why the transaction rides in the coroutine context
+    - 2.2 The types
+    - 2.3 What "records failures" can and cannot mean
+  - 3. Enforcing completeness
+  - 4. Files
+  - 5. Test plan
+  - 6. Deliberate non-goals
+  - 7. Open questions
+
+## `docs/plan/CORE-03.md`
+
+- Plan — CORE-03 · Ticket lifecycle, key allocation and the closure gate
+  - 1. What phase 1 found
+  - 2. The three properties that carry the package
+  - 3. The shape
+    - 3.1 The state machine, and the reading of the diagram it commits to
+    - 3.2 The closure gate returns a structure, and can never return an empty one
+    - 3.3 Key allocation
+    - 3.4 Dependency readiness
+  - 4. Decisions taken here
+    - 4.1 Permission checks ship with the first mutating use case
+    - 4.2 A denial and a gate refusal are both recorded, and both commit
+    - 4.3 The project context: this package establishes nothing, and says so where it matters
+  - 5. Files
+  - 6. Test plan
+  - 7. Deliberate non-goals
+  - 8. Open questions
+
+## `docs/plan/CORE-04.md`
+
+- Plan — CORE-04 · Comments, mentions and the review record
+  - 1. What phase 1 found
+  - 2. The four properties that carry the package
+  - 3. The shape
+  - 4. Decisions taken here
+    - 4.1 Sanitising is an escape, not a strip, and it makes no exception for code
+    - 4.2 Mentions are extracted from the text that is actually stored
+    - 4.3 Round allocation locks the ticket row
+    - 4.4 The gate's reads take the same lock, and this package is why
+    - 4.5 Every read-then-write is a compare-and-set, and every reader answers "not visible" distinctly
+    - 4.6 Reviewer independence is restated in the domain, not delegated to the trigger
+    - 4.7 Which capability each verb checks
+  - 5. Files
+  - 6. Test plan
+  - 6.1 Every guard watched going red
+  - 7. Deliberate non-goals
+  - 8. Open questions
+
+## `docs/plan/DB-01.md`
+
+- Plan — DB-01 · Apply the baseline schema and prove row-level security with negative tests
+  - 1. What phase 1 found
+  - 2. The one thing that decides whether any of this is worth running
+  - 3. Files
+    - The container
+  - 4. The tests
+    - 4.1 One negative per enforced rule
+    - 4.2 RLS: what "the guard removed" has to mean
+    - 4.3 `audit_event`: two layers, proved separately
+    - 4.4 Reviewer independence, as it is actually written
+    - 4.5 What the 16-hop bound actually binds
+  - 5. `lint_sql.py --self-test`
+  - 6. The defect: `ticket_label` binds across projects
+  - 7. Non-goals
+  - 8. Open questions, each with a recommendation
+  - 9. Acceptance criteria — how each is met
 
 ## `docs/plan/OPS-01.md`
 
@@ -479,11 +560,12 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
 
 ## `skills/testing.md`
 
-> What to test and how — the paired-negative rule, real Postgres for anything involving RLS, surface parity tests, per-file coverage, and the tests that are worse than no test.
+> What to test and how — the paired-negative rule, real Postgres for anything involving RLS, throwaway test environments that are torn down, surface parity tests, per-file coverage, and the tests that are worse than no test.
 
 - Testing — Nodera
   - The paired-negative rule
   - Real Postgres for anything the database enforces
+  - Test environments are throwaway, and they are torn down
   - Surface parity
   - Coverage
   - Tests that are worse than no test

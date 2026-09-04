@@ -1,5 +1,7 @@
 package ai.nodera.domain.actor
 
+import kotlin.uuid.Uuid
+
 /** Which surface a request arrived through. Recorded on every audit event. */
 public enum class Surface {
     WEB,
@@ -8,15 +10,16 @@ public enum class Surface {
     SYSTEM,
 }
 
-/** Correlates every audit event produced by one request. */
+/**
+ * Correlates every audit event produced by one request.
+ *
+ * A `Uuid` because `audit_event.request_id` is `uuid not null`: a string that is not one would
+ * type-check and then fail on the last statement of the mutation's own transaction.
+ */
 @JvmInline
 public value class RequestId(
-    public val value: String,
-) {
-    init {
-        require(value.isNotBlank()) { "request id must not be blank" }
-    }
-}
+    public val value: Uuid,
+)
 
 /**
  * Who is acting, through what, and on whose instruction.

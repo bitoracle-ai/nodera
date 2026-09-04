@@ -108,6 +108,9 @@ check-repo: ## Executable bits, line endings, docs, tickets, adapters, language,
 	echo "OK - no TODO/FIXME comments."
 
 check-db: ## SQL conventions (no database needed)
+# The paired negative first, as in check-repo: a convention gate that has never been seen to
+# fire is an assertion. This one guards the identifier rule and the forward-only ledger.
+	$(PY) scripts/lint_sql.py --self-test
 	$(PY) scripts/lint_sql.py
 
 # Runs against a THROWAWAY database, not the development one. The CI lane always starts from an

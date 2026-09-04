@@ -2,6 +2,7 @@
 summary: Every CI job, what it enforces, and the exact local command that reproduces it — so a red pipeline is always reproducible on a laptop and never requires a guess-and-push cycle.
 read_when:
   - When a CI job fails and you want to reproduce it locally.
+  - Before resting a claim on a green lane, or reporting one.
   - Before adding, removing or renaming a job or a gate.
   - When wondering why the branch ruleset names only one required check.
 ---
@@ -23,14 +24,22 @@ succeed makes the gate red.
 | **Secret scan** | No credential in the history | `gitleaks detect --config .gitleaks.toml` |
 | **Repository checks** | Executable bits, line endings, docs, tickets, adapters, language, invariants, release triggers, TODO/FIXME ban | `make check-repo` |
 | **Backend** | ktlint, detekt, module boundaries, tests, build | `make check-backend` |
-| **Frontend** | Generated client fresh, lint, types, coverage, build | `make check-frontend` |
-| **Database** | SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make verify-db` |
+| **Frontend** | Generated client fresh, the F1 lint rule proved on fixtures, lint, types, coverage, build | `make check-frontend` |
+| **Database** | SQL convention gate fires on its fixtures, SQL conventions, migrations apply twice, schema integrity | `make check-db`, then `make verify-db` |
 | **CI Gate** | Every lane above succeeded | — (aggregation only) |
 
-`make check` runs all of it **except the secret scan**: gitleaks is a separate binary that
-`make check` does not invoke, so that lane stays CI-only unless you install gitleaks and run the
-command above yourself. Every other lane has a `make` equivalent (the backend and database lanes
-additionally need a running Docker daemon).
+`make check` runs all of it **except the secret scan and `verify-db`**: gitleaks is a separate
+binary that `make check` does not invoke, so that lane stays CI-only unless you install gitleaks and
+run the command above yourself, and `check-db` covers only the SQL conventions — the migrations are
+applied by `make verify-db`, which is its own target. Every other lane has a `make` equivalent
+(the backend and database lanes additionally need a running Docker daemon).
+
+What those two lanes leave behind differs, and the difference is worth knowing before a report
+claims otherwise. The backend lane's Testcontainers removes what it labelled. The database lane is
+ephemeral **in CI**, where the job gets its own `services: postgres` container; locally
+`make verify-db` depends on `up`, so it isolates a database rather than an environment — it drops
+`nodera_verify` and leaves the developer's Postgres running. The rule this serves, and that one
+exception, are in [`../skills/testing.md`](../skills/testing.md).
 
 ## Repository checks, step by step
 
@@ -52,6 +61,14 @@ too, which is exactly the kind that tempts people to skip the heavy lanes.
 | Invariant firewall | `scripts/lint_invariants.py` | A permission decision branching on actor kind, in any of its three shapes; SQL interpolation; a second `PermissionService`; a use case that does not take `ActorContext` first |
 | No TODO/FIXME | inline `grep` | A finding hidden in a comment |
 
+## The database lane proves its own gate before it trusts it
+
+`scripts/lint_sql.py --self-test` runs first, for the same reason `lint_invariants.py --self-test`
+runs before the sweep it guards: fixtures that must produce a finding and fixtures that must not, so
+an edit that neuters the identifier rule or the comment stripping fails here instead of leaving a
+gate that reports OK on everything. The rule it protects is the one with no runtime symptom — a
+quoted mixed-case identifier works until something addresses it unquoted (DB-01).
+
 ## The database lane runs the same migrator the image runs
 
 `./gradlew :app:run --args=migrate` — not a Gradle Flyway plugin with its own url, locations and
@@ -72,6 +89,25 @@ an upgrade, which is the worst possible moment.
 diff means the contract moved and the client did not. That drift is exactly what generation exists
 to prevent, so it fails here rather than as a runtime type error nobody traces back to a schema
 change three weeks earlier.
+
+## The frontend lane proves its lint gate before it trusts it
+
+Invariant F1 — a component never calls `fetch` directly — is enforced by a lint rule, and a lint rule
+that stops firing does so silently: `eslint .` stays green either way. `frontend/eslint.selftest.mjs`
+puts it on trial before the lane trusts it, in the same shape as `lint_invariants.py --self-test`: a
+fixture that must be reported (`src/probe-f1.tsx`) and one that must not (`src/api/probe-f1.tsx`).
+`yarn lint` runs it first, so a rule that stopped firing fails the lane instead of passing it.
+
+It was a vitest test until FIX-02, and it was this lane's one random red. Loading the flat config and
+its plugins costs about 1.2 s warm and over 20 s on a loaded machine, against vitest's 5 s
+`testTimeout` — a required check failing on machine speed rather than on code. Every remedy inside
+vitest is another clock: warming in `beforeAll` only moves the cost under the 10 s `hookTimeout`, and
+when a heavier load exceeds that one, both cases are reported **skipped** rather than failed. The lint
+step carries no per-test clock: the only budget left is the job's own `timeout-minutes: 20`, against a
+worst recorded run of 55.7 s, so the proof takes as long as the machine needs.
+
+The trade is that F1 is no longer proved by `yarn test`, `yarn test:run` or `make test` — only by
+`yarn lint`. Both paths that gate a merge run it, so nothing was lost where it counts.
 
 ## Why every action is pinned to a SHA, and when the pins move
 
@@ -100,6 +136,27 @@ inherits that question.
 Resolve a pin with `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`, not with
 `git/ref/tags/<tag>`: for an annotated tag the latter returns the tag object, and `uses:` will
 never match it.
+
+## A green backend lane does not always mean a test ran
+
+Gradle skips `test` as up to date when nothing it depends on changed, and serves it from the build
+cache when the inputs match an earlier run elsewhere. The lane reports the same success either way,
+and `74 actionable tasks: 1 executed, 73 up-to-date` is what that looks like. On a docs-only or
+ticket-only tree that is correct behaviour and nothing to work around. It does mean **`make check`
+alone is not evidence that a guard was exercised** — and a report that says "gates green" without
+saying which is where that gets lost.
+
+Anything resting on the tests having executed runs them so they have to:
+
+```
+./gradlew test --no-build-cache --rerun-tasks
+```
+
+CORE-06 is the record. On its first watch of a restored guard `:domain` re-executed and
+`:persistence` was served from cache; the second watch ran with the cache off and re-executed both
+specs, and it took a **second review round** to notice that the ticket had been resting on the
+weaker of the two. The obligation that follows sits in
+[`PROJECT_MANAGEMENT.md`](PROJECT_MANAGEMENT.md) § 9: the closure record says whether the tests ran.
 
 ## Why the Gradle cache is the basic one
 
@@ -166,7 +223,8 @@ floating major.
 
 ## The image is verified separately
 
-`make check` proves the code compiles, lints and passes its tests. It cannot prove the *image*
+`make check` covers the code: it compiles, it lints, and its test lanes pass — executing them
+where they are not skipped as up to date, per the section above. It cannot prove the *image*
 behaves — that migrations apply as the owner and refuse the application role, that readiness fails
 while the schema is behind, that the root filesystem can be read-only, that `SIGTERM` drains. Those
 are properties of an artefact:

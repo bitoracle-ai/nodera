@@ -15,6 +15,11 @@ because it is cheap to violate accidentally and expensive to discover later:
 4. **``ActorContext`` is the first parameter of every use case.** Only ``public`` functions
    are checked: explicit API mode makes the modifier mandatory, so a private helper inside
    a use case is excluded without needing a rule of its own.
+5. **No unwatched transaction.** ``JdbcUnitOfWork`` opens the transaction that
+   ``:persistence``'s audit harness watches, and the harness fails the commit of a mutation
+   that wrote no audit event. One constructed outside the composition root and the harness
+   file itself opens an *unwatched* transaction, which turns invariant #3 back into something
+   a reviewer has to notice — the thing review is worst at.
 
 Allowed to mention actor kind or match a subtype, because their job is display or audit:
 ``**/audit/**``, ``**/presentation/**``, ``**/dto/**``, and the domain's own actor package
@@ -77,6 +82,18 @@ PERMISSION_CONSTRUCT_RE = re.compile(r"\bPermissionService\s*\(")
 # rather than by allowlisting the file, so a genuine second construction in that same file
 # is still a finding.
 PERMISSION_DECLARATION_RE = re.compile(r"\b(class|interface|object)\s+PermissionService\b")
+
+# The same shape, for the transaction boundary. `:persistence`'s harness watches every
+# transaction a `JdbcUnitOfWork` opens and refuses to commit a mutation with no audit event;
+# one built anywhere else opens a transaction nothing is watching.
+UNIT_OF_WORK_CONSTRUCT_RE = re.compile(r"\bJdbcUnitOfWork\s*\(")
+UNIT_OF_WORK_DECLARATION_RE = re.compile(r"\b(class|interface|object)\s+JdbcUnitOfWork\b")
+#: The composition root, and the harness file itself — not the whole `audit` package: a new spec
+#: dropped beside the harness would otherwise inherit the exemption and opt straight back out.
+UNIT_OF_WORK_ALLOWED = (
+    "/app/",
+    "/persistence/src/test/kotlin/ai/nodera/persistence/audit/AuditCompleteness.kt",
+)
 
 # `public fun name(firstParam` / `public suspend fun name(firstParam`, across line breaks,
 # capturing up to the first comma or closing paren. Explicit API mode guarantees the
@@ -169,6 +186,16 @@ def lint(root: Path) -> list[str]:
                         f"{rel}:{lineno}: PermissionService constructed outside the composition root — "
                         f"invariant #2: there is exactly one permission engine"
                     )
+                if (
+                    UNIT_OF_WORK_CONSTRUCT_RE.search(line)
+                    and not UNIT_OF_WORK_DECLARATION_RE.search(line)
+                    and not any(allowed in posix for allowed in UNIT_OF_WORK_ALLOWED)
+                ):
+                    problems.append(
+                        f"{rel}:{lineno}: JdbcUnitOfWork constructed outside the composition root and "
+                        f"AuditCompleteness.kt — this transaction is not watched for audit "
+                        f"completeness, so invariant #3 goes back to being a review duty"
+                    )
     return problems
 
 
@@ -251,6 +278,32 @@ FIXTURES: tuple[tuple[str, str, int], ...] = (
     (
         "backend/domain/src/main/kotlin/ai/nodera/domain/ticket/Ticket.kt",
         "permissions.require(ctx, projectId, Capability.TICKET_CLOSE)\n",
+        0,
+    ),
+    (
+        "backend/persistence/src/test/kotlin/ai/nodera/persistence/TicketRepositoryTest.kt",
+        "val unitOfWork = JdbcUnitOfWork(dataSource)\n",
+        1,
+    ),
+    (
+        "backend/persistence/src/test/kotlin/ai/nodera/persistence/audit/AuditCompleteness.kt",
+        "internal fun audited(): UnitOfWork = JdbcUnitOfWork(WatchedDataSource())\n",
+        0,
+    ),
+    (
+        # Beside the harness, and still a finding: the exemption is the file, not the package.
+        "backend/persistence/src/test/kotlin/ai/nodera/persistence/audit/TicketUseCaseTest.kt",
+        "val unitOfWork = JdbcUnitOfWork(dataSource)\n",
+        1,
+    ),
+    (
+        "backend/app/src/main/kotlin/ai/nodera/app/Transactions.kt",
+        "val unitOfWork = JdbcUnitOfWork(pool)\n",
+        0,
+    ),
+    (
+        "backend/persistence/src/main/kotlin/ai/nodera/persistence/JdbcUnitOfWork.kt",
+        "public class JdbcUnitOfWork(\n    private val dataSource: DataSource,\n)\n",
         0,
     ),
 )

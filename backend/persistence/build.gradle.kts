@@ -12,6 +12,10 @@ dependencies {
     implementation(libs.flyway.core)
     runtimeOnly(libs.flyway.postgresql)
     implementation(libs.slf4j.api)
+    implementation(libs.kotlinx.coroutines.core)
+    // The two jsonb columns of audit_event. The runtime library only — nothing here is
+    // @Serializable, so the serialization compiler plugin would have nothing to compile.
+    implementation(libs.kotlinx.serialization.json)
 
     // RLS policies and append-only triggers cannot be tested against a substitute.
     testImplementation(libs.bundles.testcontainers)

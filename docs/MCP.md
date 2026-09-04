@@ -124,11 +124,21 @@ from prose, each slightly differently. The rule belongs in one place, and that p
 - **No bulk mutation tool.** A single call that transitions forty tickets produces one intent and
   forty consequences, which is exactly the shape that is hard to review and impossible to undo. Loop
   over `ticket_transition`; the audit trail then reads as what actually happened.
+- **No `comment.update` capability.** Editing a comment is authoring: the check is `comment.create`
+  plus the rule that only the author edits (invariant CM1), and deleting one's own comment is the
+  same verb, with `comment.moderate` for another's. A verb that would only ever appear beside
+  `comment.create` adds a row to two tables and decides nothing. Decided by the maintainers on
+  2026-09-03 and not re-raised.
 
 ## 4. The closure gate, as an agent experiences it
 
 `ticket_transition` to `closed` with resolution `done` is refused unless every acceptance criterion is
 met, no `blocking` finding is unresolved, and at least one review exists (invariant T4).
+
+The other three resolutions do not run the gate, and an `open` ticket may take them directly — a
+duplicate recognised the moment it is filed closes in one call. `done` is never accepted from
+`open`: the machine refuses it before the gate is consulted ([`DOMAIN_MODEL.md`](DOMAIN_MODEL.md)
+§ 5.1).
 
 A refusal is not a flat error. It returns what is missing, so the agent can act rather than retry:
 

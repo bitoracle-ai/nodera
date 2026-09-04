@@ -39,9 +39,15 @@ could have been enforced at the first is a review finding.
 ## Verify by applying, not by reading
 
 ```
-make up && make migrate
+make verify-db            # applies the sequence twice on a database it creates and drops again
 python scripts/lint_sql.py
 ```
+
+That is the CI database lane locally, and it never touches the development database. Know what it
+does not do: it depends on `up`, so it runs inside the developer's Postgres — starting that
+container if it was stopped and leaving it running — and the `nodera_app` role the migrations create
+stays in the cluster. Never verify by migrating the development database itself
+([`../../skills/testing.md`](../../skills/testing.md)).
 
 An RLS policy is proved by a negative test that is demonstrably red when the policy is dropped.
 A policy nobody has seen fail is a policy nobody has tested.

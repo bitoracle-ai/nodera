@@ -19,7 +19,13 @@ SQL line comments are stripped before the identifier check, so a quoted word ins
 
 Usage:
     python scripts/lint_sql.py              # check
+    python scripts/lint_sql.py --self-test  # prove the gate still fires
     python scripts/lint_sql.py --accept     # record checksums when ADDING a migration
+
+``--self-test`` runs the checks against fixtures that must fail and fixtures that must pass,
+for the same reason ``lint_invariants.py`` does: a gate nobody has seen fire is an assertion.
+The comment-stripping fixture is the one that matters most — it is the part a later edit is
+most likely to break, and breaking it makes this gate silently permissive rather than loud.
 """
 
 from __future__ import annotations
@@ -28,6 +34,7 @@ import argparse
 import hashlib
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -202,12 +209,95 @@ def accept(root: Path) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# Self-test — the paired negative for this gate
+# ---------------------------------------------------------------------------
+
+#: ``(migration filename, file body, expected number of findings)``.
+FIXTURES: tuple[tuple[str, str, int], ...] = (
+    (
+        "V1__clean.sql",
+        'create extension if not exists "pgcrypto";\ncreate table thing (\n    id uuid primary key\n);\n',
+        0,
+    ),
+    (
+        "V2__quoted_mixed_case.sql",
+        'create table "Thing" (\n    id uuid primary key\n);\n',
+        1,
+    ),
+    # Quoting is what is refused, not merely mixed case: an unquoted lowercase identifier is the
+    # rule, and a quoted lowercase one still breaks the day something addresses it unquoted.
+    (
+        "V3__quoted_lowercase.sql",
+        'create table "widget" (\n    id uuid primary key\n);\n',
+        1,
+    ),
+    (
+        "V4__quoted_inside_a_comment.sql",
+        '-- the "Thing" table was renamed\ncreate table gadget (\n    id uuid primary key\n);\n',
+        0,
+    ),
+    (
+        "V5__unindexed_foreign_key.sql",
+        "create table child (\n    id uuid primary key,\n    parent_id uuid not null references thing (id)\n);\n",
+        1,
+    ),
+)
+
+
+def self_test() -> list[str]:
+    """Run the gate against fixtures whose findings are known, in a throwaway tree."""
+    failures: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        # resolve(): the temp directory is a symlink on macOS (/var -> /private/var), and lint()
+        # computes paths relative to the root it is given.
+        root = Path(tmp).resolve()
+        migrations = root / "db" / "migrations"
+        migrations.mkdir(parents=True)
+
+        ledger = [HEADER]
+        for name, body, _ in FIXTURES:
+            path = migrations / name
+            path.write_text(body, encoding="utf-8", newline="\n")
+            ledger.append(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {name}\n")
+        # A correct ledger, so the checksum rule stays quiet and every finding below is
+        # attributable to the rule the fixture is about.
+        (migrations / ".checksums").write_text("".join(ledger), encoding="utf-8", newline="\n")
+
+        found = lint(root)
+        for name, _, expected in FIXTURES:
+            actual = sum(1 for problem in found if problem.startswith(f"db/migrations/{name}"))
+            if actual != expected:
+                verdict = "did not fire" if expected else "fired on a clean migration"
+                failures.append(f"{name}: expected {expected} finding(s), got {actual} — the gate {verdict}.")
+
+        known = tuple(f"db/migrations/{name}" for name, _, _ in FIXTURES)
+        failures.extend(
+            f"finding attributable to no fixture, so the count above proves less than it looks: {problem}"
+            for problem in found
+            if not problem.startswith(known)
+        )
+    return failures
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Migration convention gate.")
+    parser.add_argument("--self-test", action="store_true", help="prove the gate fires, against fixtures")
     parser.add_argument("--accept", action="store_true", help="record checksums when adding a migration")
     args = parser.parse_args(argv)
 
     force_utf8()
+
+    if args.self_test:
+        failures = self_test()
+        if failures:
+            print(f"FAIL - the SQL gate is broken ({len(failures)} case(s)):", file=sys.stderr)
+            for failure in failures:
+                print(f"  - {failure}", file=sys.stderr)
+            return 1
+        print(f"OK - the SQL gate fires on all {len(FIXTURES)} fixtures as specified.")
+        return 0
+
     root = repo_root()
     if args.accept:
         return accept(root)

@@ -50,7 +50,7 @@ The toolchain criterion cannot be shown by a diff, so it is executed and recorde
 | `Actor` | sealed interface | `id`, `kind`, `handle`, `displayName`, `status`. |
 | `HumanActor`, `AgentActor` | data classes | The two subtype tables, field for field. |
 | `Surface` | `enum { WEB, REST, MCP, SYSTEM }` | The audit dimension of `ActorContext`. |
-| `RequestId` | `value class(String)` | Correlates every event of one request. |
+| `RequestId` | `value class(String)` | Correlates every event of one request. **Superseded:** carries a `Uuid` since CORE-02, because the column is `uuid not null` — [`CORE-02.md`](CORE-02.md) § 1. |
 | `ActorContext` | data class | `actorId`, `kind`, `surface`, `onBehalfOf`, `requestId` — exactly `docs/ARCHITECTURE.md` § 5. |
 
 **The sealed hierarchy is a hazard this plan creates and therefore has to close.** `Actor` being
@@ -200,16 +200,21 @@ actor with no membership.
   the actor at the empty set, so the verb is not added; from round two the actor's own set is what it
   already legitimately holds, so a self-grant can only re-state. That is invariant C3's **first
   half** — an agent cannot grant more than it holds. C3's second half, that an agent may not grant
-  `member.grant` at all, is a rule about *making* a grant and belongs to CORE-03.
+  `member.grant` at all, is a rule about *making* a grant and belongs to the use case that makes one.
 
 The asymmetry between the two self-grants is deliberate and is the part of this plan most worth
 keeping: one is the founding act, the other is self-escalation.
 
-**The obligation this creates is on the write side, and CORE-03 inherits it.** One row —
+**The obligation this creates is on the write side, and no package has taken it yet.** One row —
 `project_membership(role = 'owner', granted_by_actor_id = <self>)` — is total, unattenuated authority
 in a project, and the engine has no check that could refuse it. Only project creation may write a
 self-granted membership; every other path must refuse `grantedBy == actorId`. Stated here and in
 `PermissionService.read` because there is nowhere else it could be inherited from.
+
+**Correction, 2026-09-02 (CORE-03).** This plan named CORE-03 as the package that would inherit the
+obligation, on the assumption that it writes memberships and grants. It does not — it writes tickets
+— so the obligation is still unowned, and the sentences that named it have been re-pointed rather
+than left to send a reader to code that was never going to contain the refusal.
 
 ### 4.3 Why there is one bound and not two
 
@@ -266,7 +271,8 @@ makes that mechanical.
    introduces. Both outside the display/audit allowlist.
 3. **`ActorContext` first, mechanically.** Any `fun` in `backend/application/**/usecase/**` whose
    first parameter is not `ctx: ActorContext` is a finding. There are no use cases yet, so it binds
-   nothing today and binds CORE-03 onward; the self-test is what proves it works in the meantime.
+   nothing today and binds the first use case onward; the self-test proves it works in the meantime.
+   CORE-03 was that first package, and its three use cases are what the rule now binds.
 
 `skills/critical-invariants.md` names the two shapes in change 2 as "explicit reviewer duties"
 because the scan could not see them. That sentence becomes false with this change, so the paragraph
@@ -314,8 +320,8 @@ Instead the test source set carries `UnattenuatedReference`, a deliberately naiv
 defaults plus grants, no grantor chain — and the test asserts that the two **disagree exactly on the
 revoked capability**. Delete the attenuation code from the engine and the two agree, and the test goes
 red. The negative is committed and runs on every test run, in the same shape as invariant F1's
-(`frontend/src/invariants.test.ts`), rather than being a manual step a reader has to trust somebody
-performed.
+(`frontend/eslint.selftest.mjs`, moved out of vitest by FIX-02), rather than being a manual step a
+reader has to trust somebody performed.
 
 Four guards were confirmed red rather than assumed, each by disabling exactly one thing:
 
@@ -346,8 +352,8 @@ says so rather than implying a guard it does not provide.
 - **No caching.** A cache is a correctness hazard for an invariant whose entire point is "at the
   moment of use". It is a measured optimisation later, with an explicit invalidation story, or not
   at all.
-- **No grant/revoke use cases.** Mutation is CORE-03's, and it needs the audit recorder (CORE-02)
-  that does not exist.
+- **No grant/revoke use cases.** They need the audit recorder, which CORE-02 has since built; the
+  use cases themselves are still unwritten (CORE-03 turned out to write tickets, not grants).
 - **No `Project`, `Ticket` or `Review` entity.** Only `ProjectId`, because the engine is scoped by
   it.
 - **No Exposed 1.x code.** The version is raised; nothing compiles against it until DB-01.

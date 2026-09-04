@@ -11,15 +11,199 @@
 
 ## Status (hand-maintained)
 
+**2026-09-04 — [DOC-06](closed/DOC-06.md) is closed, and two rules the maintainers had decided are
+now written where a contributor meets them.** A check, test or simulation that needs more than this
+repository's toolchain — a database, a service, the running stack — runs in an environment created
+for that run and torn down afterwards, never the developer's `make up` stack or the volume behind
+it ([`../skills/testing.md`](../skills/testing.md)). And the identity paragraph of every entry file
+now says who sets direction: this repository is maintained by bitoracle.ai, and a contribution is
+measured against what is written here and nothing else
+([`../docs/PROJECT_MANAGEMENT.md`](../docs/PROJECT_MANAGEMENT.md) § 14).
+
+**The package is also an argument about hand-kept distillates, and the argument is the round count.**
+Seven independent review rounds; the first six each found exactly one more copy of a claim the
+package had corrected in layer 2 — the `db/migrations/` guide, a slash command, `docs/ci.md`'s own
+later section, a shell script's header, six places saying `make check` runs what CI runs, and
+`README.md`. Every one of them sat in a file no linter reads: `scripts/lint_adapters.py` covers the
+three root entry files, `.github/instructions/` and the three scoped pairs, and says so. A rule
+stated once reaches nine files by hand, and the hand is what fails.
+
+**The first round found the package's own first draft was wrong about the repository.**
+`make verify-db` had been named as a mechanic satisfying the new rule; it is not one. `verify-db: up`
+runs inside the developer's Postgres, starts that container if it was stopped, leaves it running and
+leaves the cluster-level `nodera_app` role behind — it isolates the data, not the environment. The
+rule stands and the target has not caught up with it, which is [CI-02](open/CI-02.md); until then
+`skills/testing.md` names the gap in place rather than claiming a guarantee.
+
+**And what CORE-06's closure taught is now written where the gate is described.** On a tree Gradle
+considers unchanged, `make check` reports the backend lane green without a test executing — this
+package's own closure run is exactly that, `74 actionable tasks: 1 executed, 73 up-to-date`, stated
+as such rather than reported as passing tests. `docs/PROJECT_MANAGEMENT.md` § 9 now requires the
+closure record to say which lanes executed and what the run created and removed.
+
+**2026-09-04 — [CORE-06](closed/CORE-06.md) is closed: the three questions CORE-03 and CORE-04
+raised for the maintainers are answered, and the one that is code is implemented.** The status machine has its
+`open → closed` edge, for `wont_do`, `duplicate` and `superseded` only: a ticket recognised as a
+duplicate the moment it is filed closes in one transition, and `done` is refused on that edge before
+the gate is consulted, because a direct `done` would route around the review the gate reads. Both
+halves were watched red with their guard removed. Markdown safety stays on construction until a
+renderer exists, `&lt;` in code samples and all; the renderer is WEB-02's and is named there as the
+home of both halves, link-destination filtering included, and CORE-05's round-trip criterion now
+runs through the sanitiser rather than around it. And `comment.update` is not a verb: editing stays
+`comment.create` plus the author check, recorded once in `docs/MCP.md` § 3.4.
+
+**2026-09-03 — [CORE-04](closed/CORE-04.md) is closed, and the closure gate finally has something
+that feeds it.** Comments with server-side mention extraction, edits that preserve authorship,
+deletion as a tombstone, review rounds that are appended and never collapsed, and finding resolution
+— seven use cases, three adapters, 561 backend tests, 0 failures. An unresolved blocking finding
+from round 1 now refuses a closure through the domain rather than through seeded fixtures, and a
+round-2 verdict contradicting round 1 leaves both readable.
+
+**The part worth carrying is that nine of the nine blocking findings were in one function.** Five
+review rounds, and every blocking one was the Markdown sanitiser calling prose *code*, so a
+`<script>` reached the `comment.body` column — each round with a shape the previous round's fix had
+not considered. Round 3 named the reason and it generalises: **refusing to treat a marker as an
+opener is not conservative**, because the refused marker's CommonMark partner is still there for a
+later marker to pair with, so declining to recognise a construct can create a mis-classification.
+Round 4 then showed the same mechanism on fenced blocks, from three-line bodies. The answer was to
+delete the exemption rather than repair it a fifth time: every `<` is escaped now, with nothing to
+classify and so nothing to classify wrongly. The price is `&lt;` in code samples, asserted by its
+own test and raised for the maintainers — the sanitising renderer `skills/secure-coding.md` assumes
+is where this belongs, and it does not exist yet. Decided on 2026-09-03 in
+[CORE-06](closed/CORE-06.md): it stays on construction until that renderer lands, and the renderer
+is WEB-02's.
+
+**Two findings were about a guard rather than the code it guards, which is now four packages
+running.** The project-scope clause on the key-addressed reads had no paired negative at all —
+every fixture project derived its ticket prefix from its own id, so no test could put one key in two
+projects and the clause was deletable from four statements with the suite green. And the harness
+that watched the twenty guards go red reported success twice while being wrong: once because it
+could not find the build script and answered a missing results directory with "no failures", once
+because its result parser filed each failure under the preceding, passing case's name.
+
+**One thing this package was expected to carry and does not: `criterion_set`.** It is the third
+input the closure gate reads, [`../docs/plan/CORE-03.md`](../docs/plan/CORE-03.md) § 7 had assigned
+it here, and it is in neither CORE-04's approach nor its acceptance criteria. Acceptance criteria
+are still written only by tests. [`../docs/plan/CORE-04.md`](../docs/plan/CORE-04.md) § 8 proposes a
+small follow-up package; CORE-05 needs it.
+
+**2026-09-02 — [CORE-03](closed/CORE-03.md) is closed, and a ticket now has a lifecycle it cannot be
+talked out of.** The status machine is a pure transition function over nine specified edges, key
+allocation locks its `ticket_sequence` row, and the closure gate returns
+`UnmetClosureRequirements` — never a boolean, and never an empty one: the type refuses to be
+constructed with nothing unmet, because a refusal that names nothing is the boolean it exists to
+replace. Three use cases, the first mutating ones in the repository, so CORE-02's completeness
+harness finally has real transactions to watch. 252 backend tests, 0 failures.
+
+**The thing worth carrying is where the defects were: in the guards, not in the code they guard.**
+Three review rounds, eighteen findings, none blocking — and the three that mattered were all a guard
+weaker than its prose. The race that proves key allocation passed with `for update` deleted, because
+the contender was blocking on the sequence table's unique index before it ever reached the lock; the
+allocator's "refuse rather than restart the sequence" had never executed, because row-level security
+refuses the insert one statement earlier; and the audit entity id added to three refusal paths was
+pinned on one of them, so dropping it from the other two left the suite green. Each is now either
+fixed, tested, or described as what it actually is.
+
+**One real defect, and it was found by reading rather than by running.** Two concurrent transitions
+of one ticket could lose an update: the read took no lock and the write was unconditional, so two
+callers that both read `in_review` were both permitted and the later write won — landing a status
+the machine never allows from the status the row actually had, with an audit row describing a
+`before` that had already gone. The write is a compare-and-set now, and the loser is told to retry.
+
+**And one thing the specification does not carry, raised rather than invented:** `open → closed` has
+no path, so a ticket recognised as a duplicate the moment it is filed must be walked through
+`in_progress` and `in_review` to be closed. `docs/DOMAIN_MODEL.md` § 5.1 does not draw that edge;
+[`docs/plan/CORE-03.md`](../docs/plan/CORE-03.md) § 8 proposes it. It is a product decision, and it
+was open until [CORE-06](closed/CORE-06.md) took it on 2026-09-03.
+
+**2026-09-02 — [CORE-02](closed/CORE-02.md) is closed, and the audit trail has a writer that cannot
+be forgotten.** `AuditRecorder` appends one row on the transaction the use case already opened, and
+`AuditEventRepository` refuses to write when there is none — a sink that opened its own would let a
+mutation and its audit row commit independently, which is the defect this package exists to prevent.
+150 backend tests, 0 failures.
+
+**The part worth carrying is the enforcement, not the writer.** "Every mutation writes exactly one
+event" was going to be a review duty, and review is worst at noticing an absence. It is now a JDBC
+listener in the `:persistence` harness: it reads the statements that actually executed and refuses to
+commit a transaction whose mutations carry any audit-event count but one. A use case that bypasses
+the recorder, hand-writes its SQL or simply forgets is caught identically, because none of that
+changes what reaches the database. Opting out is mechanical too — `scripts/lint_invariants.py`
+refuses a `JdbcUnitOfWork` built outside the composition root and the harness file, so no future test
+can quietly open an unwatched transaction.
+
+**Both blocking findings across five review rounds were defects in that check itself**, which is the
+argument for reviewing the guard harder than the code it guards. The first version was anchored at
+`^` and could not see a mutation inside a common table expression or behind a comment — the shapes
+CORE-03's key allocation actually writes. The second was a `CallableStatement` interception that no
+test had ever executed: deleting the branch left the suite green. Seven committed refusals now cover
+one door each, and the harness was watched going red twice — once with its check neutered, once
+against a throwaway un-audited `insert` of a shape no committed test uses.
+
+**One CORE-01 type changed shape.** `RequestId` carried a non-blank `String` while
+`audit_event.request_id` is `uuid not null`, so a string that was not a UUID type-checked and would
+have failed on the last statement of the mutation's own transaction. It carries a `Uuid` now.
+`docs/API_CONTRACT.md` states the shape that forces; what a surface does with a client-supplied
+header that is not one is left to API-01.
+
+**2026-09-01 — [FIX-02](closed/FIX-02.md) is closed, and invariant F1's proof no longer runs against
+a clock.** It was a vitest test running ESLint programmatically, and it failed on machine speed
+rather than on code: 7037 ms against a 5 s `testTimeout` under artificial load, 22 763 ms on a cold,
+busy machine. The cost is ESLint loading the flat configuration and its plugin graph once per
+process — about 1.2 s warm — and no clock vitest offers fits it. Sharing one instance saves the
+10 ms of construction, and warming in `beforeAll` only moves the cost under `hookTimeout`, where a
+heavier load makes vitest report both cases **skipped** rather than failed: a paired negative that
+stops running without going red, which is worse than the flake. The proof now runs inside
+`yarn lint` as `frontend/eslint.selftest.mjs`, in the shape `lint_invariants.py --self-test`
+established, and it is still red in both directions when the rule or its `src/api/**` exemption is
+removed.
+
+**Worth carrying, because it is bigger than that ticket: the backend lane was unrunnable on the
+development machine for want of a `JAVA_HOME`, not for want of a JDK.** `make check` exited 2 at
+`check-backend` until `JAVA_HOME` was pointed at a JDK 21 that was already installed; with it set,
+all four lanes pass and the backend suite runs 118 tests, 0 failures. No toolchain resolver is
+configured, so Gradle cannot provision a JDK itself — on a machine without one the lane stops rather
+than self-heals, and every backend package is unverifiable until it is fixed. `CONTRIBUTING.md` and
+`README.md` already name JDK 21 as a prerequisite; nothing in the repository was wrong.
+
+**2026-08-31 — [DB-01](closed/DB-01.md) is closed, and the schema has now been seen to refuse.**
+Everything `V1`–`V5` claimed to enforce was, until this package, a claim in a file: the migrations
+applied, and nothing they carried had ever been observed failing. There is now a Testcontainers
+harness in `:persistence` and 55 negative tests, every one asked as `nodera_app` rather than as the
+owner — the owner is a superuser and bypasses row-level security, so a suite written against it
+passes with every policy deleted. 59 tests in `:persistence`, 118 across the backend, 0 failures.
+Full record in the ticket; the reasoning in [`docs/plan/DB-01.md`](../docs/plan/DB-01.md).
+
+**The ticket said "demonstrably red when the policy is dropped", and that turns out to be the one
+removal that cannot show a leak.** A table with row-level security enabled and no policy denies
+everything, so a dropped-policy probe reads the same zero the working guard reads — a paired negative
+that stays green with the guard gone, which is the exact shape this repository's honesty rule exists
+to catch. Each of the fourteen policies is instead removed two ways: row-level security off, which
+puts the mechanism on trial, and the predicate replaced with `true`, which puts the policy on trial.
+The deny-all behaviour is pinned by its own test rather than used as the negative.
+
+**And proving the boundary found a hole in it.** `ticket_label` was the last two-ended association
+without a same-project guard: `V4`'s policy scopes `ticket_id` and says nothing about `label_id`, and
+referential integrity checks bypass row-level security by design — they must, or a foreign key could
+be evaded by hiding the parent. A caller holding one project's context could attach **another
+project's label** to its own ticket. Not a cross-project read: the label's columns stayed invisible
+and the join returned nothing. A cross-project write, and a weak existence oracle. `ticket_dependency`
+has the identical shape and has carried its trigger since `V2`, which is what makes this an omission
+rather than a decision. Corrected by a **new** migration, `V6`, never by editing `V2` — and `V6`
+refuses to install over pre-existing straddling rows rather than deleting them.
+
+`scripts/lint_sql.py` gains `--self-test`, the shape CORE-01 established for `lint_invariants.py`: a
+gate that has never been seen to fire is an assertion, and the identifier rule it guards is the one
+with no runtime symptom — a quoted mixed-case identifier works until something addresses it unquoted.
+
 **2026-08-25 — [CORE-01](closed/CORE-01.md) is closed, and it is the first application code in the
 repository.** `:domain` holds the actor model — one participant type, two subtypes, nothing branching
 on which — and `:application` holds `PermissionService`, the single engine both surfaces will call.
 64 backend tests, 0 failures. Full record in the ticket; the reasoning, including what was rejected,
 in [`docs/plan/CORE-01.md`](../docs/plan/CORE-01.md).
 
-**What still does not exist:** any persistence for it. `PermissionDirectory` is a port with no
-implementation, so nothing in this package has run against a database — that is DB-01's, and it is
-the next package.
+**What still does not exist:** `PermissionDirectory` is still a port with no implementation. DB-01
+proved the schema; it wrote no production Kotlin and no repository. That is CORE-02's and SEC-01's,
+and they are the next packages.
 
 Two findings from that package are worth carrying, because both are the same shape as CI-01's and
 OPS-01's. **A permission engine's bounds are part of its semantics:** the first implementation walked
@@ -96,7 +280,7 @@ eslint-plugin-react-hooks 5→7, and tailwindcss 3→4. Both are migrated forwar
 The eslint half was one line; the tailwind half moved the `xs` breakpoint into `@theme`, deleted
 `tailwind.config.js`, and had to re-declare the `content` globs as `@source` — v4's automatic
 detection had started compiling class names out of this repository's own prose. Invariant F1's
-paired negative is now a committed test rather than something a reviewer reproduces by hand.
+paired negative is now a committed gate rather than something a reviewer reproduces by hand.
 
 **[OPS-03](closed/OPS-03.md) is closed.** `compose.prod.yml` shipped a production topology with no
 procedure for running it and no way to get the data back; the only mentions of backup or restore in
@@ -145,49 +329,44 @@ their shape.
 
 ## Working order
 
-[CORE-01](closed/CORE-01.md) is done, so the order now starts one step in.
+[CORE-01](closed/CORE-01.md), [DB-01](closed/DB-01.md) and [CORE-02](closed/CORE-02.md) are done,
+so the order now starts three steps in.
 
-1. **[DB-01](open/DB-01.md)** — the schema applied and row-level security proved by negative tests.
-   It depends on nothing and everything else depends on it, including the `PermissionDirectory`
-   implementation CORE-01 left as a port.
-2. **[CORE-02](open/CORE-02.md)** and **[SEC-01](open/SEC-01.md)** — the audit recorder and
-   credentials, both after DB-01: the audit invariant is unenforceable without the privilege split
-   the migration creates.
-3. **[API-01](open/API-01.md)** and **[MCP-01](open/MCP-01.md)** — the two surfaces, built against
+1. **[SEC-01](open/SEC-01.md)** — credentials. It was waiting on DB-01 alongside
+   [CORE-02](closed/CORE-02.md), which is now closed: the audit invariant was unenforceable without
+   the privilege split the migration creates, and that split is proved rather than assumed.
+2. **[API-01](open/API-01.md)** and **[MCP-01](open/MCP-01.md)** — the two surfaces, built against
    the same use cases. MCP-01 depends on API-01 only for the shared error mapping, not for logic.
-4. Everything after that is ordered by the table below.
+3. Everything after that is ordered by the table below.
 
 ## Open tickets
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_15 open (P1 3 · P2 8 · P3 4 · P4 0) · 7 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_12 open (P1 1 · P2 6 · P3 5 · P4 0) · 18 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
-### 🔴 P1 — Highest (3)
+### 🔴 P1 — Highest (1)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
-| [CORE-02](open/CORE-02.md) | Audit recorder — one event per mutation, in the mutation's transaction | ~2 d | CORE-01, DB-01 |
-| [DB-01](open/DB-01.md) | Apply the baseline schema and prove row-level security with negative tests | ~2 d | — |
 | [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
 
-### 🟠 P2 — High (8)
+### 🟠 P2 — High (6)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
 | [API-01](open/API-01.md) | REST API skeleton with a contract-first OpenAPI document | ~3 d | CORE-01, SEC-01, CORE-03 |
-| [CORE-03](open/CORE-03.md) | Ticket lifecycle, key allocation and the closure gate | ~3 d | CORE-01, CORE-02 |
-| [CORE-04](open/CORE-04.md) | Comments, mentions and the review record | ~2 d | CORE-02, CORE-03 |
 | [MCP-01](open/MCP-01.md) | MCP server with the orientation and read tools | ~3 d | CORE-01, SEC-01, CORE-03 · Depends on API-01 only for the shared error taxonomy, not for logic. |
 | [MCP-02](open/MCP-02.md) | MCP mutating tools with idempotency and structured gate errors | ~2 d | MCP-01, CORE-04 |
 | [OPS-02](open/OPS-02.md) | Prove the release package by cutting one | ~0.5 d | Carries the one OPS-01 criterion that cannot be proved from inside this repository. |
 | [WEB-01](open/WEB-01.md) | Frontend shell — routing, authentication, generated API client | ~2 d | API-01 |
 | [WEB-02](open/WEB-02.md) | Ticket list and detail views, mobile-first | ~3 d | WEB-01, CORE-04 |
 
-### 🟡 P3 — Medium (4)
+### 🟡 P3 — Medium (5)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
+| [CI-02](open/CI-02.md) | Make the repository's own runs leave nothing behind | ~0.5 d | The two runs skills/testing.md and verify_image.sh name as not yet meeting the rule — verify-db runs inside the developer's Postgres, and the image check leaves a volume. |
 | [CORE-05](open/CORE-05.md) | Markdown ticket import and export with round-trip fidelity | ~2 d | CORE-04 |
 | [DOC-01](open/DOC-01.md) | Deployment guide and the self-hosting path | ~1 d | API-01, WEB-01 |
 | [GH-01](open/GH-01.md) | Link branches, commits and pull requests onto tickets automatically | ~2 d | CORE-01, CORE-03, DB-01 · Shape settled in ADR-0010 — the fence runs through the payload, so it is enforced in the schema. |

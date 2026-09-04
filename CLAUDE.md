@@ -9,8 +9,13 @@ first-class Model Context Protocol server beside the REST API.
 
 Read the scope fence before proposing anything: `docs/VISION.md` § 3.
 
-Local layout: this clone sits inside the `bitoracle-ai/hq` umbrella checkout — the hq management
-repo resolves via `../`, sibling project repos via `../oracleai`, `../webadmin`, `../studio`.
+Layout: this repository stands alone. Every path in its documentation is relative to the repository
+root, and nothing it references resolves outside it.
+
+Maintained by **bitoracle.ai**: direction, priorities and the standards enforced here are set by the
+maintainers' management process, and its decisions bind this repository. Work runs through this
+repository's own process — the five phases, the independent review, the gates, closure — and nothing
+outside this checkout is a precondition for a change (`docs/PROJECT_MANAGEMENT.md` § 14).
 
 ## Start here, every session
 
@@ -57,7 +62,28 @@ Load on demand — not permanently in context.
   reason, or ticket it per `docs/PROJECT_MANAGEMENT.md` § 8.
 - **English only** in everything committed. Speak German with me if you like; write English into the
   repository.
-- `git commit` only when I ask. **Never `git push`** unless I ask in that turn.
+- **Commit when the work is done, without being asked** — a finished package or task goes onto the
+  current branch once its gates are green, its review has passed and, for a ticketed package,
+  closure is complete. Never mid-task, never on a red gate, never on unreviewed work, never if I
+  said not to. Commit subjects **and pull-request titles** you author start with **🤖**:
+  `🤖 <type>(<area>): <ID> — <summary>`.
+  **Never `git push`** unless I ask in that turn — same for deploying, releasing and publishing.
+  `docs/PROJECT_MANAGEMENT.md` § 12.
+- **Comments minimal** — only at critical or genuinely complex spots, lean even there; rationale
+  goes in the ticket, the ADR or `docs/`. **Do not imitate the tree**: several migrations and Kotlin
+  files carry paragraph-length commentary written before this rule. They are not the standard.
+  `docs/AI_COLLABORATION.md` § 1.
+- **Test environments are throwaway Docker, and they are torn down.** Anything a check, test or
+  simulation needs beyond this repository's toolchain — a database, a service, the running stack —
+  runs in an environment created for that run: Testcontainers, or a compose project under its own
+  `-p <name>` torn down with `down -v`. Never the host's own installs, never my `make up` stack or
+  the volume behind it. What the run created is removed afterwards — containers, volumes, networks
+  — and the closure record says what was created and removed, what was left running, or that there
+  was none. `make verify-db` is the one named exception: it isolates its own database but runs
+  inside my Postgres and leaves it up. `skills/testing.md`.
+- **Do not report a cache as a test run.** On an unchanged tree Gradle serves the backend lane from
+  its build cache or skips it as up to date, and `make check` is green without a test executing.
+  Say which lanes executed; `--no-build-cache --rerun-tasks` covers both. `docs/ci.md`.
 - Tool entry files (this one and the other adapters listed in `docs/INDEX.md`) change only inside an
   explicit work package, never in passing.
 
@@ -65,8 +91,9 @@ Load on demand — not permanently in context.
 
 ```
 make dev        # postgres + migrations + backend + frontend
-make check      # every CI lane locally, except the CI-only gitleaks scan
+make check      # every CI lane locally, except the CI-only gitleaks scan and verify-db
 make verify-db  # the CI database lane: migrations twice on a throwaway database + schema checks
+                # (a throwaway database inside the dev Postgres — the exception noted above)
 make help       # all targets
 ```
 
@@ -105,8 +132,8 @@ Windows gotcha: run the gate scripts with `py` (`py scripts/lint_adapters.py`) o
 
 | I say | You do |
 |---|---|
-| "done" | Closure per `docs/PROJECT_MANAGEMENT.md` § 9: criteria checked, gates green, review recorded, ticket moved, views regenerated. |
-| "commit" | Stage + commit the current branch, conventional message. Never push. |
+| "done" | Closure per `docs/PROJECT_MANAGEMENT.md` § 9: criteria checked, gates green, review recorded, ticket moved, views regenerated — **and committed**, § 12. |
+| "commit" | Stage + commit the current branch, `🤖` subject. Never push. (You do not need me to say it — see the rule above.) |
 | "review" | Phase-4 via the `reviewer` subagent (`/nodera-review`). |
 | "push" / "deploy" | Deliberately undefined — stop and ask; I act. |
 

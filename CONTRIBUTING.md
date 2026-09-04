@@ -4,6 +4,12 @@ Contributions are welcome — from people and from AI agents. Both follow the sa
 both are reviewed the same way. That is not a slogan; it is the product's premise applied to its
 own development.
 
+Nodera is maintained by **bitoracle.ai**: direction, priorities and the standards enforced here are
+set by the maintainers' management process. Your contribution is measured against what is written
+in this repository and nothing else — the phases, the review, the gates, the closure protocol. You
+never need access to anything outside this checkout to make a change or to know whether it will be
+accepted ([`docs/PROJECT_MANAGEMENT.md`](docs/PROJECT_MANAGEMENT.md) § 14).
+
 ---
 
 ## Before you write anything
@@ -22,7 +28,9 @@ Then read [`docs/INDEX.md`](docs/INDEX.md). Every rule in this repository is rea
 3. Implement, running the gates after each chunk rather than at the end.
 4. **Get an independent review** — in a sub-agent, not inline in the context that wrote the code.
 5. Fix BLOCKING findings, re-test, review again.
-6. Open a pull request with the template filled in honestly.
+6. Commit it — once the gates are green and the review has passed, that is not a step you wait to
+   be asked for.
+7. Open a pull request with the template filled in honestly.
 
 Full reference: [`docs/PROJECT_MANAGEMENT.md`](docs/PROJECT_MANAGEMENT.md).
 
@@ -53,14 +61,25 @@ cp .env.example .env && make up && make migrate && make seed
 make check
 ```
 
-`make check` runs everything CI runs. If it is green locally it will be green in CI, with two
-exceptions worth knowing: the backend tests need a running Docker daemon for Testcontainers, and
-skipping them locally is the most common cause of a surprise red build; and the secret scan
-(gitleaks) runs only in CI — `gitleaks detect --config .gitleaks.toml` reproduces it locally if
-you have gitleaks installed.
+`make check` runs almost everything CI runs, with three exceptions worth knowing. The backend
+tests need a running Docker daemon for Testcontainers, and skipping them locally is the most common
+cause of a surprise red build. The secret scan (gitleaks) runs only in CI —
+`gitleaks detect --config .gitleaks.toml` reproduces it locally if you have gitleaks installed. And
+`make check` does not apply the migrations: that is `make verify-db`, a target of its own, so a
+migration change is not covered by a green `make check` (`docs/ci.md`).
 
 **`make dev` also starts the backend and frontend, and those do not run yet** — they are the open
 tickets. The database, the migrations and every gate do work today.
+
+**A test gets its own environment, and it is gone afterwards.** Anything a check or a test needs
+beyond the toolchain above — a database, a service, the stack — runs in an environment created for
+that run: Testcontainers for the persistence tests, or a compose project under its own
+`-p <name>`, torn down with `down -v`. Not your `make up` Postgres and not the volume behind it;
+those are yours and they hold work between sessions. `make verify-db` is the documented exception —
+it isolates its own database but runs inside your Postgres and leaves it running, which is why a
+report says so rather than claiming the run left nothing. Everything a run created is removed again
+— containers, volumes, networks — and nothing it started stays running. Full rule and the exception:
+[`skills/testing.md`](skills/testing.md).
 
 ## The rules that will get a pull request declined
 
@@ -106,6 +125,16 @@ messages, everything committed.
 or anything else; ship English. This is a property of the artefact, not of the conversation that
 produced it, and the gate (`python scripts/lint_language.py`) only ever looks at the artefact.
 
+## Comments
+
+Comment sparingly: only at critical or genuinely complex spots, and lean even there. Rationale
+belongs in the ticket, the ADR or `docs/`, where it is indexed and can be corrected.
+
+**Do not take the surrounding code as the standard.** Several migrations and Kotlin files carry
+paragraph-length commentary written before this rule; they are not being rewritten, and they are not
+what to imitate. Matching them is the most likely way to be asked for changes on an otherwise good
+pull request.
+
 ## Commits and pull requests
 
 Commit message: `type(scope): TICKET-ID — short description`
@@ -117,6 +146,24 @@ docs(adr): DOC-02 — record the sibling-surface decision
 ```
 
 Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`.
+
+**A subject written by an AI assistant starts with `🤖`** — commit subjects and pull-request titles
+alike:
+
+```
+🤖 test(db): DB-01 — the schema proved by negative tests
+```
+
+It is there for you, the reader. This repository's history is written by people and by agents, and
+the marker is how you can tell which without asking — the same accountability the product itself is
+built on. It marks who wrote the change, not who is answerable for it: that is still the human who
+opened the pull request.
+
+**Finished work gets committed without being asked**, once its gates are green and its review has
+passed — never mid-task, never on a red gate, never on unreviewed work, never if you were asked not
+to.
+**Pushing is different: never `git push` unless it was asked for in that turn.**
+Full rule: [`docs/PROJECT_MANAGEMENT.md`](docs/PROJECT_MANAGEMENT.md) § 12.
 
 One logical change per pull request. A pull request that fixes a bug and refactors two unrelated
 files is two pull requests, and the reviewer will ask for it to be split — not out of process

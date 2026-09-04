@@ -44,6 +44,20 @@ evaluate is not a release.
   application role.
 - Release images are built for `linux/amd64` and `linux/arm64` and signed with keyless cosign,
   alongside the provenance and SBOM that were already produced.
+- **The audit trail has a writer, and a mechanism that will not let a mutation skip it** (CORE-02).
+  `AuditRecorder` appends exactly one `audit_event` row on the transaction the use case already
+  opened; the sink refuses to write when there is none, so a mutation and its audit row can never
+  commit or roll back independently. Denials are recorded with `outcome = 'denied'`, and the
+  delegation chain comes from the authenticated context rather than from a caller's argument.
+  Completeness is enforced rather than reviewed: a JDBC listener in the test harness reads the
+  statements that actually executed and refuses to commit a transaction whose mutations carry no
+  audit event, so bypassing the recorder, hand-writing the SQL and forgetting are all caught the
+  same way.
+- **A direct `open → closed` edge in the ticket status machine** for `wont_do`, `duplicate` and
+  `superseded`, so a ticket recognised as a duplicate the moment it is filed closes in one
+  transition instead of being walked through `in_progress` and `in_review`. `done` is refused on
+  that edge before the closure gate is consulted — a direct `done` would route around the review
+  the gate reads. Both halves carry a test that is red with the guard removed (CORE-06).
 
 ### Changed
 
@@ -120,6 +134,18 @@ evaluate is not a release.
 - The coverage gate scanned `dist/`. Vitest replaces its default excludes when `coverage.exclude`
   is given, so `yarn test:coverage` passed on a clean tree and failed as soon as anyone had run
   `yarn build` first — an order-dependent gate.
+- A ticket could wear a label belonging to another project. `ticket_label` was the last two-ended
+  association without a same-project guard: the policy scopes `ticket_id` only, and referential
+  integrity checks bypass row-level security by design, so the `label_id` end was unguarded. What
+  this allowed was writing a cross-project association and confirming that a label id exists — not
+  reading another project's data: the label's own columns stayed invisible and the join returned
+  nothing. `V6` adds the trigger that `ticket_dependency`, which has the same shape, has carried
+  since `V2`. Found by DB-01's negative tests rather than by reading the migration (DB-01).
+- Invariant F1's paired negative failed on machine speed rather than on code. It ran ESLint inside
+  vitest, where loading the flat config and its plugins costs about 1.2 s warm and over 20 s on a
+  loaded machine, against a 5 s `testTimeout` — so `CI Gate`, a required check, could go red on a
+  change with nothing wrong with it, which is how a real red gets waved through. The proof now runs
+  in `yarn lint`, which carries no per-test clock (FIX-02).
 
 ### Notes
 

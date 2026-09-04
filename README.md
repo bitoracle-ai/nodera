@@ -71,7 +71,8 @@ model, running, before any application code exists.
 
 **`make dev` additionally starts the backend and frontend, and those do not run yet.** `backend/`
 and `frontend/` hold build configuration and module structure; the implementations are the open
-tickets. `make help` lists every target, and `make check` runs every gate that does work.
+tickets. `make help` lists every target, and `make check` runs every gate that does work — except
+`make verify-db`, which applies the migrations and is a target of its own.
 
 ### Connecting an agent
 

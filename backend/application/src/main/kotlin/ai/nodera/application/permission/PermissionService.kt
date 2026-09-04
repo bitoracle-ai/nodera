@@ -138,8 +138,9 @@ public class PermissionService(
             // is nowhere else it could be inherited from: one row —
             // `project_membership(role='owner', granted_by_actor_id = <self>)` — is total,
             // unattenuated authority in a project. Only project creation may write a self-granted
-            // membership. Every other path must refuse `grantedBy == actorId`, and CORE-03, which
-            // writes memberships and grants, owns that refusal.
+            // membership. Every other path must refuse `grantedBy == actorId`. CORE-03 turned out
+            // not to be that path — it writes tickets, not memberships — so the refusal belongs to
+            // whichever package first writes a membership or a grant, and does not exist yet.
             grantedBy = membership.grantedBy,
             additions = additions,
             denials = denials.map { it.capability }.toSet(),
@@ -192,7 +193,7 @@ private fun solve(closure: Map<ActorId, Grantee>): Map<ActorId, Set<Capability>>
  * holds, so a self-grant can only re-state something and never introduce it. That is invariant C3's
  * first half — an agent cannot grant itself more than it holds — by construction rather than by an
  * `if`. C3's second half, that an agent may not grant `member.grant` at all, is a rule about *making*
- * a grant and belongs to the use case that makes them (CORE-03).
+ * a grant and belongs to the use case that makes them, which no package has written yet.
  *
  * Denials are applied last and unconditionally. Requiring a denial's grantor to still hold the verb
  * would mean revoking a person's access silently *widens* what their agent may do. `capability_grant`

@@ -1,8 +1,9 @@
 #!/bin/sh
 # Container-level acceptance checks for the Nodera image.
 #
-# The gates in `make check` prove the code compiles, lints and passes its tests. They cannot prove
-# that the *image* behaves: that migrations apply as the owner and refuse as the application role,
+# The gates in `make check` cover the code: it compiles, it lints, and its test lanes pass where
+# they are not skipped as up to date (docs/ci.md). They cannot prove that the *image* behaves:
+# that migrations apply as the owner and refuse as the application role,
 # that readiness fails while the schema is behind, that the root filesystem can be read-only, or
 # that SIGTERM drains instead of killing. Those are properties of an artefact, and this script is
 # how they are checked by someone other than the person who claims them.
@@ -11,7 +12,8 @@
 #   docker build --build-arg VERSION=0.0.0-local -t nodera:local .
 #   sh scripts/verify_image.sh nodera:local
 #
-# Needs a Docker daemon and nothing else. Leaves nothing behind.
+# Needs a Docker daemon and nothing else. Its trap removes the containers and the network; the
+# anonymous volume the Postgres image declares survives, because the removal omits -v (CI-02).
 
 set -u
 

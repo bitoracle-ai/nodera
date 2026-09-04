@@ -1,9 +1,10 @@
 ---
-summary: How work is organised in this repository — the ticket system, the session protocol, priorities, the closure protocol, ticket hygiene and the repository language rule.
+summary: How work is organised in this repository — the ticket system, the session protocol, priorities, the closure protocol, ticket hygiene, the repository language rule, and who sets direction.
 read_when:
   - Before every session that changes files.
   - Whenever a ticket is created or closed.
   - When unsure about priority, numbering, or which language something must be written in.
+  - When wondering who decides what goes into this repository, and what a contribution is measured against.
 ---
 
 # Project management — Nodera
@@ -119,7 +120,9 @@ detector rather than of the project:
 
 **Rules:**
 
-1. **P1 before P2 before P3 before P4.** No low-priority package while a P1 is open.
+1. **P1 before P2 before P3 before P4.** No low-priority package while a P1 is open. Packages have
+   nonetheless closed while an unblocked P1 stood open; § 14 says what the record shows and names
+   the question that leaves open.
 2. **Respect dependencies** — `depends_on` in the frontmatter names the preconditions.
 3. **Never several packages at once.** Finish one completely, then start the next. Independent
    packages may run in parallel across separate sessions, never within one.
@@ -144,7 +147,8 @@ detector rather than of the project:
 When a piece of work, an idea or a defect is mentioned, it is **entered into the system immediately** —
 not merely acknowledged in a reply.
 
-1. Determine the priority (§ 5).
+1. Determine the priority (§ 5). If the package is starting out of that order, say so in the
+   ticket and why — § 14.
 2. Assign the next free ID in the prefix range (§ 6).
 3. Scaffold: `python scripts/ticket_new.py <ID> "<title>" [--priority P2] [--effort "~1 d"]` — creates
    the file from `tickets/TEMPLATE.md`, refuses an ID collision, and regenerates the views.
@@ -206,7 +210,8 @@ reach it.
 All steps mandatory.
 
 1. **Every acceptance criterion met** — each `[ ]` becomes `[x]`, and each is actually true.
-2. **Gates green:** `make check` — no error.
+2. **Gates green:** `make check` — no error. The record says which lanes executed and which were
+   served from a cache, and names any environment the run created and removed (below).
 3. **Independent review returned with 0 BLOCKING** — phase 4, run in a sub-agent (§ 3).
 4. **Move the file** `tickets/open/<ID>.md` → `tickets/closed/<ID>.md`; set `status: closed` and
    `closed: YYYY-MM-DD` (mandatory — the closed index sorts by it).
@@ -215,8 +220,23 @@ All steps mandatory.
 6. **Regenerate views:** `python scripts/tickets_index.py --write`.
 7. **Update hand-written mentions** — if the INDEX head links the ticket as `open/<ID>.md`, repoint it.
 8. **`python scripts/check_tickets.py --check` green.**
-9. **Propose a commit message** (`feat(<area>): <ID> — <short description>`). Commit only when the user
-   asks; never push unasked.
+9. **Commit it** — § 12. Closure ends in a commit on the current branch, not in a proposal.
+
+### What the closure record says about the run
+
+**What the run created, and that it is gone.** A gate that needs more than this repository's own
+toolchain — the backend lane's Testcontainers, the database lane — runs in an environment created
+for it and torn down afterwards ([`../skills/testing.md`](../skills/testing.md), which also names
+the one mechanic that does not meet that yet). The record names what was created, what was removed
+and anything left running; a package that needed none says that instead, which is the useful answer
+rather than the empty one.
+
+**And whether the tests actually ran.** A green `make check` on a tree Gradle considers unchanged
+proves the lane was satisfied, not that a test executed — Gradle skips it as up to date or serves it
+from the build cache, and the report reads identically either way ([`ci.md`](ci.md)). So a closure
+that rests on the tests names the run that executed them, and one that does not rest on them — a
+docs package, a ticket-only change — says the lane was not executed. Both are honest; only silence
+is not.
 
 ## 10. Plans
 
@@ -230,3 +250,93 @@ useful. Trivial packages keep the plan in chat, no ceremony.
 A P1 or P2 defect that took ≥ ~0.5 day to understand gets `docs/retro/<slug>.md` when it closes:
 symptom · cause with exact file paths · fix with the commit reference · a repeatable check · what to
 watch for.
+
+## 12. Committing
+
+**A finished work package is committed on the current branch without being asked.** So is any other
+finished task, including maintenance small enough to need no ticket. The conditions are the gates,
+not a request: its gates are green, its review has passed, and — for a ticketed package — closure
+(§ 9) is complete.
+
+Never mid-task. Never on a red gate. Never on work whose review is still outstanding. Never if the
+user said not to. Those four bound the **unasked** commit; a user who asks for a commit has given
+their own instruction, and it is still a commit and still never a push.
+
+The reason it is the default rather than a courtesy: uncommitted work is work nobody else can see,
+review or recover, and "I will commit when asked" reliably means a session ends with hours of it
+sitting in a working tree. A commit is also the cheapest possible undo.
+
+### Pushing is not part of it
+
+**Never `git push`** unless the user asks for it explicitly in that turn. The same holds for
+deploying, releasing and publishing. Committing is a local, reversible act; pushing is not, and the
+distinction is the whole point of making one of them automatic.
+
+### The subject line
+
+`<type>(<area>): <ID> — <short description>`, with the types `CONTRIBUTING.md` lists.
+
+**A subject an agent authors starts with `🤖`** — commit subjects and pull-request titles alike:
+
+```
+🤖 test(db): DB-01 — the schema proved by negative tests
+```
+
+This is a public repository, so the marker is not only an authoring rule. It is how anyone reading
+the history can tell agent-authored commits from human-authored ones without asking, which is the
+same accountability the product itself is built on.
+
+## 13. Redacting a disclosure from the ticket record
+
+**A closed ticket is a record.** It is not edited because it later reads badly, because a decision
+in it turned out wrong, or because someone would tidy it. The record's value comes from being what
+it was.
+
+**It is redacted when it discloses internal detail about a system outside this repository** — how
+another system is hosted, scheduled, backed up or reached. That detail is not ours to publish, it is
+never load-bearing for a decision recorded here, and leaving it because of where it sits would make
+the rule about which file it is in rather than about what this repository discloses.
+
+A redaction:
+
+- is **marked in place**, so a reader sees that something was removed rather than meeting a record
+  that pretends it always read this way;
+- states **what class of detail** went and **why**, without restating the detail — describing it
+  precisely enough to reconstruct it is not a redaction;
+- **leaves the argument intact.** If the surrounding reasoning does not survive, the redaction is
+  wrong and the case goes to the maintainers instead.
+
+**The same restraint binds the package doing the removing:** a ticket that records a disclosure being
+taken out does not quote it, but names the class and cites the commit — the diff is the complete
+record, and reproducing the string relocates the disclosure instead of ending it.
+
+**It changes what this repository says today. It does not remove anything from published history**,
+and nothing about a redaction may be written as though it did.
+
+## 14. Who sets direction
+
+Nodera is maintained by **bitoracle.ai**. Its direction, its priorities and the standards this
+repository enforces are set by the maintainers' management process, and the decisions that come out
+of it bind the repository.
+
+**A contribution runs through this repository's process, not through that one.** The five phases
+(§ 3), the independent review, the gates and the closure protocol (§ 9) are the whole contract for
+a change. Nothing outside this checkout is a precondition for one: a contributor never needs access
+to anything that is not here, and no rule applies to a pull request unless it is written in a file
+this repository ships.
+
+**One corollary, and it is an open question rather than an answer.** Packages have closed while the
+P1 SEC-01 stood open and unblocked — CORE-06 (P3) and DOC-06 (P2) among them. Only DOC-06 says
+anything about its ordering; for the others it can be read off the dates and nothing more, so why
+each ran when it did is not in the record. § 5 rule 1 still reads flatly, and this section does not
+read it down: whether the ladder governs only what a contributor picks up next, or every package
+including one the maintainers dispatch, is for the maintainers to settle. Until it is settled,
+**a package that runs outside the order says so in its own ticket** — a new obligation this section
+creates, and the only thing here that is a rule rather than an observation.
+
+That division is what makes the rules checkable. A maintainer decision arrives the same way any
+other change does — as a work package with a ticket, a diff and a review — never as an unexplained
+edit to an entry file, which is the whole point of
+[`../skills/critical-invariants.md`](../skills/critical-invariants.md) § 12. A rule you can read
+here, argue with here, and see the reasoning for here is a rule; one that arrives from somewhere
+you cannot see is an instruction.
