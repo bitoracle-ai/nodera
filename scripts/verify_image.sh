@@ -58,6 +58,11 @@ printf ' ready\n\n'
 
 OWNER_ENV="--network $NET -e NODERA_DB_URL=jdbc:postgresql://$PG:5432/nodera -e NODERA_DB_USER=nodera_owner -e NODERA_DB_PASSWORD=$OWNER_PW"
 
+# `serve` requires these from SEC-01 on and refuses to start without them, so every serve
+# container below carries them. Unmistakably local, like every other value in this script: the
+# key is base64 of the ASCII sentence "nodera-local-dev-only-not-a-secret-000000".
+SERVE_ENV="-e NODERA_JWT_SIGNING_KEY=bm9kZXJhLWxvY2FsLWRldi1vbmx5LW5vdC1hLXNlY3JldC0wMDAwMDA= -e NODERA_JWT_ISSUER=http://localhost:8080"
+
 # ---------------------------------------------------------------------------
 # Configuration refuses rather than guesses
 # ---------------------------------------------------------------------------
@@ -73,6 +78,15 @@ if [ $rc -ne 0 ] && echo "$out" | grep -q "are both set"; then
     ok "a variable set directly and as _FILE refuses start-up rather than picking one"
 else
     bad "both-set refuses start-up" "rc=$rc out=$out"
+fi
+
+# The database block alone is no longer enough. Checked at the image because that is where the
+# absence is real: the unit test proves the loader, this proves the artefact an operator runs.
+out=$(docker run --rm $OWNER_ENV "$IMAGE" serve 2>&1); rc=$?
+if [ $rc -ne 0 ] && echo "$out" | grep -q "NODERA_JWT_SIGNING_KEY"; then
+    ok "an absent signing key refuses start-up, naming it"
+else
+    bad "absent signing key refuses start-up" "rc=$rc out=$out"
 fi
 
 # ---------------------------------------------------------------------------
@@ -100,7 +114,7 @@ docker exec "$PG" psql -U nodera_owner -d nodera -q -c 'create database nodera_e
 docker run -d --name "$SERVE" --network "$NET" --read-only --tmpfs /tmp \
     -e NODERA_DB_URL="jdbc:postgresql://$PG:5432/nodera_empty" \
     -e NODERA_DB_USER=nodera_owner -e NODERA_DB_PASSWORD="$OWNER_PW" \
-    "$IMAGE" serve >/dev/null
+    $SERVE_ENV "$IMAGE" serve >/dev/null
 sleep 8
 ready=$(docker exec "$SERVE" wget -qO- http://localhost:8080/health/ready 2>/dev/null); rrc=$?
 live=$(docker exec "$SERVE" wget -qO- http://localhost:8080/health/live 2>/dev/null); lrc=$?
@@ -160,7 +174,7 @@ fi
 docker run -d --name "$SERVE" --network "$NET" --read-only --tmpfs /tmp \
     -e NODERA_DB_URL="jdbc:postgresql://$PG:5432/nodera" \
     -e NODERA_DB_USER=nodera_app -e NODERA_DB_PASSWORD="$APP_PW" \
-    "$IMAGE" serve >/dev/null
+    $SERVE_ENV "$IMAGE" serve >/dev/null
 sleep 10
 body=$(docker exec "$SERVE" wget -qO- http://localhost:8080/health/ready 2>/dev/null); rc=$?
 if [ $rc -eq 0 ] && echo "$body" | grep -q '"ready"'; then

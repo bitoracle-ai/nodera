@@ -2,8 +2,11 @@ package ai.nodera.persistence
 
 import java.sql.PreparedStatement
 import java.sql.Types
+import java.time.ZoneOffset
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
+import java.time.Instant as JavaInstant
 
 /** Binds in declaration order, so a statement's placeholders never have to be counted by hand. */
 internal class Binding(
@@ -28,6 +31,17 @@ internal class Binding(
     fun int(value: Int) {
         index += 1
         statement.setInt(index, value)
+    }
+
+    /** A `timestamptz` parameter, always UTC. Null binds as the typed null the column expects. */
+    fun instant(value: Instant?) {
+        index += 1
+        if (value == null) {
+            statement.setNull(index, Types.TIMESTAMP_WITH_TIMEZONE)
+        } else {
+            val moment = JavaInstant.ofEpochSecond(value.epochSeconds, value.nanosecondsOfSecond.toLong())
+            statement.setObject(index, moment.atOffset(ZoneOffset.UTC))
+        }
     }
 
     /** A `text[]` parameter. Cast to the column's own type in the statement, never here. */

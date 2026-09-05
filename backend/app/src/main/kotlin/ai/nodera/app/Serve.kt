@@ -2,9 +2,17 @@ package ai.nodera.app
 
 import ai.nodera.api.rest.ReadinessProbe
 import ai.nodera.api.rest.healthRoutes
+import ai.nodera.api.rest.installCredentialAuthentication
+import ai.nodera.application.identity.CredentialAuthenticator
+import ai.nodera.application.identity.CredentialVerifier
+import ai.nodera.application.identity.Secrets
+import ai.nodera.persistence.ConnectionPool
 import ai.nodera.persistence.DatabaseSettings
+import ai.nodera.persistence.JdbcUnitOfWork
 import ai.nodera.persistence.Migrator
 import ai.nodera.persistence.SchemaState
+import ai.nodera.persistence.identity.JdbcActorDirectory
+import ai.nodera.persistence.identity.JdbcCredentialStore
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
@@ -17,6 +25,7 @@ import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.PrintStream
+import kotlin.time.Clock
 
 private val logger = LoggerFactory.getLogger("ai.nodera.app")
 
@@ -41,21 +50,23 @@ internal fun runServe(
     config: ServeConfig,
     out: PrintStream,
 ): Int {
-    val migrator =
-        Migrator(
-            DatabaseSettings(
-                url = config.database.url,
-                user = config.database.user,
-                password = config.database.password,
-            ),
+    val database =
+        DatabaseSettings(
+            url = config.database.url,
+            user = config.database.user,
+            password = config.database.password,
         )
+    val migrator = Migrator(database)
     // In the image the assets are always present. On a development machine they are not, because
     // Vite serves them — so their absence is reported rather than fatal, and reported rather than
     // silent, so a broken image cannot look like a development machine.
     val assets = File(config.staticRoot)
+    val pool = ConnectionPool(database)
+    val authenticator = credentialAuthenticator(config.identity, pool)
     val server =
         embeddedServer(Netty, port = config.httpPort) {
             install(ContentNegotiation) { json() }
+            installCredentialAuthentication(authenticator)
             routing {
                 healthRoutes(buildVersion, readinessProbe(migrator))
                 if (assets.isDirectory) {
@@ -73,11 +84,31 @@ internal fun runServe(
         out.println("No web assets at ${assets.absolutePath}; serving the API only.")
     }
     Runtime.getRuntime().addShutdownHook(
-        Thread { server.stop(SHUTDOWN_GRACE_MILLIS, SHUTDOWN_TIMEOUT_MILLIS) },
+        Thread {
+            server.stop(SHUTDOWN_GRACE_MILLIS, SHUTDOWN_TIMEOUT_MILLIS)
+            pool.close()
+        },
     )
     out.println("Nodera $buildVersion listening on port ${config.httpPort}")
     server.start(wait = true)
     return EXIT_OK
+}
+
+/** The identity graph, assembled here and nowhere else — `docs/plan/SEC-01.md` § 7. */
+private fun credentialAuthenticator(
+    identity: IdentityConfig,
+    pool: ConnectionPool,
+): CredentialAuthenticator {
+    val clock = Clock.System
+    val credentials = JdbcCredentialStore()
+    val secrets = Secrets(SecureRandomSecrets(), Argon2idSecretHasher(identity.hashCost))
+
+    return CredentialAuthenticator(
+        unitOfWork = JdbcUnitOfWork(pool.dataSource),
+        verifier = CredentialVerifier(credentials, secrets.hasher, clock),
+        actors = JdbcActorDirectory(),
+        accessTokens = JwtAccessTokens(identity.signingKey, identity.issuer, identity.accessTtl),
+    )
 }
 
 /**

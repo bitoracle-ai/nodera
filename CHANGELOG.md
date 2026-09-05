@@ -58,9 +58,46 @@ evaluate is not a release.
   transition instead of being walked through `in_progress` and `in_review`. `done` is refused on
   that edge before the closure gate is consulted — a direct `done` would route around the review
   the gate reads. Both halves carry a test that is red with the guard removed (CORE-06).
+- **An agent can authenticate as itself, and so can a person** (SEC-01) — the mechanism, and not
+  yet an endpoint to reach it through. Personal access tokens
+  (`nod_pat_…`) are issued once and stored only as an Argon2id hash; humans sign in with an e-mail
+  address and a one-time code and receive a fifteen-minute access JWT beside a rotating opaque
+  refresh token. Both credential shapes reach the same `CredentialAuthenticator` and leave through
+  one function, so the `ActorContext` they produce differs only in the surface the request arrived
+  on and in which actor was identified — asserted as an equality, not described in a comment. The
+  refresh token is refused there and spent only at the rotation path, so a captured one cannot serve
+  requests for its whole lifetime without ever rotating past the revocation that would catch it.
+- **A token is a selector and a verifier**, `nod_pat_<selector>_<verifier>` in lowercase
+  hexadecimal. Argon2id is salted, so a hash cannot be a lookup key; the selector addresses the row
+  and carries no authority, and the verifier is checked against the hash in constant time. The
+  alphabet also puts the documented example token `nod_pat_EXAMPLE…` outside the grammar, so it can
+  neither be minted nor parsed. `V7` adds the column, its unique index and `sign_in_code`.
+- **Redaction at the logging boundary.** `%rmsg` and `%rex` in `logback.xml` remove anything
+  credential-shaped — a Nodera token, a compact JWS, an authorisation header — from the message and
+  from the stack trace, so a secret that reached a log line through code nobody here wrote is
+  contained. The types that hold a secret refuse to render it as well; the boundary is the layer
+  that catches what those cannot.
+- **`serve` refuses to start without a signing key**, an issuer, or with an Argon2id cost below
+  OWASP's floor, and refuses a partly-set OIDC configuration rather than falling back to local
+  sign-in. A credential passed as a command-line argument is refused before the command is parsed,
+  named by position and never echoed.
+- **A REST authentication middleware.** An `Authorization: Bearer` header becomes an `ActorContext`
+  on the call before routing; a header that is present and unusable is answered `401` with the
+  contract's `unauthenticated` problem document rather than continuing as an anonymous request.
+  Health stays unauthenticated, and no other route exists yet — API-01 builds them.
+- **A conditional write decides, not the read before it.** Rotating a session, redeeming a sign-in
+  code and spending one of its five guesses each end in an `update … where` that can match nothing,
+  and each now refuses when it does: concurrent callers holding one refresh token, or one code, no
+  longer both receive a session, and the attempt limit is no longer widened by asking at once.
+  Every mutating refusal that knows an actor is recorded — requesting a code for a suspended actor,
+  and a replayed refresh token, included. Authentication stays a read and writes nothing.
 
 ### Changed
 
+- `compose.prod.yml` mounts a third secret, `secrets/jwt_signing_key`, and requires
+  `NODERA_PUBLIC_URL` for the `iss` claim. **An existing deployment must create both before its
+  next upgrade**, or `serve` refuses to start — which is the intended behaviour rather than a
+  regression (`docs/ops/deploy.md`).
 - Every workflow job sets `timeout-minutes`; the previous default was six hours.
 - Every `actions/checkout` sets `persist-credentials: false`, except the release step that pushes
   the tag.

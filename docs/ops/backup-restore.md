@@ -32,8 +32,9 @@ It does **not** carry:
 | The `nodera_app` role | Roles are cluster-level, not database-level. A dump restored onto a fresh cluster hits `role "nodera_app" does not exist` on the first `CREATE POLICY`. | Recreated by `migrate` from `secrets/app_role_password` — § Restore step 4. |
 | `secrets/app_role_password` | Without it the restored database has a role the application cannot authenticate as. Nothing in the dump can reconstruct it. | `./secrets/`, git-ignored, **back it up separately**. |
 | `secrets/db_owner_password` | A fresh volume initialises `nodera_owner` from this file. A different value gives you a database you cannot open as the owner. | Same. |
+| `secrets/jwt_signing_key` | Access tokens are signatures, not rows. A restore with a different key leaves every signed-in person holding a token that no longer verifies; they sign in again, and nothing is lost but the interruption. | Same. Less critical than the two above, and still worth restoring. |
 
-So a complete backup is **three things**: the dump, and both secret files. Store the secrets
+So a complete backup is **four things**: the dump, and all three secret files. Store the secrets
 somewhere other than the host, and not in the same place as the dump if you can avoid it — the dump
 also contains credential hashes, and the two together are the whole system.
 
@@ -179,10 +180,11 @@ a different project name**: `compose.prod.yml` declares `name: nodera`, the deve
 
 ```sh
 docker build --build-arg VERSION=0.0.0-local -t nodera:local .
-printf 'NODERA_IMAGE=nodera\nNODERA_VERSION=local\n' > .env
+printf 'NODERA_IMAGE=nodera\nNODERA_VERSION=local\nNODERA_PUBLIC_URL=http://localhost:8080\n' > .env
 mkdir -p secrets
 printf '%s' "$(openssl rand -base64 32)" > secrets/db_owner_password
 printf '%s' "$(openssl rand -base64 32)" > secrets/app_role_password
+printf '%s' "$(openssl rand -base64 48)" > secrets/jwt_signing_key
 
 docker compose -p nodera-drill -f compose.prod.yml up -d
 # insert a recognisable row, take the dump, then:

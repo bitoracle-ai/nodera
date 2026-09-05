@@ -12,8 +12,24 @@ regexes = [
   # CI dummies. Deliberately unmistakable so a real value can never masquerade as one.
   '''ci-dummy''',
   '''nodera-local-dev-only''',
-  # Documented example tokens carry this prefix; the token issuer refuses to mint it.
+  # Documented example tokens carry this prefix. Not merely unlikely: the token grammar is
+  # lowercase hexadecimal, so EXAMPLE is outside it and neither mints nor parses (SEC-01).
   '''nod_pat_EXAMPLE[A-Za-z0-9]*''',
+  # The development JWT signing keys. Base64 of ASCII sentences that say what they are —
+  # "nodera-local-dev-only-not-a-secret-000000" and "nodera-test-only-not-a-secret-0000000000".
+  # `serve` refuses to start without a key, so a placeholder has to exist somewhere.
+  '''bm9kZXJhLWxvY2FsLWRldi1vbmx5LW5vdC1hLXNlY3JldC0wMDAwMDA=''',
+  '''bm9kZXJhLXRlc3Qtb25seS1ub3QtYS1zZWNyZXQtMDAwMDAwMDAwMA==''',
+  # The token grammar's test vectors: one selector, one verifier and one compact JWS, each a fixed
+  # literal in the identity tests. They are well-formed on purpose — a redaction test over a fixture
+  # with nothing credential-shaped in it passes for the wrong reason — which is exactly why the
+  # scanner sees them. Named one by one rather than exempting the test tree by path: a `paths` entry
+  # would blind the scan to every backend test file, including the one that leaks a real value.
+  # Adding a differently-shaped fixture means adding it here; the scan is what tells you.
+  '''6f1c9a4b2e8d70a3c5f2b1e4''',
+  '''nod_pat_6f1c9a4b''',
+  '''9c2e4a17b30df85629e1c47a0b6d3f92548ea7c1063b9df24e85a170c93b6e42''',
+  '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiJmYWtlIn0\.c2lnbmF0dXJlLXBsYWNlaG9sZGVy''',
 ]
 paths = [
   '''.*\.example$''',

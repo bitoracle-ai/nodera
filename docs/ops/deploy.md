@@ -91,13 +91,14 @@ Prefer the asset once it exists. A clone gives you `main`'s compose file while `
 an older image, so the pin stops describing the deployment — and it puts the whole build tree on a
 host where § What must never happen forbids building.
 
-**The two secrets.** They are files, never environment variables, and the application reads them
+**The three secrets.** They are files, never environment variables, and the application reads them
 through `*_FILE` variables so the values never appear in `docker inspect` or in a process listing:
 
 ```sh
 cd /opt/nodera && mkdir -p secrets
 printf '%s' "$(openssl rand -base64 32)" > secrets/db_owner_password
 printf '%s' "$(openssl rand -base64 32)" > secrets/app_role_password
+printf '%s' "$(openssl rand -base64 48)" > secrets/jwt_signing_key
 chmod 640 secrets/* && chown root:101 secrets/*
 ```
 
@@ -131,12 +132,25 @@ created with those bits **on a Linux host** arrives in the container unchanged t
 `secrets/app_role_password` is substituted into `V4`'s `create role nodera_app` the first time
 `migrate` runs. From then on it is the credential the server authenticates with, and it is **not**
 contained in a database dump — [`backup-restore.md`](backup-restore.md) § What a dump covers — and
-what it does not. Back both files up now, somewhere other than this host.
+what it does not. Back all three files up now, somewhere other than this host.
 
-**The version.** Put it in `.env` beside the compose file rather than exporting it:
+`secrets/jwt_signing_key` signs the fifteen-minute access token every signed-in person carries. It
+must decode from base64 to at least 32 bytes, and the server **refuses to start** without it rather
+than falling back to a value an attacker could guess. Replacing it is a deliberate act with a
+visible effect: every access token in flight stops verifying, so everyone signs in again with the
+refresh token they still hold. Personal access tokens are unaffected — they are rows, not
+signatures.
+
+`NODERA_PUBLIC_URL` is required alongside it and is not a secret: it becomes the `iss` claim this
+deployment signs and the only issuer it accepts, so a token minted for a different instance is
+refused here. Set it in the same `.env` as `NODERA_VERSION`.
+
+**The version, and the public URL.** Put both in `.env` beside the compose file rather than
+exporting them — `NODERA_PUBLIC_URL` is declared `:?` exactly as `NODERA_VERSION` is, so a missing
+one fails every compose subcommand:
 
 ```sh
-printf 'NODERA_VERSION=0.1.0\n' > .env
+printf 'NODERA_VERSION=0.1.0\nNODERA_PUBLIC_URL=https://nodera.example\n' > .env
 ```
 
 This `.env` is Compose interpolation and nothing else. If you took the clone route you also have
@@ -225,6 +239,20 @@ reachable on the compose network and nowhere else. Confirmed in the rehearsal. L
 
 ## Updating
 
+An instance installed before SEC-01 has neither `secrets/jwt_signing_key` nor `NODERA_PUBLIC_URL`.
+Create both **before** the upgrade — `serve` refuses to start without the key, and the compose file
+refuses to interpolate without the URL:
+
+```sh
+test -f secrets/jwt_signing_key || {
+  printf '%s' "$(openssl rand -base64 48)" > secrets/jwt_signing_key
+  chmod 640 secrets/jwt_signing_key && chown root:101 secrets/jwt_signing_key
+}
+grep -q '^NODERA_PUBLIC_URL=' .env || printf 'NODERA_PUBLIC_URL=https://nodera.example\n' >> .env
+```
+
+Then:
+
 ```sh
 sed -i 's/^NODERA_VERSION=.*/NODERA_VERSION=0.2.0/' .env
 docker compose -f compose.prod.yml up -d
@@ -257,6 +285,8 @@ rollback is expected to fail, but because it is the only thing that helps when i
 | Symptom | First thing to check |
 |---|---|
 | Any compose subcommand fails with `required variable NODERA_VERSION is missing a value` | The variable, not the daemon. It is declared `:?` and re-read on *every* invocation, `logs` and `down` included. Put it in `.env` beside the compose file. |
+| The same, naming `NODERA_PUBLIC_URL` | Identical cause, and the one an instance installed before SEC-01 meets first. § Updating creates it. |
+| `serve` exits at start-up naming `NODERA_JWT_SIGNING_KEY` | `secrets/jwt_signing_key` is absent or unreadable. Refusing is the design — there is no fallback key. § Updating creates it; the permissions row above applies to it too. |
 | `invalid reference format` on `up` | A digest pinned as `NODERA_VERSION=@sha256:…`. Split it across the colon — see § First install. |
 | `migrate` exits non-zero, server never starts | `docker compose logs migrate`. Working as designed: the server is gated on `service_completed_successfully`, so a failed migration stops the deployment rather than half-applying it. |
 | `migrate` fails on privileges | It runs as `nodera_owner` and refuses to run as `nodera_app` on purpose. Check `NODERA_DB_USER` in the `migrate` service, and that `secrets/db_owner_password` matches what the database was initialised with. |

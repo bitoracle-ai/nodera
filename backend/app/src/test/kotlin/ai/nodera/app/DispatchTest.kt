@@ -3,6 +3,7 @@ package ai.nodera.app
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 
@@ -49,7 +50,40 @@ class DispatchTest :
             run.stderr shouldContain "NODERA_DB_URL"
             run.stderr shouldContain "Configuration error"
         }
+
+        // Guard: the credentialArgument check at the top of dispatch. Remove it and the process
+        // carries on with a token in its argv, where the process table and shell history keep it.
+        "refuses a token passed as an argument, saying why and without echoing it" {
+            val run = dispatchCapturing("serve", PAT)
+
+            run.exitCode shouldBe EXIT_USAGE
+            run.stdout shouldBe ""
+            run.stderr shouldContain "process table"
+            run.stderr shouldContain "argument 2"
+            run.stderr shouldNotContain PAT
+            run.stderr shouldNotContain PAT.substringAfterLast('_')
+        }
+
+        "refuses a token however it is dressed up as an option" {
+            listOf("--token=$PAT", "--password=hunter2", "--client-secret", "-key").forEach { argument ->
+                dispatchCapturing("serve", argument).exitCode shouldBe EXIT_USAGE
+            }
+        }
+
+        "refuses before the command is parsed, so no entrypoint is exempt" {
+            dispatchCapturing("mcp-stdio", PAT).exitCode shouldBe EXIT_USAGE
+            dispatchCapturing(PAT).exitCode shouldBe EXIT_USAGE
+        }
+
+        "leaves ordinary arguments alone, so the refusal is about credentials and not about arity" {
+            dispatchCapturing("mcp-stdio", "--verbose").exitCode shouldBe EXIT_NOT_IMPLEMENTED
+        }
     })
+
+/** A real, well-formed token: a fixture with nothing token-shaped in it would pass for the wrong reason. */
+private const val PAT =
+    "nod_pat_6f1c9a4b2e8d70a3c5f2b1e4_" +
+        "9c2e4a17b30df85629e1c47a0b6d3f92548ea7c1063b9df24e85a170c93b6e42"
 
 private data class CapturedRun(
     val exitCode: Int,

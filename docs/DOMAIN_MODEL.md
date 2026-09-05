@@ -275,8 +275,8 @@ verdict destroys precisely the information that makes a review record worth keep
 
 ## 8. `credential`
 
-`actor_id`, `kind` (`session` | `personal_access_token` | `oidc_link`), `token_hash`, `label`,
-`scopes`, `expires_at`, `last_used_at`, `revoked_at`.
+`actor_id`, `kind` (`session` | `personal_access_token` | `oidc_link`), `selector`, `token_hash`,
+`label`, `scopes`, `expires_at`, `last_used_at`, `revoked_at`.
 
 **Invariant CR1 — a token is stored only as an Argon2id hash.** The plaintext is returned exactly
 once, at creation, and never logged, echoed in an error, or included in any API response afterwards.
@@ -284,6 +284,35 @@ once, at creation, and never logged, echoed in an error, or included in any API 
 **Invariant CR2 — a credential belongs to exactly one actor and grants nothing beyond that actor's
 effective capabilities.** There is no shared, ambient or service-wide token. An agent that needs
 access gets its own actor and its own credential.
+
+**Invariant CR3 — `selector` is the lookup key and `token_hash` is not.** A token is two parts,
+`<prefix><selector>_<verifier>`: the selector is random, unique, stored in the clear and carries no
+authority; only the verifier is secret. Argon2id is salted, so the same plaintext hashes differently
+every time and `token_hash` can never be matched by a `where` clause — the unique index `V1` puts on
+it reads as a lookup key and is not one. The alternative to a selector is one Argon2id evaluation
+per credential per request, which is a denial-of-service surface held open from inside. The
+alphabet is lowercase hexadecimal, so a token splits unambiguously and the documented example
+`nod_pat_EXAMPLE…` is outside the grammar rather than merely unlikely.
+
+**Invariant CR4 — the kind a credential is used as comes from the row, never from the prefix
+presented.** A selector is unique across the whole table, so re-prefixing a token addresses the same
+row with a different claim about what it is. A session's refresh token is spent only at rotation and
+is refused as a bearer credential; a personal access token cannot be rotated into a session. Both
+gates read the presented prefix, and `CredentialVerifier` refuses when it disagrees with
+`credential.kind` — that comparison is what makes the row decide, and the gates defence in depth.
+
+### 8.1 `sign_in_code`
+
+`actor_id`, `code_hash`, `attempts`, `expires_at`, `consumed_at`, `created_at`. The local half of
+human sign-in: an eight-digit code, hashed like every other secret, consumed on redemption and on
+supersession. Not project-scoped, so no row-level security — sign-in runs before a project context
+exists, the same reason `credential` carries none.
+
+**Invariant CR5 — the attempt limit is enforced by the write.** Eight digits are guessable, so what
+makes the code safe is the counter rather than its length; and the counter is claimed by a
+conditional `update … where attempts < n` *before* the verification, not judged from a row read one
+Argon2id evaluation earlier. A limit decided by the read is a limit an attacker widens by asking
+concurrently.
 
 ## 9. `audit_event` — append-only
 

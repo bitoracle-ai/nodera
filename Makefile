@@ -18,8 +18,12 @@ COMPOSE ?= docker compose
 # teaches contributors to put real credentials in shell history. The application itself has no
 # defaults: it refuses to start without these (invariant #6), which is why they are named here
 # rather than buried in a fallback nobody reads.
+# NODERA_JWT_SIGNING_KEY is base64 of the ASCII sentence "nodera-local-dev-only-not-a-secret-000000",
+# which is the same "unmistakably local" reasoning one line up: `serve` refuses to start without a
+# key, so a development value has to exist somewhere, and it is better here than in a fallback.
 DEV_DB_ENV  = NODERA_DB_URL=jdbc:postgresql://localhost:5432/nodera NODERA_DB_USER=nodera NODERA_DB_PASSWORD=nodera-local-dev-only
 DEV_APP_ENV = $(DEV_DB_ENV) NODERA_APP_PASSWORD=nodera-local-dev-only
+DEV_IDENTITY_ENV = NODERA_JWT_SIGNING_KEY=bm9kZXJhLWxvY2FsLWRldi1vbmx5LW5vdC1hLXNlY3JldC0wMDAwMDA= NODERA_JWT_ISSUER=http://localhost:8080
 
 .PHONY: help dev up down logs migrate seed check check-repo check-db verify-db check-backend \
         check-frontend backend frontend test fmt clean ticket
@@ -60,7 +64,7 @@ seed: ## Load the development seed (one project, one human, one agent)
 # it. Piping keeps the same command working on every contributor's machine.
 
 backend: ## Run the backend
-	cd backend && $(DEV_DB_ENV) NODERA_STATIC_ROOT=../../frontend/dist ./gradlew :app:run --no-daemon
+	cd backend && $(DEV_DB_ENV) $(DEV_IDENTITY_ENV) NODERA_STATIC_ROOT=../../frontend/dist ./gradlew :app:run --no-daemon
 
 frontend: ## Run the frontend dev server
 	cd frontend && yarn install --frozen-lockfile && yarn dev

@@ -16,13 +16,11 @@ dependencies {
     implementation(libs.bundles.ktor.server)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.argon2)
+    implementation(libs.java.jwt)
     implementation(libs.slf4j.api)
-    runtimeOnly(libs.logback.classic)
-
-    // On the compile classpath for tests only: LoggingTargetTest asserts the console
-    // appender's target, because stdout is the MCP framing channel on the stdio entrypoint
-    // and a logging default is what would quietly put a line into it.
-    testImplementation(libs.logback.classic)
+    // Compile-time now, not runtimeOnly: Redaction.kt extends Logback's own converters so the
+    // pattern layout cannot render a message without passing it through the redactor.
+    implementation(libs.logback.classic)
 }
 
 application {

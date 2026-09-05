@@ -27,10 +27,11 @@ internal suspend fun currentConnection(): Connection? = coroutineContext[Transac
  * JDBC type. `ActorContext` stays an explicit parameter regardless: the unit of work is ambient,
  * who is acting is not.
  *
- * **Unfinished seam:** nothing here establishes `nodera.project_ids` from the authenticated context
- * (invariant #5). Until the package that authenticates does, a project-scoped read returns nothing
- * and an audit row carrying a `project_id` is refused by `V4`'s policy, aborting the transaction.
- * Fail-closed in both directions, but a failing write rather than an empty read.
+ * **Unfinished seam:** nothing here establishes `nodera.project_ids` (invariant #5). A project-scoped
+ * read therefore returns nothing, and an audit row carrying a `project_id` is refused by `V4`'s
+ * policy, aborting the transaction — fail-closed in both directions, but a failing write rather
+ * than an empty read. The setting comes from the project a *request* addresses, so it belongs to
+ * the surface that resolves one — API-01, not SEC-01 (`docs/plan/SEC-01.md` § 9.2).
  */
 public class JdbcUnitOfWork(
     private val dataSource: DataSource,

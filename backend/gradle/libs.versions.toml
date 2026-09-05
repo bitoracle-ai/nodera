@@ -16,6 +16,8 @@ mockk = "1.14.11"
 slf4j = "2.0.18"
 logback = "1.6.3"
 argon2 = "2.12"
+# Resolved transitively through ktor-server-auth-jwt; pinned here because :app imports it directly.
+java-jwt = "4.6.0"
 ktlint-plugin = "12.2.0"
 detekt = "1.23.8"
 
@@ -46,6 +48,7 @@ hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 argon2 = { module = "de.mkammerer:argon2-jvm", version.ref = "argon2" }
+java-jwt = { module = "com.auth0:java-jwt", version.ref = "java-jwt" }
 
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }

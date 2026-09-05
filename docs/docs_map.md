@@ -72,6 +72,7 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - 6. `comment`
   - 7. `review` and `review_finding`
   - 8. `credential`
+    - 8.1 `sign_in_code`
   - 9. `audit_event` — append-only
   - 10. Markdown interchange
 
@@ -405,6 +406,20 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - Status header
   - Shape
   - Current plans
+
+## `docs/plan/SEC-01.md`
+
+- Plan — SEC-01 · Credential issuance and authentication for humans and agents
+  - 1. What phase 1 found
+  - 2. What this package is, in one sentence
+  - 3. The structural decision: selector and verifier
+  - 4. Module placement, and the one thing that surprised the layout
+  - 5. Files
+  - 6. Acceptance criteria, and the guard each one is paired against
+    - 6.1 What review added, and why each one is a guard rather than a preference
+  - 7. Deliberate non-goals
+  - 8. `java-jwt`, declared rather than inherited
+  - 9. Open questions, each with a recommendation
 
 ## `docs/prompts/README.md`
 

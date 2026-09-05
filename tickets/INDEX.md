@@ -11,6 +11,30 @@
 
 ## Status (hand-maintained)
 
+**2026-09-05 — [SEC-01](closed/SEC-01.md) is closed: an agent can authenticate as itself, and so
+can a person, through one code path.** A token is a public selector and a secret verifier —
+`nod_pat_<selector>_<verifier>` — because Argon2id salts and a hash therefore cannot be a lookup
+key, which is what `V1`'s unique index on `token_hash` reads as and is not. `V7` adds the column and
+`sign_in_code` beside it. Both credential shapes leave through one function, so the `ActorContext`
+differs only in the surface and the actor; a refresh token is refused there and spent only at
+rotation. `serve` refuses to start without a signing key, an issuer, or with an Argon2id cost below
+OWASP's floor, and a credential in argv is refused before the command is parsed. Redaction sits at
+the logging boundary, proved against the encoder the shipped `logback.xml` configures. No route
+exposes any of it — that is API-01's, and `docs/API_CONTRACT.md` has no `/auth/*` contract yet.
+
+**Seven review rounds, and the arithmetic is the lesson.** Two earlier sessions were interrupted
+mid-package; rounds 2–6 ran across them and **three of the four blocking findings after round 2 were
+defects a previous round's own fix had introduced.** Round 4's is the sharpest: the guard existed,
+had a test, and tested the attacker's input. Round 6 reached zero and its six fixes were then never
+re-read, because the session ended. Round 7 found the same shape one layer up — **a guard comment
+naming a paired negative that did not exist**: the supersession spec was green with supersession
+removed, because redemption reads only the newest row. It was found by disabling the guard and
+watching the spec pass, which is the only way that class of defect is ever found. Twenty-eight
+negatives were re-established mechanically on the committed tree; **two were watched staying green**
+and their comments now say so. The harness's own first run reported all thirty red because it never
+reached Gradle — the same lesson, one layer further down, and the reason a run that produces no
+`BUILD` line is now an error rather than a result.
+
 **2026-09-05 — [CI-02](closed/CI-02.md) is closed, and the rule DOC-06 wrote down is now true of
 the two runs that did not meet it.** `make verify-db` no longer depends on `up`: it stands up its own
 Postgres from `compose.verify.yml` under `-p nodera-verify` and removes the container, the volume and
@@ -237,8 +261,8 @@ on which — and `:application` holds `PermissionService`, the single engine bot
 in [`docs/plan/CORE-01.md`](../docs/plan/CORE-01.md).
 
 **What still does not exist:** `PermissionDirectory` is still a port with no implementation. DB-01
-proved the schema; it wrote no production Kotlin and no repository. That is CORE-02's and SEC-01's,
-and they are the next packages.
+proved the schema; it wrote no production Kotlin and no repository. CORE-02 and SEC-01 have since
+closed and neither implemented it — it belongs with the surface that resolves a project.
 
 Two findings from that package are worth carrying, because both are the same shape as CI-01's and
 OPS-01's. **A permission engine's bounds are part of its semantics:** the first implementation walked
@@ -364,27 +388,25 @@ their shape.
 
 ## Working order
 
-[CORE-01](closed/CORE-01.md), [DB-01](closed/DB-01.md) and [CORE-02](closed/CORE-02.md) are done,
-so the order now starts three steps in.
+[CORE-01](closed/CORE-01.md), [DB-01](closed/DB-01.md), [CORE-02](closed/CORE-02.md) and
+[SEC-01](closed/SEC-01.md) are done, so the order now starts four steps in.
 
-1. **[SEC-01](open/SEC-01.md)** — credentials. It was waiting on DB-01 alongside
-   [CORE-02](closed/CORE-02.md), which is now closed: the audit invariant was unenforceable without
-   the privilege split the migration creates, and that split is proved rather than assumed.
-2. **[API-01](open/API-01.md)** and **[MCP-01](open/MCP-01.md)** — the two surfaces, built against
+1. **[API-01](open/API-01.md)** and **[MCP-01](open/MCP-01.md)** — the two surfaces, built against
    the same use cases. MCP-01 depends on API-01 only for the shared error mapping, not for logic.
-3. Everything after that is ordered by the table below.
+   Both were waiting on SEC-01: the use cases they host exist, the middleware that turns a
+   credential into an `ActorContext` is wired into `serve`, and what is left is the routes — the
+   `/auth/*` contract among them, which `docs/API_CONTRACT.md` does not yet specify.
+2. Everything after that is ordered by the table below.
 
 ## Open tickets
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_11 open (P1 1 · P2 6 · P3 4 · P4 0) · 19 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_10 open (P1 0 · P2 6 · P3 4 · P4 0) · 20 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
-### 🔴 P1 — Highest (1)
+### 🔴 P1 — Highest (0)
 
-| ID | Title | Effort | Depends on / note |
-|---|---|---|---|
-| [SEC-01](open/SEC-01.md) | Credential issuance and authentication for humans and agents | ~3 d | CORE-01, DB-01 |
+_none._
 
 ### 🟠 P2 — High (6)
 

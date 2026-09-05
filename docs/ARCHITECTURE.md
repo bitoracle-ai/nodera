@@ -129,12 +129,16 @@ whether it is a person or an agent, from the field. No badge derived from a name
 
 Two credential shapes, one authorisation path.
 
-**Humans** sign in via OIDC, or local email + one-time code where no provider is configured. The
-result is a short-lived access JWT (15 min) plus a rotating opaque refresh token.
+**Humans** sign in with an e-mail address and a one-time code. The result is a short-lived access
+JWT (15 min) plus a rotating opaque refresh token. An OIDC provider is configurable and nothing
+reads that configuration yet — the authorization-code exchange needs a callback route, which is
+API-01's.
 
-**Agents** authenticate with a personal access token (`nod_pat_…`), presented as a bearer token and
-stored only as an Argon2id hash (invariant CR1). A PAT belongs to exactly one agent actor, carries its
-own scopes, and can expire.
+**Agents** authenticate with a personal access token (`nod_pat_…`), presented as a bearer token. A
+token is a public selector and a secret verifier; only the verifier is stored, as an Argon2id hash
+(invariants CR1 and CR3). A PAT belongs to exactly one actor — a person may hold one too, and the
+code path does not know which — and can expire. `credential.scopes` is in the schema and nothing
+reads it yet; the surface that issues tokens is where a scope would be chosen.
 
 Both produce the same `ActorContext`:
 

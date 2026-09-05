@@ -1,5 +1,6 @@
 package ai.nodera.app
 
+import ai.nodera.domain.identity.SecretRedaction
 import java.io.PrintStream
 import kotlin.system.exitProcess
 
@@ -38,6 +39,27 @@ private fun usage(): String =
       mcp-stdio   Model Context Protocol server over stdio, for an agent-spawned process
     """.trimIndent()
 
+/** `--token`, `-password=…`, `--client-secret` and anything else whose name announces a secret. */
+private val SECRET_ARGUMENT_NAME =
+    Regex("(?i)--?[a-z-]*(token|password|secret|key|credential)[a-z-]*")
+
+private const val CREDENTIAL_ON_COMMAND_LINE =
+    "Refusing to start: argument %d is a credential. Command-line arguments are visible in the " +
+        "process table and in shell history, so Nodera accepts a secret only from the environment " +
+        "or from the file a *_FILE variable points at (invariant #6). The value has not been echoed."
+
+/**
+ * The position of the first argument that is a credential, or `null`.
+ *
+ * Recognition is [SecretRedaction]'s, not a second list: whatever the logging boundary would take
+ * out of a line is what must not arrive on the command line, so the two cannot disagree. The name
+ * rule catches the rest — a secret this build could not have minted is still a secret.
+ */
+internal fun credentialArgument(args: Array<String>): Int? =
+    args
+        .indexOfFirst { SecretRedaction.redact(it) != it || SECRET_ARGUMENT_NAME.matches(it.substringBefore('=')) }
+        .takeIf { it >= 0 }
+
 public fun main(args: Array<String>) {
     exitProcess(dispatch(args, Environment(System.getenv()), System.out, System.err))
 }
@@ -55,6 +77,12 @@ internal fun dispatch(
     out: PrintStream,
     err: PrintStream,
 ): Int {
+    val credential = credentialArgument(args)
+    if (credential != null) {
+        err.println(CREDENTIAL_ON_COMMAND_LINE.format(credential + 1))
+        return EXIT_USAGE
+    }
+
     val requested = args.firstOrNull() ?: Command.SERVE.argument
     val command = Command.entries.firstOrNull { it.argument == requested }
     if (command == null) {
