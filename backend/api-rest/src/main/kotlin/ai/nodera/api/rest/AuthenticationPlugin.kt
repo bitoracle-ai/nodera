@@ -1,13 +1,12 @@
 package ai.nodera.api.rest
 
+import ai.nodera.application.error.ErrorCode
 import ai.nodera.application.identity.AuthenticationResult
 import ai.nodera.application.identity.CredentialAuthenticator
 import ai.nodera.domain.actor.ActorContext
 import ai.nodera.domain.actor.RequestId
 import ai.nodera.domain.actor.Surface
-import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationCallPipeline
@@ -15,38 +14,27 @@ import io.ktor.server.application.call
 import io.ktor.server.request.header
 import io.ktor.server.request.path
 import io.ktor.server.response.header
-import io.ktor.server.response.respondText
 import io.ktor.util.AttributeKey
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlin.uuid.Uuid
 
 private const val BEARER = "Bearer"
-private const val UNAUTHENTICATED = "unauthenticated"
-private const val PROBLEM_TYPE = "https://nodera.dev/errors/unauthenticated"
-private const val PROBLEM_TITLE = "Unauthenticated"
-
-private const val UNSUPPORTED_SCHEME =
-    "the Authorization header must carry a bearer credential"
-
-private val ACTOR_CONTEXT = AttributeKey<ActorContext>("nodera.actorContext")
-private val PROBLEM_JSON = ContentType("application", "problem+json")
-
-/** RFC 9457, with the `code` clients switch on — `docs/API_CONTRACT.md` § 4. */
-@Serializable
-public data class ProblemDetail(
-    public val type: String,
-    public val title: String,
-    public val status: Int,
-    public val code: String,
-    public val detail: String,
-    public val instance: String,
-)
 
 /**
- * The credential this request carried, or `null` if it carried none. There is no third state: a
- * request that presented something unusable was answered `401` before routing, so "no context"
- * here can never mean "something was presented and quietly ignored".
+ * Hyphenated, and that is load-bearing: [ai.nodera.domain.identity.SecretRedaction] replaces
+ * `bearer` or `basic` followed by whitespace and a token, so "a bearer credential" left this as
+ * "a bearer ***". `ProblemDetailTest` asserts every detail this surface emits survives redaction.
+ */
+internal const val UNSUPPORTED_SCHEME: String =
+    "the Authorization header must carry a bearer-scheme credential"
+
+private val ACTOR_CONTEXT = AttributeKey<ActorContext>("nodera.actorContext")
+
+/**
+ * The credential this request carried, or `null` if it carried none.
+ *
+ * On every path the contract secures there is no third state: something presented and unusable was
+ * answered `401` before routing. On the [UNAUTHENTICATED_PATHS] there **is** — a header is ignored
+ * there, so `null` can also mean "presented and deliberately not read". No route under those paths
+ * asks, and one that did would have to say which it meant.
  */
 public fun ApplicationCall.actorContext(): ActorContext? = attributes.getOrNull(ACTOR_CONTEXT)
 
@@ -57,14 +45,18 @@ public fun ApplicationCall.actorContext(): ActorContext? = attributes.getOrNull(
  * A header that is present and unusable is a `401` here rather than an anonymous request a route
  * later mistakes for a deliberate one. A request with no header is left alone.
  *
- * @param requestId defaults to a fresh id per call. Correlating with a client-supplied header
- *   belongs with the package that builds the routes.
+ * @param unauthenticated paths this never touches, because the contract gives them no security at
+ *   all — [UNAUTHENTICATED_PATHS] says why refusing there breaks the client it is meant to protect.
+ * @param requestId defaults to the correlation id [installRequestCorrelation] established, which is
+ *   the one echoed on the response and the one the audit trail carries.
  */
 public fun Application.installCredentialAuthentication(
     authenticator: CredentialAuthenticator,
-    requestId: (ApplicationCall) -> RequestId = { RequestId(Uuid.random()) },
+    unauthenticated: Set<String> = UNAUTHENTICATED_PATHS,
+    requestId: (ApplicationCall) -> RequestId = ApplicationCall::correlationId,
 ) {
     intercept(ApplicationCallPipeline.Plugins) {
+        if (call.request.path() in unauthenticated) return@intercept
         val header = call.request.header(HttpHeaders.Authorization)?.trim() ?: return@intercept
         val presented =
             header
@@ -88,21 +80,8 @@ public fun Application.installCredentialAuthentication(
     }
 }
 
-/**
- * Serialised here rather than through content negotiation, because the media type is part of what
- * makes it a problem document: RFC 9457 defines `application/problem+json`, and a gateway or client
- * keying on it does not recognise `application/json`.
- */
+/** `WWW-Authenticate` on top of the shared problem document, because this refusal is about a scheme. */
 private suspend fun ApplicationCall.refuse(detail: String) {
     response.header(HttpHeaders.WWWAuthenticate, BEARER)
-    val problem =
-        ProblemDetail(
-            type = PROBLEM_TYPE,
-            title = PROBLEM_TITLE,
-            status = HttpStatusCode.Unauthorized.value,
-            code = UNAUTHENTICATED,
-            detail = detail,
-            instance = request.path(),
-        )
-    respondText(Json.encodeToString(problem), PROBLEM_JSON, HttpStatusCode.Unauthorized)
+    respondProblem(ErrorCode.UNAUTHENTICATED, detail)
 }

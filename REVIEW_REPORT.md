@@ -8,10 +8,11 @@ Generated from ticket frontmatter: `python scripts/tickets_index.py --write`.
 
 <!-- BEGIN GENERATED: closed tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_20 closed work packages, newest first._
+_21 closed work packages, newest first._
 
 | ID | Title | Closed |
 |---|---|---|
+| [API-01](tickets/closed/API-01.md) | REST API skeleton with a contract-first OpenAPI document | 2026-09-10 |
 | [SEC-01](tickets/closed/SEC-01.md) | Credential issuance and authentication for humans and agents | 2026-09-05 |
 | [CI-02](tickets/closed/CI-02.md) | Make the repository's own runs leave nothing behind | 2026-09-05 |
 | [DOC-06](tickets/closed/DOC-06.md) | Entry files — throwaway test environments, and who sets direction | 2026-09-04 |

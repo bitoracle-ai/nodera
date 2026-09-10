@@ -38,3 +38,4 @@ A plan that lists only files is a checklist. The justification is the part worth
 | [`CORE-03.md`](CORE-03.md) — ticket lifecycle, key allocation and the closure gate | `implemented` |
 | [`CORE-04.md`](CORE-04.md) — comments, mentions and the review record | `implemented` |
 | [`SEC-01.md`](SEC-01.md) — credential issuance and authentication | `implemented` |
+| [`API-01.md`](API-01.md) — the REST surface and its contract-first document | `implemented` |

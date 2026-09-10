@@ -11,6 +11,27 @@
 
 ## Status (hand-maintained)
 
+**2026-09-10 — [API-01](closed/API-01.md) is closed: an agent's own path exists end to end, over a
+contract written before the routes.** `GET /api/v1/me` answers the actor envelope with `kind` always
+present; `POST`/`DELETE /api/v1/me/credentials` mint and revoke the caller's own tokens, the
+plaintext returned exactly once; `POST /api/v1/auth/refresh` rotates a session, revoking the token
+presented in the transaction that mints its replacement. No route resolves a project, so none asks
+the permission engine anything — `docs/API_CONTRACT.md` § 2b lists what is specified and not served,
+with the blocker beside each. The OpenAPI document is served as the same bytes the repository holds,
+and a test compares the routing tree with it in both directions. `ErrorCode` lives in `:application`,
+because MCP-01 needs it and `:api-mcp` cannot see `:api-rest`.
+
+**Four review rounds, and not one blocking finding was wrong logic.** Round 1: a working defect — a
+stale `Authorization` header made renewing a session impossible for a client behaving normally.
+Round 2: a regression round 1's own fix introduced, which the redactor turned into
+`"a bearer ***"` — and a `shouldContain` assertion is what let it through. Round 3: the document and
+the server disagreed. `/api/v1/me` declared `200` and `401` and the route also answers `404`, so the
+generated client had no member for an answer the server gives — invariant #11's failure mode, on day
+one rather than after a drift. **Nothing in this repository catches that class:** the drift check
+compares `(method, path)` sets and never response maps, and whether it should is a proposal for
+[API-02](open/API-02.md) in `docs/plan/API-01.md` § 11. Round 4 approved with no defect in the fix
+diff, which is not the outcome this repository's record predicts.
+
 **2026-09-05 — [SEC-01](closed/SEC-01.md) is closed: an agent can authenticate as itself, and so
 can a person, through one code path.** A token is a public selector and a secret verifier —
 `nod_pat_<selector>_<verifier>` — because Argon2id salts and a hash therefore cannot be a lookup
@@ -20,7 +41,8 @@ differs only in the surface and the actor; a refresh token is refused there and 
 rotation. `serve` refuses to start without a signing key, an issuer, or with an Argon2id cost below
 OWASP's floor, and a credential in argv is refused before the command is parsed. Redaction sits at
 the logging boundary, proved against the encoder the shipped `logback.xml` configures. No route
-exposes any of it — that is API-01's, and `docs/API_CONTRACT.md` has no `/auth/*` contract yet.
+exposed any of it then; API-01 built them and wrote the `/auth/*` contract into
+`docs/API_CONTRACT.md`.
 
 **Seven review rounds, and the arithmetic is the lesson.** Two earlier sessions were interrupted
 mid-package; rounds 2–6 ran across them and **three of the four blocking findings after round 2 were
@@ -369,7 +391,7 @@ keeps the bit from being lost again.
 and every command in the Makefile, in `docs/ci.md` and in both workflows failed at its first line.
 It now builds, tests, lints, containerises and releases — one image with three entrypoints, health
 probes, and a migration step that refuses the application role's credentials. What exists is a
-chain, not a product: the only endpoints are `/health/live` and `/health/ready`, and the frontend is
+chain, not a product: the only endpoints then were `/health/live` and `/health/ready`, and the frontend is
 a placeholder WEB-01 replaces.
 
 The deployment shape was settled before implementation rather than after:
@@ -388,21 +410,24 @@ their shape.
 
 ## Working order
 
-[CORE-01](closed/CORE-01.md), [DB-01](closed/DB-01.md), [CORE-02](closed/CORE-02.md) and
-[SEC-01](closed/SEC-01.md) are done, so the order now starts four steps in.
+[CORE-01](closed/CORE-01.md), [DB-01](closed/DB-01.md), [CORE-02](closed/CORE-02.md),
+[SEC-01](closed/SEC-01.md) and [API-01](closed/API-01.md) are done, so the order now starts five steps
+in.
 
-1. **[API-01](open/API-01.md)** and **[MCP-01](open/MCP-01.md)** — the two surfaces, built against
-   the same use cases. MCP-01 depends on API-01 only for the shared error mapping, not for logic.
-   Both were waiting on SEC-01: the use cases they host exist, the middleware that turns a
-   credential into an `ActorContext` is wired into `serve`, and what is left is the routes — the
-   `/auth/*` contract among them, which `docs/API_CONTRACT.md` does not yet specify.
-2. Everything after that is ordered by the table below.
+1. **[MCP-01](open/MCP-01.md)** — the second surface over the same use cases. It depends on API-01
+   only for the shared error mapping (`ErrorCode` in `:application`), which API-01 shipped, not for
+   logic.
+2. **[API-02](open/API-02.md)** — the project-scoped half of the REST contract. API-01 specified it
+   and served none of it. The RLS bootstrap decision is API-02's first job, and two of API-01's
+   acceptance criteria moved with it — for two different reasons, which
+   [API-01](closed/API-01.md) § Scope amendment states separately.
+3. Everything after that is ordered by the table below.
 
 ## Open tickets
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_10 open (P1 0 · P2 6 · P3 4 · P4 0) · 20 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_10 open (P1 0 · P2 6 · P3 4 · P4 0) · 21 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (0)
 
@@ -412,7 +437,7 @@ _none._
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
-| [API-01](open/API-01.md) | REST API skeleton with a contract-first OpenAPI document | ~3 d | CORE-01, SEC-01, CORE-03 |
+| [API-02](open/API-02.md) | Project-scoped REST surface and the scope bootstrap it needs | ~3 d | API-01, CORE-03, CORE-04 · Carries API-01's two project-scoped acceptance criteria and the RLS bootstrap decision behind them. |
 | [MCP-01](open/MCP-01.md) | MCP server with the orientation and read tools | ~3 d | CORE-01, SEC-01, CORE-03 · Depends on API-01 only for the shared error taxonomy, not for logic. |
 | [MCP-02](open/MCP-02.md) | MCP mutating tools with idempotency and structured gate errors | ~2 d | MCP-01, CORE-04 |
 | [OPS-02](open/OPS-02.md) | Prove the release package by cutting one | ~0.5 d | Carries the one OPS-01 criterion that cannot be proved from inside this repository. |

@@ -154,7 +154,9 @@ class AuthenticationPluginTest :
                 val response = client.get("/probe") { header(HttpHeaders.Authorization, "Basic dXNlcjpwYXNz") }
 
                 response.status shouldBe HttpStatusCode.Unauthorized
-                response.bodyAsText() shouldContain "bearer"
+                // The whole sentence, not a substring of it: `shouldContain "bearer"` is what let
+                // the redactor rewrite this detail to "a bearer ***" undetected (review round 2).
+                response.bodyAsText() shouldContain "\"detail\":\"$UNSUPPORTED_SCHEME\""
             }
         }
     })

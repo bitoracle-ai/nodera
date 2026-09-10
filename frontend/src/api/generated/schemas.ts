@@ -4,6 +4,44 @@
 
 import { z } from 'zod'
 
+export const ProblemSchema = z.object({
+  type: z.string(),
+  title: z.string(),
+  status: z.number().int(),
+  code: z.enum(["unauthenticated", "forbidden", "not_found", "validation_failed", "closure_gate_failed", "dependency_cycle", "idempotency_conflict", "rate_limited"]),
+  detail: z.string(),
+  instance: z.string(),
+})
+
+export const ActorRefSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["human", "agent"]),
+  handle: z.string(),
+  displayName: z.string(),
+})
+
+export const RefreshRequestSchema = z.object({
+  refreshToken: z.string(),
+})
+
+export const SessionSchema = z.object({
+  accessToken: z.string(),
+  expiresAt: z.string(),
+  refreshToken: z.string(),
+})
+
+export const IssueCredentialRequestSchema = z.object({
+  label: z.string(),
+  expiresAt: z.string(),
+})
+
+export const IssuedCredentialSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  token: z.string(),
+  expiresAt: z.string(),
+})
+
 export const LivenessResponseSchema = z.object({
   status: z.enum(["alive"]),
   version: z.string(),
@@ -13,4 +51,12 @@ export const ReadinessResponseSchema = z.object({
   status: z.enum(["ready", "not_ready"]),
   version: z.string(),
   detail: z.string(),
+})
+
+export const ActorSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["human", "agent"]),
+  handle: z.string(),
+  displayName: z.string(),
+  owner: ActorRefSchema.optional(),
 })

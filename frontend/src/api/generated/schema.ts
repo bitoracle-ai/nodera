@@ -4,6 +4,103 @@
  */
 
 export interface paths {
+    "/openapi.yaml": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * This document.
+         * @description The same bytes the repository holds, streamed from the classpath. A client that reads the contract from the instance it is talking to cannot be looking at another version of it.
+         */
+        get: operations["openApiDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Exchange a refresh token for a new session.
+         * @description The presented token is revoked in the same transaction that mints its replacement, so a captured one replayed afterwards meets a revoked row. A refresh token is not a bearer credential and is refused in the Authorization header.
+         */
+        post: operations["refreshSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The actor the presented credential belongs to.
+         * @description No capability is required and none is checked: a capability is held in a project, and this route resolves none. kind is always present, so no client has to infer whether an actor is a person.
+         */
+        get: operations["whoAmI"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/credentials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mint a personal access token for the caller.
+         * @description For the caller and for nobody else — there is no field naming an actor. The plaintext is in this response and in no other, ever.
+         */
+        post: operations["issuePersonalAccessToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/credentials/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke one of the caller's own credentials. */
+        delete: operations["revokeCredential"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -48,6 +145,69 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description RFC 9457, plus the stable code clients switch on. The codes are part of the contract and are the same ones the MCP surface answers with; renaming one is a breaking change. */
+        Problem: {
+            /** @example https://nodera.dev/errors/not-found */
+            type: string;
+            title: string;
+            status: number;
+            /** @enum {string} */
+            code: "unauthenticated" | "forbidden" | "not_found" | "validation_failed" | "closure_gate_failed" | "dependency_cycle" | "idempotency_conflict" | "rate_limited";
+            /** @description Human-readable, and never a quotation of what was presented. No problem body carries a token, a selector, a verifier, a hash or a sign-in code. */
+            detail: string;
+            instance: string;
+        };
+        /** @description One actor as any response refers to it. kind is always present: no client should ever have to infer whether an actor is a person, and one that reads a name pattern instead is a blocking review finding. */
+        ActorRef: {
+            id: string;
+            /** @enum {string} */
+            kind: "human" | "agent";
+            handle: string;
+            displayName: string;
+        };
+        /** @description The actor envelope. owner appears only on agents and is not recursive beyond one level; the full chain is at /actors/{id}, which is not served yet. */
+        Actor: {
+            id: string;
+            /** @enum {string} */
+            kind: "human" | "agent";
+            handle: string;
+            displayName: string;
+            owner?: components["schemas"]["ActorRef"];
+        };
+        RefreshRequest: {
+            /** @description The opaque token a session was issued with. Spent here and nowhere else. */
+            refreshToken: string;
+        };
+        /** @description The refresh token is in the body rather than in a Set-Cookie header: scripts, CI jobs and agents are first-class clients here and a cookie is invisible to all of them. */
+        Session: {
+            accessToken: string;
+            /**
+             * @description RFC 3339, UTC. When the access token stops being accepted.
+             * @example 2026-09-10T14:22:00Z
+             */
+            expiresAt: string;
+            refreshToken: string;
+        };
+        IssueCredentialRequest: {
+            /** @description What the owner calls it. The only part of a credential they can ever read back. */
+            label: string;
+            /**
+             * @description RFC 3339, UTC, and required although the column is nullable. A token that never expires is a token nobody rotates, and a default chosen here would be a policy invented where the deployment cannot be seen.
+             * @example 2027-01-01T00:00:00Z
+             */
+            expiresAt: string;
+        };
+        /** @description The one and only exposure of a token's plaintext. */
+        IssuedCredential: {
+            id: string;
+            label: string;
+            /**
+             * @description Store it now. It is not retrievable from any endpoint afterwards: the row keeps an Argon2id hash of the secret half and the public selector, and neither reconstructs it.
+             * @example nod_pat_6f1c9a4b2e8d70a3c5f2b1e4_9c2e…
+             */
+            token: string;
+            expiresAt: string;
+        };
         LivenessResponse: {
             /** @enum {string} */
             status: "alive";
@@ -79,6 +239,187 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    openApiDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The OpenAPI document. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/yaml": string;
+                };
+            };
+        };
+    };
+    refreshSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshRequest"];
+            };
+        };
+        responses: {
+            /** @description A new session. The token presented is no longer usable. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Session"];
+                };
+            };
+            /** @description Unknown, revoked or expired. Which of the three is named — the caller already holds the credential — but an unknown selector and a wrong verifier share one answer. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The body is not a refresh request. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    whoAmI: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's actor envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Actor"];
+                };
+            };
+            /** @description No credential, or one that cannot be used. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The credential resolved and the actor behind it no longer exists. It fails closed rather than answering with a partial envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    issuePersonalAccessToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueCredentialRequest"];
+            };
+        };
+        responses: {
+            /** @description The credential, with its plaintext exposed once. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedCredential"];
+                };
+            };
+            /** @description No credential, or one that cannot be used. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The label is empty or too long, or the expiry is absent or not a timestamp. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    revokeCredential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The credential's identifier, as returned when it was issued. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked. Repeating the call answers 404, because the row is no longer live. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No credential, or one that cannot be used. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Absent, or somebody else's — one answer on purpose. A distinct 403 would say which credential identifiers exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     healthLive: {
         parameters: {
             query?: never;

@@ -13,6 +13,10 @@ kotlinx-coroutines = "1.11.0"
 kotest = "5.9.1"
 testcontainers = "1.21.4"
 mockk = "1.14.11"
+# Test-only, in :api-rest. ContractDriftTest compares the routing tree with the committed OpenAPI
+# document, and a check that guards the contract has to parse the contract rather than approximate
+# it — a hand-rolled subset parser is a gate that stops seeing entries without saying so.
+snakeyaml-engine = "2.7"
 slf4j = "2.0.19"
 logback = "1.6.3"
 argon2 = "2.12"
@@ -59,6 +63,7 @@ kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest"
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+snakeyaml-engine = { module = "org.snakeyaml:snakeyaml-engine", version.ref = "snakeyaml-engine" }
 
 [bundles]
 ktor-server = [

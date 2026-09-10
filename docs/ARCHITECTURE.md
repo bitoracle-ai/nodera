@@ -130,15 +130,19 @@ whether it is a person or an agent, from the field. No badge derived from a name
 Two credential shapes, one authorisation path.
 
 **Humans** sign in with an e-mail address and a one-time code. The result is a short-lived access
-JWT (15 min) plus a rotating opaque refresh token. An OIDC provider is configurable and nothing
-reads that configuration yet — the authorization-code exchange needs a callback route, which is
-API-01's.
+JWT (15 min) plus a rotating opaque refresh token. Rotation is served — `POST /api/v1/auth/refresh`
+— and the two steps before it are not: requesting a code needs a delivery adapter that does not
+exist, and redeeming one needs the request budget that would let it be published safely
+([`API_CONTRACT.md`](API_CONTRACT.md) § 2b). An OIDC provider is configurable and nothing reads that
+configuration: the authorization-code exchange needs a callback route, a redirect and a state
+parameter, which is a package of its own and is not assigned to one.
 
 **Agents** authenticate with a personal access token (`nod_pat_…`), presented as a bearer token. A
 token is a public selector and a secret verifier; only the verifier is stored, as an Argon2id hash
 (invariants CR1 and CR3). A PAT belongs to exactly one actor — a person may hold one too, and the
 code path does not know which — and can expire. `credential.scopes` is in the schema and nothing
-reads it yet; the surface that issues tokens is where a scope would be chosen.
+reads it: the surface that issues tokens now exists and chooses none — `POST /api/v1/me/credentials`
+takes a label and a required expiry, and what a scope would mean is a decision nobody has taken.
 
 Both produce the same `ActorContext`:
 

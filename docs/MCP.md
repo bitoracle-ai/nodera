@@ -227,6 +227,13 @@ there is any. Codes are part of the contract and are not renamed without a migra
 **`not_found` over `forbidden` for invisible projects** is a deliberate information-leak trade-off: a
 distinct `forbidden` would let any actor enumerate which project keys exist.
 
+**These are the same codes the REST surface answers with, and they exist once.** API-01 put them in
+`:application` as `ErrorCode` rather than in either adapter, because `:api-mcp` is a sibling of
+`:api-rest` and cannot see it (ADR-0005) — two lists would drift, and the one with fewer readers goes
+first. What a code becomes on the wire is each adapter's: an HTTP status here, the shape above there.
+Adding or renaming one is a contract change in [`API_CONTRACT.md`](API_CONTRACT.md) § 4 and in this
+table, before it is a code change.
+
 ## 10. Rate limits
 
 Per actor, not per token, so minting a second token gains nothing. Read tools and write tools have

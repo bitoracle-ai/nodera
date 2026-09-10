@@ -21,13 +21,15 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
 
 ## `docs/API_CONTRACT.md`
 
-> The REST contract — resource shapes, the actor envelope every response carries, error bodies, pagination, idempotency, and the rule that the OpenAPI document is written before the routes rather than derived from them.
+> The REST contract — the authentication and session routes, resource shapes, the actor envelope every response carries, error bodies, pagination, idempotency, and the rule that the OpenAPI document is written before the routes rather than derived from them.
 
 - REST API contract — Nodera
   - 1. Conventions
   - 2. The actor envelope
-  - 2a. Health — the only implemented endpoints today
+  - 2a. Health
+  - 2b. What is served today
   - 3. Resources
+    - Authentication and sessions
     - Projects
     - Tickets
     - Acceptance criteria, dependencies, labels
@@ -286,6 +288,23 @@ section without opening ten files. Regenerate with `python scripts/generate_docs
   - Rolling back
   - When something is wrong
   - What must never happen
+
+## `docs/plan/API-01.md`
+
+- Plan — API-01 · REST API skeleton with a contract-first OpenAPI document
+  - 1. What phase 1 found
+  - 2. The scope decision, stated before the diff
+  - 3. The error taxonomy, designed for two consumers
+  - 4. Contract-first, and the drift check that makes it true
+  - 5. Test plan
+  - 6. Acceptance criteria — how each is met
+  - 7. Deliberate non-goals
+  - 8. Open questions, each with a recommendation
+  - 9. What review round 1 changed
+  - 10. What review round 2 changed
+  - 11. What review round 3 changed
+    - Proposal, not started here
+  - 12. What review round 4 changed
 
 ## `docs/plan/CORE-01.md`
 

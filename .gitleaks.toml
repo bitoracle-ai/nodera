@@ -25,7 +25,8 @@ regexes = [
   # with nothing credential-shaped in it passes for the wrong reason — which is exactly why the
   # scanner sees them. Named one by one rather than exempting the test tree by path: a `paths` entry
   # would blind the scan to every backend test file, including the one that leaks a real value.
-  # Adding a differently-shaped fixture means adding it here; the scan is what tells you.
+  # This is a list of suppressions, not a register of every fixture: a value the scanner never flags
+  # does not belong here. Add an entry when — and only when — the scan asks for one.
   '''6f1c9a4b2e8d70a3c5f2b1e4''',
   '''nod_pat_6f1c9a4b''',
   '''9c2e4a17b30df85629e1c47a0b6d3f92548ea7c1063b9df24e85a170c93b6e42''',

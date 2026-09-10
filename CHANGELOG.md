@@ -11,6 +11,40 @@ evaluate is not a release.
 
 ### Added
 
+- **The REST surface an agent authenticates itself on** (API-01). `GET /api/v1/me` answers with the
+  actor envelope — `kind` always present, an agent's owner beside it — and
+  `POST`/`DELETE /api/v1/me/credentials` mint and revoke the caller's own personal access tokens,
+  with the plaintext returned exactly once. `POST /api/v1/auth/refresh` rotates a session, revoking
+  the token presented in the transaction that mints its replacement. No route resolves a project, so
+  none of them asks the permission engine anything: a capability is held in a project, and
+  `docs/API_CONTRACT.md` § 2b says which routes are still specified rather than served, and why.
+- **The OpenAPI document is the contract, and drift is a red build.** It is served at
+  `GET /openapi.yaml` as the same bytes the repository holds, and a test compares the routing tree
+  with the document's paths in both directions — an undocumented route and a documented path with no
+  route each fail, with the offending operation named.
+- **One error taxonomy for both surfaces.** `ErrorCode` lives in `:application` rather than in an
+  adapter, because `:api-mcp` is a sibling of `:api-rest` and cannot see it; the wire codes are the
+  contract and the HTTP status each becomes stays in the REST adapter. Problem documents are
+  RFC 9457 with `application/problem+json`, and both caller-visible strings pass through
+  `SecretRedaction` on the way out — `instance` is the request's own path, and a caller that puts a
+  token where an identifier belongs would otherwise have it handed back.
+- **A stale `Authorization` header no longer stops the request that renews it.** The credential
+  middleware refuses any presented credential it cannot use, before routing — which is right
+  everywhere the contract declares security and wrong on the four routes that declare none. A client
+  keeps a default header, its access token expires, and it calls refresh with that header still
+  attached; refusing there made renewing a session impossible for a client behaving normally, and the
+  refusal named the wrong credential. The middleware now has the list of routes the contract marks
+  `security: []`, and a test asserts that list is exactly those operations, so the two cannot drift.
+- **Every refusal's `detail` reaches the caller unchanged, and a test says so.** The redaction that
+  keeps a token out of a problem document also rewrites deliberate text that looks like one:
+  "a bearer credential" came back as "a bearer ***". The sentence is hyphenated, and every detail
+  this surface can emit is asserted byte-identical after redaction — whole strings, because a
+  substring assertion is what let the corruption through.
+- **`X-Request-Id` correlates every response, including refusals.** A client value that is not a UUID
+  is replaced rather than refused or passed through: refusing would break a caller behind a proxy
+  with its own correlation format, and passing it through would put a client-controlled string where
+  `audit_event.request_id` is `uuid not null`. The id echoed is the id the audit trail records.
+
 - Repository foundation: vision and scope fence, domain model, architecture, MCP surface
   specification, and the baseline database schema as four forward-only migrations.
 - The rule set: twelve critical invariants, ten skills, and the phase-4 review rubric.
@@ -84,7 +118,7 @@ evaluate is not a release.
 - **A REST authentication middleware.** An `Authorization: Bearer` header becomes an `ActorContext`
   on the call before routing; a header that is present and unusable is answered `401` with the
   contract's `unauthenticated` problem document rather than continuing as an anonymous request.
-  Health stays unauthenticated, and no other route exists yet — API-01 builds them.
+  Health stays unauthenticated; API-01 added the routes that use it.
 - **A conditional write decides, not the read before it.** Rotating a session, redeeming a sign-in
   code and spending one of its five guesses each end in an `update … where` that can match nothing,
   and each now refuses when it does: concurrent callers holding one refresh token, or one code, no

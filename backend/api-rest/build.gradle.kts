@@ -16,4 +16,5 @@ dependencies {
     implementation(libs.slf4j.api)
 
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.snakeyaml.engine)
 }

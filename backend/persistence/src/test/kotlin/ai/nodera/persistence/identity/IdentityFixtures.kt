@@ -16,6 +16,7 @@ import ai.nodera.application.identity.SignInCodeDelivery
 import ai.nodera.application.identity.SignInCodes
 import ai.nodera.application.identity.usecase.IssuePersonalAccessToken
 import ai.nodera.application.identity.usecase.RevokeCredential
+import ai.nodera.application.identity.usecase.WhoAmI
 import ai.nodera.domain.actor.ActorContext
 import ai.nodera.domain.actor.ActorId
 import ai.nodera.domain.actor.ActorKind
@@ -137,6 +138,7 @@ internal class Identity {
     private val codes = SignInCodes(JdbcSignInCodeStore(), secrets, CODE_TTL, clock)
 
     val authenticator = CredentialAuthenticator(unitOfWork, verifier, actors, accessTokens)
+    val whoAmI = WhoAmI(unitOfWork, JdbcActorProfiles())
     val issueToken = IssuePersonalAccessToken(unitOfWork, recorder, credentials, secrets)
     val revokeCredential = RevokeCredential(unitOfWork, recorder, credentials, clock)
     val requestSignInCode = RequestSignInCode(unitOfWork, recorder, actors, codes, mailbox)
