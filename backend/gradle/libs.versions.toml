@@ -16,7 +16,7 @@ mockk = "1.14.11"
 # Test-only, in :api-rest. ContractDriftTest compares the routing tree with the committed OpenAPI
 # document, and a check that guards the contract has to parse the contract rather than approximate
 # it — a hand-rolled subset parser is a gate that stops seeing entries without saying so.
-snakeyaml-engine = "2.7"
+snakeyaml-engine = "3.1.1"
 slf4j = "2.0.19"
 logback = "1.6.3"
 argon2 = "2.12"
