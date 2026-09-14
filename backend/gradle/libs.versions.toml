@@ -10,7 +10,7 @@ hikari = "7.1.0"
 kotlinx-serialization = "1.11.0"
 kotlinx-datetime = "0.8.0"
 kotlinx-coroutines = "1.11.0"
-kotest = "5.9.1"
+kotest = "6.2.5"
 testcontainers = "1.21.4"
 mockk = "1.14.11"
 # Test-only, in :api-rest. ContractDriftTest compares the routing tree with the committed OpenAPI
