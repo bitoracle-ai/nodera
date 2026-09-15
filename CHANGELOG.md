@@ -177,6 +177,20 @@ evaluate is not a release.
 
 ### Fixed
 
+- **The audit harness compared equal to the connection it hides.** `AuditCompleteness` proxies a
+  JDBC connection and forwarded every call it did not handle to the target, `equals` among them, so
+  the watched connection answered `false` for itself and `true` for the raw one underneath — the
+  guarantee it exists to give, inverted. The handlers now answer `equals`, `hashCode` and `toString`
+  by identity, on the connection proxy and on both statement proxies. The case named "not the one
+  underneath it" never caught it: green under kotest 5 because `shouldBe` short-circuited on
+  reference identity, and under 6.2.5 red with the same message whether the escape guard is there or
+  deleted. It now asserts identity, and a new case states both polarities of the equality (FIX-03).
+- **CodeQL's `java-kotlin` analysis had extracted nothing since the Kotlin 2.4.20 bump.** The
+  extractor is a compiler plugin and aborts the compile it traces rather than analysing less, so the
+  job uploaded a failed-run SARIF and the backend — credentials, tokens, the permission engine —
+  went unanalysed. The analysis build, and only it, now compiles with a version bundle 2.27.0
+  accepts, through a Gradle property no other build sets; the shipped build keeps 2.4.20, where
+  CVE-2026-53914 is fixed. The pin leaves with CI-03 (FIX-03).
 - **CI had never been green — 23 runs, 23 failures.** `backend/gradlew` was recorded in the git
   index as `100644`, so every `./gradlew` step failed with `Permission denied` and exit code 126,
   taking the `backend` and `database` lanes and `CI Gate` with them. The bit is restored on the

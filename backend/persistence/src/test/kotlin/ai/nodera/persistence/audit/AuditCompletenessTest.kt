@@ -10,10 +10,12 @@ import ai.nodera.persistence.SchemaFixture
 import ai.nodera.persistence.currentConnection
 import ai.nodera.persistence.runSql
 import ai.nodera.persistence.seedProject
+import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import java.sql.Connection
 import java.sql.SQLFeatureNotSupportedException
 import java.util.UUID
@@ -250,7 +252,24 @@ class AuditCompletenessTest :
         "a statement hands back the watched connection, not the one underneath it" {
             unitOfWork.inTransaction {
                 val connection = requireNotNull(currentConnection())
-                connection.createStatement().use { it.connection shouldBe connection }
+                connection.createStatement().use { it.connection shouldBeSameInstanceAs connection }
+            }
+        }
+
+        // A proxy forwards `equals` to its target unless the handler answers it, and a forwarded
+        // one is the guarantee above inverted: unequal to itself, equal to the connection it hides.
+        // Both polarities are asserted, or the half that matters is the one nothing watches.
+        "the watched connection is its own equal, and is not the one underneath it" {
+            SchemaFixture.asApp(scope) { raw ->
+                val watched = AuditCompleteness(raw).watched()
+
+                // Softly, or the first red assertion hides whether the rest are alive.
+                assertSoftly {
+                    watched.equals(watched) shouldBe true
+                    watched.equals(raw) shouldBe false
+                    watched.createStatement().use { it.equals(it) shouldBe true }
+                    watched.prepareStatement("select 1").use { it.equals(it) shouldBe true }
+                }
             }
         }
 

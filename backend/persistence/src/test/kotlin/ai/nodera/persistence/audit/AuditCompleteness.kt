@@ -49,6 +49,24 @@ private const val UNWRAPPED = "the audit harness wraps this connection and canno
  */
 private val CONNECTION_ESCAPES = setOf("unwrap", "getMetaData")
 
+/**
+ * `Object`'s three dispatched methods, answered here rather than forwarded. A proxy that forwards
+ * `equals` is this harness inverted: unequal to itself, and equal to the object it hides.
+ */
+private val OBJECT_METHODS = setOf("equals", "hashCode", "toString")
+
+private fun identity(
+    self: Any,
+    label: String,
+    method: Method,
+    args: Array<out Any?>?,
+): Any =
+    when (method.name) {
+        "equals" -> self === args?.firstOrNull()
+        "hashCode" -> System.identityHashCode(self)
+        else -> "audit-watched $label"
+    }
+
 private class Mutation(
     val verb: String,
     val table: String,
@@ -106,7 +124,13 @@ internal class AuditCompleteness(
             Proxy.newProxyInstance(
                 Connection::class.java.classLoader,
                 arrayOf(Connection::class.java),
-            ) { _, method, args -> intercept(method, args) } as Connection
+            ) { self, method, args ->
+                if (method.name in OBJECT_METHODS) {
+                    identity(self, "Connection", method, args)
+                } else {
+                    intercept(method, args)
+                }
+            } as Connection
         return proxy
     }
 
@@ -161,18 +185,26 @@ internal class AuditCompleteness(
         sql: String?,
         type: Class<T>,
     ): PreparedStatement =
-        Proxy.newProxyInstance(type.classLoader, arrayOf(type)) { _, method, args ->
-            if (method.name in EXECUTING) record(sql ?: args?.firstOrNull() as? String)
-            unwatchable(method) ?: call(statement, method, args)
+        Proxy.newProxyInstance(type.classLoader, arrayOf(type)) { self, method, args ->
+            if (method.name in OBJECT_METHODS) {
+                identity(self, type.simpleName, method, args)
+            } else {
+                if (method.name in EXECUTING) record(sql ?: args?.firstOrNull() as? String)
+                unwatchable(method) ?: call(statement, method, args)
+            }
         } as PreparedStatement
 
     private fun watch(statement: Statement): Statement =
         Proxy.newProxyInstance(
             Statement::class.java.classLoader,
             arrayOf(Statement::class.java),
-        ) { _, method, args ->
-            if (method.name in EXECUTING) record(args?.firstOrNull() as? String)
-            unwatchable(method) ?: call(statement, method, args)
+        ) { self, method, args ->
+            if (method.name in OBJECT_METHODS) {
+                identity(self, "Statement", method, args)
+            } else {
+                if (method.name in EXECUTING) record(args?.firstOrNull() as? String)
+                unwatchable(method) ?: call(statement, method, args)
+            }
         } as Statement
 
     /** The ways a statement hands its caller back out of the harness. `null` means "not one of them". */

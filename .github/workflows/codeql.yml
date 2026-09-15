@@ -55,10 +55,12 @@ jobs:
 
       # Kotlin needs a real build for CodeQL to see the code. `-x test` keeps this to
       # compilation: the tests already ran in CI, and running them twice buys nothing.
+      # The pinned compiler is the newest this bundle accepts — without it the extractor aborts
+      # and the lane analyses nothing. It goes away with CI-03; backend/settings.gradle.kts says why.
       - if: matrix.build-mode == 'manual'
         name: Build for analysis
         working-directory: backend
-        run: ./gradlew classes -x test --no-daemon
+        run: ./gradlew classes -x test --no-daemon -PcodeqlKotlinVersion=2.4.10
 
       - name: Analyse
         uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63  # v4.38.0

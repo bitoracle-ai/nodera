@@ -11,6 +11,35 @@
 
 ## Status (hand-maintained)
 
+**2026-09-15 — [FIX-03](closed/FIX-03.md) is closed: both lanes on `main` went red after the Monday
+dependency merges, and neither failure was the bump's own.** kotest 5.9.1 → 6.2.5 reddened
+`AuditCompletenessTest` on a tree whose production code had not moved — kotest 5's `shouldBe`
+short-circuited on reference identity, and underneath it the audit harness's JDBC proxy forwarded
+`equals` to the connection it hides: **unequal to itself, equal to the raw one.** The guarantee the
+harness exists to give, inverted. The handlers now answer `equals`, `hashCode` and `toString` by
+identity. The case named "not the one underneath it" never caught that, and once the short-circuit
+was gone it was red with the *same message* whether the escape guard was present or deleted; it now
+asserts identity, and a new case states both polarities.
+
+**The review's sharpest finding was a second copy of a guard.** The identity branch exists three
+times — connection, `Statement`, `PreparedStatement` — and the new case watched two of them. Deleting
+the third alone left the whole suite green: the negative had looked convincing only because emptying
+the shared set kills all three at once. Two guards and one watcher is the shape, and it is the shape
+a paired negative is supposed to make impossible.
+
+**CodeQL's `java-kotlin` analysis had extracted nothing for three pushes.** The extractor is a
+compiler plugin and refuses a compiler it does not know, so the Kotlin 2.4.20 bump made it abort the
+compile it traces and upload a failed-run SARIF — while `main` read green, because CodeQL is not one
+of the five lanes and not in `CI Gate`. Going back is not available: 2.4.20 is where
+CVE-2026-53914 is fixed. The analysis build alone now compiles with a version the bundle accepts,
+through a property no other build sets — [CI-03](open/CI-03.md) takes it out again. Both failures
+are now in [`../docs/ci.md`](../docs/ci.md) § What a Dependabot bump gets past every lane.
+
+**And the merges themselves.** All five pull requests were merged before their runs finished. The
+`developer` ruleset does require `CI Gate` on `main` — and grants organisation admins and the admin
+repository role `bypass_mode: always`, so the required check is advisory for whoever merges. Only
+the owner can change that, so it is reported here rather than filed as a ticket.
+
 **2026-09-10 — [API-01](closed/API-01.md) is closed: an agent's own path exists end to end, over a
 contract written before the routes.** `GET /api/v1/me` answers the actor envelope with `kind` always
 present; `POST`/`DELETE /api/v1/me/credentials` mint and revoke the caller's own tokens, the
@@ -427,7 +456,7 @@ in.
 
 <!-- BEGIN GENERATED: open tickets (regenerate: python scripts/tickets_index.py --write) -->
 
-_10 open (P1 0 · P2 6 · P3 4 · P4 0) · 21 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
+_11 open (P1 0 · P2 6 · P3 5 · P4 0) · 22 closed → [REVIEW_REPORT.md](../REVIEW_REPORT.md)._
 
 ### 🔴 P1 — Highest (0)
 
@@ -444,10 +473,11 @@ _none._
 | [WEB-01](open/WEB-01.md) | Frontend shell — routing, authentication, generated API client | ~2 d | API-01 |
 | [WEB-02](open/WEB-02.md) | Ticket list and detail views, mobile-first | ~3 d | WEB-01, CORE-04 |
 
-### 🟡 P3 — Medium (4)
+### 🟡 P3 — Medium (5)
 
 | ID | Title | Effort | Depends on / note |
 |---|---|---|---|
+| [CI-03](open/CI-03.md) | Drop the CodeQL Kotlin compiler pin once the bundle supports 2.4.20 | ~0.5 d | Waits on a CodeQL bundle release; nothing in this repository can bring it forward. |
 | [CORE-05](open/CORE-05.md) | Markdown ticket import and export with round-trip fidelity | ~2 d | CORE-04 |
 | [DOC-01](open/DOC-01.md) | Deployment guide and the self-hosting path | ~1 d | API-01, WEB-01 |
 | [GH-01](open/GH-01.md) | Link branches, commits and pull requests onto tickets automatically | ~2 d | CORE-01, CORE-03, DB-01 · Shape settled in ADR-0010 — the fence runs through the payload, so it is enforced in the schema. |

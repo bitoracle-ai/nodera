@@ -223,6 +223,24 @@ change contributors have to be *told* about, which is why `CONTRIBUTING.md` and 
 version and point at `.nvmrc`, and why the Dockerfile pins `node:22.23-alpine` rather than the
 floating major.
 
+**A test-framework major can redden a case on a tree whose code has not moved — and the red is the
+honest answer.** FIX-03's kotest 5.9.1 → 6.2.5 failed `AuditCompletenessTest`'s "a statement hands
+back the watched connection" without a line of production code changing. Nothing regressed: kotest
+5's `shouldBe` short-circuited on reference identity and never called `equals`, so a proxy that
+answered `equals` by forwarding it to the connection it hides — unequal to itself, equal to the raw
+one — was invisible to the single case written to catch exactly that. The lane is not what to be
+suspicious of. A bump that reddens a case nobody touched is evidence about the case, and the first
+question is what the old framework was hiding.
+
+**A compiler major can delete an entire analysis lane, and the lane says so only if you read it.**
+FIX-03's other half: the `backend-minor-patch` group moved Kotlin 2.4.10 → 2.4.20, and CodeQL's
+Kotlin extractor is a compiler plugin that refuses a compiler it does not know. `Analyse
+(java-kotlin)` then fails in `Build for analysis`, uploads a failed-run SARIF and extracts nothing
+— which it did for three consecutive pushes to `main`. CodeQL is not one of the five lanes and not
+in `CI Gate`, so the branch reads green while the backend goes unanalysed. Any analyser bolted onto
+the compiler inherits the compiler's version floor, which makes a compiler bump a change to the
+security lane whether the bump says so or not.
+
 ## The image is verified separately
 
 `make check` covers the code: it compiles, it lints, and its test lanes pass — executing them
